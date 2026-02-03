@@ -1,0 +1,135 @@
+{
+  "identity": {
+    "name": "Voice Workspace MVP",
+    "aesthetic": "Editorial Utility",
+    "description": "A minimalist, text-forward workspace for meeting intelligence. Combines the clarity of a document editor with the power of AI analysis.",
+    "emotional_tone": "Clarity, Focus, Professional, Flow-state",
+    "target_audience": "Business analysts, Product Managers, Executives"
+  },
+  "typography": {
+    "font_family": {
+      "headings": "Manrope, sans-serif",
+      "body": "Public Sans, sans-serif",
+      "mono": "JetBrains Mono, monospace"
+    },
+    "weights": {
+      "headings": "600 (SemiBold) or 800 (ExtraBold)",
+      "body": "400 (Regular) and 500 (Medium)"
+    },
+    "scale": {
+      "h1": "text-4xl md:text-5xl tracking-tight font-extrabold",
+      "h2": "text-3xl tracking-tight font-semibold",
+      "h3": "text-2xl font-semibold",
+      "body_lg": "text-lg leading-relaxed",
+      "body_base": "text-base leading-relaxed",
+      "caption": "text-sm text-muted-foreground"
+    },
+    "imports": [
+      "@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');"
+    ]
+  },
+  "colors": {
+    "theme": "light",
+    "palette": {
+      "background": "#FFFFFF",
+      "foreground": "#0F172A",
+      "card": "#FFFFFF",
+      "card_foreground": "#0F172A",
+      "popover": "#FFFFFF",
+      "popover_foreground": "#0F172A",
+      "primary": "#0F172A",
+      "primary_foreground": "#F8FAFC",
+      "secondary": "#F1F5F9",
+      "secondary_foreground": "#0F172A",
+      "muted": "#F8FAFC",
+      "muted_foreground": "#64748B",
+      "accent": "#F1F5F9",
+      "accent_foreground": "#0F172A",
+      "destructive": "#EF4444",
+      "destructive_foreground": "#F8FAFC",
+      "border": "#E2E8F0",
+      "input": "#E2E8F0",
+      "ring": "#0F172A"
+    },
+    "custom_accents": {
+      "brand_indigo": "#4F46E5",
+      "signal_orange": "#F97316",
+      "success_green": "#10B981",
+      "speaker_1": "#E0F2FE",
+      "speaker_2": "#FCE7F3",
+      "speaker_3": "#DCFCE7",
+      "speaker_4": "#FEF3C7"
+    }
+  },
+  "visual_enhancers": {
+    "radius": "0.75rem",
+    "shadows": {
+      "card": "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
+      "hover": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+      "float": "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)"
+    },
+    "borders": "1px solid #E2E8F0",
+    "glassmorphism": "bg-white/80 backdrop-blur-md border-b border-white/20"
+  },
+  "layout_strategies": {
+    "dashboard_grid": "grid grid-cols-1 md:grid-cols-12 gap-6 p-8",
+    "transcript_view": "max-w-3xl mx-auto py-12 px-6",
+    "sidebar_width": "w-80",
+    "spacing_scale": "Relaxed (use p-6, p-8, gap-6 instead of p-4)"
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-6 rounded-full font-medium transition-all active:scale-95",
+      "secondary": "bg-secondary text-secondary-foreground hover:bg-secondary/80 h-10 px-6 rounded-full font-medium transition-all active:scale-95",
+      "ghost": "hover:bg-accent hover:text-accent-foreground h-10 px-4 rounded-full font-medium transition-all"
+    },
+    "cards": {
+      "base": "bg-card text-card-foreground rounded-xl border shadow-sm p-6 transition-all hover:shadow-md",
+      "interactive": "cursor-pointer hover:border-primary/20 hover:shadow-md transition-all duration-300"
+    },
+    "inputs": {
+      "base": "flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+    }
+  },
+  "assets": {
+    "images": {
+      "landing_hero": "https://images.unsplash.com/photo-1758691737217-77302c5f988f?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "auth_background": "https://images.unsplash.com/photo-1765046255478-55efc763637c?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "empty_state_project": "https://images.unsplash.com/photo-1687817988401-7cf4e965b24c?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "user_avatar_placeholder": "https://images.unsplash.com/photo-1758691736975-9f7f643d178e?crop=entropy&cs=srgb&fm=jpg&q=85"
+    },
+    "icons": "lucide-react"
+  },
+  "instructions_to_main_agent": [
+    "Use 'Manrope' for all headings to establish a modern, geometric identity.",
+    "Use 'Public Sans' for body text to ensure high readability for long transcripts.",
+    "Implement a 'Focus Mode' for the transcript view that hides unnecessary UI elements.",
+    "Use the 'Bento Grid' layout for the dashboard project list.",
+    "Ensure high contrast for all text elements (WCAG AA compliant).",
+    "Use 'sonner' for all toast notifications.",
+    "Do not use generic 'blue' for primary actions; use the defined Slate/Black primary with Indigo accents.",
+    "For the transcript editor, use a clean, paper-like interface with generous margins.",
+    "Speaker labels should use the defined pastel colors (speaker_1, speaker_2, etc.) to visually distinguish voices.",
+    "The 'Analysis Chat' should feel like a distinct layer, perhaps a slide-over or a floating panel."
+  ],
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients",
+    "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
+    "Create depth through layered design elements with z-index hierarchy",
+    "Use glass-morphism effects with backdrop filters (12-24px blur)",
+    "You MUST NOT apply universal transition. Eg: transition: all. This results in breaking transforms. Always add transitions for specific interactive elements like button, input excluding transforms",
+    "You MUST NOT center align the app container, ie do not add .App { text-align: center; } in the css file. This disrupts the human natural reading flow of text",
+    "Always use modern button styles like pill-shaped, or sharp button with interaction animations & color relevant to the app style",
+    "NEVER: use AI assistant Emoji characters like 🤖🧠💭💡🔮🎯📚🎭🎬🎪🎉🎊🎁🎀🎂🍰🎈🎨🎰💰💵💳🏦💎🪙💸🤑📊📈📉💹🔢🏆🥇 etc for icons.",
+    "Every interaction needs micro-animations - hover states, transitions, parallax effects, and entrance animations. Static = dead.",
+    "Use 2-3x more spacing than feels comfortable. Cramped designs look cheap.",
+    "Subtle grain textures, noise overlays, custom cursors, selection states, and loading animations: separates good from extraordinary.",
+    "Main agent relies on these image URLs. Missing categories (especially sponsor logos) = main agent will use placeholder text which is FORBIDDEN",
+    "Prioritize using pre-existing components from src/components/ui when applicable",
+    "Create new components that match the style and conventions of existing components when needed",
+    "Examine existing components to understand the project's component patterns before creating new ones",
+    "Components MUST use named exports (export const ComponentName = ...)",
+    "Pages MUST use default exports (export default function PageName() {...})",
+    "Use 'sonner' for toasts. Sonner component are located in /app/src/components/ui/sonner.tsx"
+  ]
+}
