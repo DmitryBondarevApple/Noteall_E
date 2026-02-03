@@ -1,0 +1,793 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import {
+  projectsApi,
+  transcriptsApi,
+  fragmentsApi,
+  speakersApi,
+  chatApi,
+  promptsApi
+} from '../lib/api';
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Textarea } from '../components/ui/textarea';
+import { Badge } from '../components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { ScrollArea } from '../components/ui/scroll-area';
+import { Separator } from '../components/ui/separator';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '../components/ui/dialog';
+import {
+  ArrowLeft,
+  Upload,
+  FileAudio,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  Users,
+  MessageSquare,
+  FileText,
+  Sparkles,
+  Clock,
+  Mic,
+  Play,
+  Check,
+  X,
+  Send,
+  History
+} from 'lucide-react';
+import { toast } from 'sonner';
+import { formatDistanceToNow } from 'date-fns';
+import { ru } from 'date-fns/locale';
+
+const statusConfig = {
+  new: { label: 'Новый', color: 'bg-slate-100 text-slate-700' },
+  transcribing: { label: 'Транскрибация...', color: 'bg-blue-100 text-blue-700' },
+  processing: { label: 'Обработка...', color: 'bg-indigo-100 text-indigo-700' },
+  needs_review: { label: 'Требует проверки', color: 'bg-orange-100 text-orange-700' },
+  ready: { label: 'Готов к анализу', color: 'bg-green-100 text-green-700' },
+  error: { label: 'Ошибка', color: 'bg-red-100 text-red-700' }
+};
+
+export default function ProjectPage() {
+  const { projectId } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const [project, setProject] = useState(null);
+  const [transcripts, setTranscripts] = useState([]);
+  const [fragments, setFragments] = useState([]);
+  const [speakers, setSpeakers] = useState([]);
+  const [prompts, setPrompts] = useState([]);
+  const [chatHistory, setChatHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  
+  const [dragActive, setDragActive] = useState(false);
+  const [selectedPrompt, setSelectedPrompt] = useState('');
+  const [additionalText, setAdditionalText] = useState('');
+  const [activeTab, setActiveTab] = useState('transcript');
+  const [editingFragment, setEditingFragment] = useState(null);
+  const [editingSpeaker, setEditingSpeaker] = useState(null);
+
+  const loadData = useCallback(async () => {
+    try {
+      const [projectRes, transcriptsRes, fragmentsRes, speakersRes, promptsRes, chatRes] = await Promise.all([
+        projectsApi.get(projectId),
+        transcriptsApi.list(projectId).catch(() => ({ data: [] })),
+        fragmentsApi.list(projectId).catch(() => ({ data: [] })),
+        speakersApi.list(projectId).catch(() => ({ data: [] })),
+        promptsApi.list({ project_id: projectId }),
+        chatApi.history(projectId).catch(() => ({ data: [] }))
+      ]);
+
+      setProject(projectRes.data);
+      setTranscripts(transcriptsRes.data);
+      setFragments(fragmentsRes.data);
+      setSpeakers(speakersRes.data);
+      setPrompts(promptsRes.data);
+      setChatHistory(chatRes.data);
+    } catch (error) {
+      toast.error('Ошибка загрузки проекта');
+      navigate('/dashboard');
+    } finally {
+      setLoading(false);
+    }
+  }, [projectId, navigate]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  // Poll for status updates when transcribing/processing
+  useEffect(() => {
+    if (project?.status === 'transcribing' || project?.status === 'processing') {
+      const interval = setInterval(async () => {
+        try {
+          const res = await projectsApi.get(projectId);
+          setProject(res.data);
+          if (res.data.status !== 'transcribing' && res.data.status !== 'processing') {
+            loadData();
+          }
+        } catch (e) {}
+      }, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [project?.status, projectId, loadData]);
+
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    const files = e.dataTransfer?.files;
+    if (files?.length > 0) {
+      await handleUpload(files[0]);
+    }
+  };
+
+  const handleFileSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await handleUpload(file);
+    }
+  };
+
+  const handleUpload = async (file) => {
+    const allowedTypes = ['audio/', 'video/'];
+    if (!allowedTypes.some(type => file.type.startsWith(type))) {
+      toast.error('Поддерживаются только аудио и видео файлы');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      await projectsApi.upload(projectId, file);
+      toast.success('Файл загружен, начинается транскрибация');
+      loadData();
+    } catch (error) {
+      toast.error('Ошибка загрузки файла');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleConfirmFragment = async (fragment, correctedText) => {
+    try {
+      await fragmentsApi.update(projectId, fragment.id, {
+        corrected_text: correctedText,
+        status: 'confirmed'
+      });
+      setFragments(fragments.map(f => 
+        f.id === fragment.id ? { ...f, corrected_text: correctedText, status: 'confirmed' } : f
+      ));
+      setEditingFragment(null);
+      toast.success('Фрагмент подтвержден');
+    } catch (error) {
+      toast.error('Ошибка сохранения');
+    }
+  };
+
+  const handleUpdateSpeaker = async (speaker, newName) => {
+    try {
+      await speakersApi.update(projectId, speaker.id, {
+        speaker_label: speaker.speaker_label,
+        speaker_name: newName
+      });
+      setSpeakers(speakers.map(s =>
+        s.id === speaker.id ? { ...s, speaker_name: newName } : s
+      ));
+      setEditingSpeaker(null);
+      toast.success('Спикер обновлен');
+    } catch (error) {
+      toast.error('Ошибка сохранения');
+    }
+  };
+
+  const handleConfirmTranscript = async () => {
+    setConfirming(true);
+    try {
+      await transcriptsApi.confirm(projectId);
+      toast.success('Транскрипт подтвержден');
+      loadData();
+    } catch (error) {
+      toast.error('Ошибка подтверждения');
+    } finally {
+      setConfirming(false);
+    }
+  };
+
+  const handleAnalyze = async () => {
+    if (!selectedPrompt) {
+      toast.error('Выберите промпт для анализа');
+      return;
+    }
+
+    setAnalyzing(true);
+    try {
+      const response = await chatApi.analyze(projectId, {
+        prompt_id: selectedPrompt,
+        additional_text: additionalText
+      });
+      setChatHistory([response.data, ...chatHistory]);
+      setAdditionalText('');
+      toast.success('Анализ завершен');
+    } catch (error) {
+      toast.error('Ошибка анализа');
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  const getTranscript = (type) => transcripts.find(t => t.version_type === type);
+  const currentTranscript = getTranscript('confirmed') || getTranscript('processed') || getTranscript('raw');
+  const pendingFragments = fragments.filter(f => f.status === 'pending');
+  const status = statusConfig[project?.status] || statusConfig.new;
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      {/* Header */}
+      <header className="bg-white border-b sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link to="/dashboard">
+              <Button variant="ghost" size="icon" data-testid="back-to-dashboard">
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+            </Link>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight" data-testid="project-title">{project?.name}</h1>
+              <p className="text-sm text-muted-foreground">{project?.description || 'Без описания'}</p>
+            </div>
+          </div>
+          <Badge className={status.color}>{status.label}</Badge>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-6 py-8">
+        {/* Upload Section - Show only for new projects */}
+        {project?.status === 'new' && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Upload className="w-5 h-5" />
+                Загрузите запись встречи
+              </CardTitle>
+              <CardDescription>
+                Поддерживаются форматы: MP3, WAV, MP4, WEBM и другие аудио/видео файлы
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div
+                className={`dropzone border-2 border-dashed rounded-xl p-12 text-center transition-all ${
+                  dragActive ? 'active border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:border-slate-300'
+                }`}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+                data-testid="file-dropzone"
+              >
+                <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
+                  <FileAudio className="w-8 h-8 text-slate-400" />
+                </div>
+                <p className="text-lg font-medium mb-2">
+                  Перетащите файл сюда или{' '}
+                  <label className="text-indigo-600 hover:text-indigo-700 cursor-pointer">
+                    выберите вручную
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="audio/*,video/*"
+                      onChange={handleFileSelect}
+                      disabled={uploading}
+                      data-testid="file-input"
+                    />
+                  </label>
+                </p>
+                <p className="text-sm text-muted-foreground">Максимальный размер: 500MB</p>
+                {uploading && (
+                  <div className="mt-4 flex items-center justify-center gap-2 text-indigo-600">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Загрузка...</span>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Main Content Tabs */}
+        {project?.status !== 'new' && (
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <TabsList className="bg-white border p-1">
+              <TabsTrigger value="transcript" className="gap-2" data-testid="transcript-tab">
+                <FileText className="w-4 h-4" />
+                Транскрипт
+              </TabsTrigger>
+              <TabsTrigger value="review" className="gap-2" data-testid="review-tab">
+                <AlertCircle className="w-4 h-4" />
+                Проверка
+                {pendingFragments.length > 0 && (
+                  <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center">
+                    {pendingFragments.length}
+                  </Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="speakers" className="gap-2" data-testid="speakers-tab">
+                <Users className="w-4 h-4" />
+                Спикеры
+              </TabsTrigger>
+              <TabsTrigger value="analysis" className="gap-2" data-testid="analysis-tab">
+                <Sparkles className="w-4 h-4" />
+                Анализ
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Transcript Tab */}
+            <TabsContent value="transcript">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>Транскрипт</CardTitle>
+                    <CardDescription>
+                      {currentTranscript?.version_type === 'confirmed' 
+                        ? 'Финальная версия'
+                        : currentTranscript?.version_type === 'processed'
+                        ? 'Обработанная версия (требует проверки)'
+                        : 'Исходная версия'}
+                    </CardDescription>
+                  </div>
+                  {project?.status === 'needs_review' && (
+                    <Button
+                      onClick={handleConfirmTranscript}
+                      disabled={confirming || pendingFragments.length > 0}
+                      className="gap-2"
+                      data-testid="confirm-transcript-btn"
+                    >
+                      {confirming ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <CheckCircle2 className="w-4 h-4" />
+                      )}
+                      Подтвердить транскрипт
+                    </Button>
+                  )}
+                </CardHeader>
+                <CardContent>
+                  {currentTranscript ? (
+                    <ScrollArea className="h-[500px] rounded-lg border p-6 bg-white">
+                      <div className="prose prose-slate max-w-none whitespace-pre-wrap font-mono text-sm leading-relaxed" data-testid="transcript-content">
+                        {renderTranscript(currentTranscript.content, speakers)}
+                      </div>
+                    </ScrollArea>
+                  ) : (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+                      <p>Транскрибация в процессе...</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Review Tab */}
+            <TabsContent value="review">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Спорные фрагменты</CardTitle>
+                  <CardDescription>
+                    Проверьте и исправьте слова, распознанные с низкой уверенностью
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {fragments.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <CheckCircle2 className="w-8 h-8 mx-auto mb-4 text-green-500" />
+                      <p>Нет спорных фрагментов</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {fragments.map((fragment) => (
+                        <Card key={fragment.id} className={`${fragment.status === 'confirmed' ? 'bg-green-50 border-green-200' : 'bg-orange-50 border-orange-200'}`}>
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <Badge variant={fragment.status === 'confirmed' ? 'default' : 'destructive'}>
+                                    {fragment.status === 'confirmed' ? 'Подтверждено' : 'Требует проверки'}
+                                  </Badge>
+                                  {fragment.start_time && (
+                                    <span className="text-xs text-muted-foreground">
+                                      {formatTime(fragment.start_time)}
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-sm text-muted-foreground mb-2">
+                                  Контекст: "...{fragment.context}..."
+                                </p>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium">Исходное:</span>
+                                  <code className="bg-white px-2 py-1 rounded text-sm">{fragment.original_text}</code>
+                                  {fragment.corrected_text && (
+                                    <>
+                                      <span>→</span>
+                                      <code className="bg-green-100 px-2 py-1 rounded text-sm">{fragment.corrected_text}</code>
+                                    </>
+                                  )}
+                                </div>
+                                {fragment.suggestions?.length > 0 && fragment.status !== 'confirmed' && (
+                                  <div className="mt-2 flex items-center gap-2 flex-wrap">
+                                    <span className="text-sm text-muted-foreground">Варианты:</span>
+                                    {fragment.suggestions.map((s, i) => (
+                                      <Button
+                                        key={i}
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-7"
+                                        onClick={() => handleConfirmFragment(fragment, s)}
+                                        data-testid={`suggestion-${fragment.id}-${i}`}
+                                      >
+                                        {s}
+                                      </Button>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                              {fragment.status !== 'confirmed' && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setEditingFragment(fragment)}
+                                  data-testid={`edit-fragment-${fragment.id}`}
+                                >
+                                  Исправить
+                                </Button>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Speakers Tab */}
+            <TabsContent value="speakers">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Разметка спикеров</CardTitle>
+                  <CardDescription>
+                    Назначьте имена участникам встречи
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {speakers.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <Users className="w-8 h-8 mx-auto mb-4" />
+                      <p>Спикеры будут определены после транскрибации</p>
+                    </div>
+                  ) : (
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {speakers.map((speaker, index) => (
+                        <Card key={speaker.id} className={`speaker-${(index % 4) + 1}`}>
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center font-bold">
+                                  {speaker.speaker_name[0]?.toUpperCase() || '?'}
+                                </div>
+                                <div>
+                                  <p className="font-medium">{speaker.speaker_name}</p>
+                                  <p className="text-xs text-muted-foreground">{speaker.speaker_label}</p>
+                                </div>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setEditingSpeaker(speaker)}
+                                data-testid={`edit-speaker-${speaker.id}`}
+                              >
+                                Изменить
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Analysis Tab */}
+            <TabsContent value="analysis">
+              <div className="grid gap-6 lg:grid-cols-3">
+                {/* Analysis Form */}
+                <Card className="lg:col-span-1">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Sparkles className="w-5 h-5" />
+                      Анализ встречи
+                    </CardTitle>
+                    <CardDescription>
+                      Выберите промпт и запустите анализ с помощью AI
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Промпт для анализа</Label>
+                      <Select value={selectedPrompt} onValueChange={setSelectedPrompt}>
+                        <SelectTrigger data-testid="prompt-select">
+                          <SelectValue placeholder="Выберите промпт" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {prompts.filter(p => p.prompt_type !== 'master').map((prompt) => (
+                            <SelectItem key={prompt.id} value={prompt.id}>
+                              {prompt.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Дополнительные указания (опционально)</Label>
+                      <Textarea
+                        placeholder="Например: обрати особое внимание на технические риски..."
+                        value={additionalText}
+                        onChange={(e) => setAdditionalText(e.target.value)}
+                        rows={4}
+                        data-testid="additional-text-input"
+                      />
+                    </div>
+                    <Button
+                      onClick={handleAnalyze}
+                      disabled={analyzing || !selectedPrompt || project?.status === 'needs_review'}
+                      className="w-full gap-2"
+                      data-testid="analyze-btn"
+                    >
+                      {analyzing ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Анализ...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4" />
+                          Запустить анализ
+                        </>
+                      )}
+                    </Button>
+                    {project?.status === 'needs_review' && (
+                      <p className="text-xs text-orange-600">
+                        Сначала подтвердите транскрипт на вкладке "Проверка"
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Chat History */}
+                <Card className="lg:col-span-2">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <History className="w-5 h-5" />
+                      История анализов
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {chatHistory.length === 0 ? (
+                      <div className="text-center py-12 text-muted-foreground">
+                        <MessageSquare className="w-8 h-8 mx-auto mb-4" />
+                        <p>Пока нет результатов анализа</p>
+                      </div>
+                    ) : (
+                      <ScrollArea className="h-[400px]">
+                        <div className="space-y-4">
+                          {chatHistory.map((chat) => (
+                            <Card key={chat.id} className="bg-slate-50">
+                              <CardContent className="p-4">
+                                <div className="flex items-center justify-between mb-2">
+                                  <Badge variant="outline">
+                                    {prompts.find(p => p.id === chat.prompt_id)?.name || 'Промпт'}
+                                  </Badge>
+                                  <span className="text-xs text-muted-foreground">
+                                    {formatDistanceToNow(new Date(chat.created_at), { addSuffix: true, locale: ru })}
+                                  </span>
+                                </div>
+                                {chat.additional_text && (
+                                  <p className="text-sm text-muted-foreground mb-2 italic">
+                                    + {chat.additional_text}
+                                  </p>
+                                )}
+                                <div className="prose prose-sm max-w-none whitespace-pre-wrap" data-testid={`chat-response-${chat.id}`}>
+                                  {chat.response_text}
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+          </Tabs>
+        )}
+
+        {/* Processing/Transcribing Status */}
+        {(project?.status === 'transcribing' || project?.status === 'processing') && (
+          <Card className="mt-8">
+            <CardContent className="py-12 text-center">
+              <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-indigo-500" />
+              <h3 className="text-lg font-semibold mb-2">
+                {project.status === 'transcribing' ? 'Транскрибация...' : 'Обработка текста...'}
+              </h3>
+              <p className="text-muted-foreground">
+                Это может занять несколько минут в зависимости от длительности записи
+              </p>
+            </CardContent>
+          </Card>
+        )}
+      </main>
+
+      {/* Edit Fragment Dialog */}
+      <Dialog open={!!editingFragment} onOpenChange={() => setEditingFragment(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Исправить фрагмент</DialogTitle>
+            <DialogDescription>
+              Введите правильный вариант слова или фразы
+            </DialogDescription>
+          </DialogHeader>
+          {editingFragment && (
+            <EditFragmentForm
+              fragment={editingFragment}
+              onSave={(text) => handleConfirmFragment(editingFragment, text)}
+              onCancel={() => setEditingFragment(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Speaker Dialog */}
+      <Dialog open={!!editingSpeaker} onOpenChange={() => setEditingSpeaker(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Изменить имя спикера</DialogTitle>
+            <DialogDescription>
+              Введите имя участника встречи
+            </DialogDescription>
+          </DialogHeader>
+          {editingSpeaker && (
+            <EditSpeakerForm
+              speaker={editingSpeaker}
+              onSave={(name) => handleUpdateSpeaker(editingSpeaker, name)}
+              onCancel={() => setEditingSpeaker(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// Helper Components
+function EditFragmentForm({ fragment, onSave, onCancel }) {
+  const [text, setText] = useState(fragment.original_text);
+
+  return (
+    <div className="space-y-4 mt-4">
+      <div className="space-y-2">
+        <Label>Исходный текст</Label>
+        <code className="block bg-slate-100 p-2 rounded">{fragment.original_text}</code>
+      </div>
+      <div className="space-y-2">
+        <Label>Исправленный текст</Label>
+        <Input
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Введите правильный вариант"
+          data-testid="edit-fragment-input"
+        />
+      </div>
+      <div className="flex justify-end gap-2">
+        <Button variant="outline" onClick={onCancel}>Отмена</Button>
+        <Button onClick={() => onSave(text)} data-testid="save-fragment-btn">Сохранить</Button>
+      </div>
+    </div>
+  );
+}
+
+function EditSpeakerForm({ speaker, onSave, onCancel }) {
+  const [name, setName] = useState(speaker.speaker_name);
+
+  return (
+    <div className="space-y-4 mt-4">
+      <div className="space-y-2">
+        <Label>Метка</Label>
+        <code className="block bg-slate-100 p-2 rounded">{speaker.speaker_label}</code>
+      </div>
+      <div className="space-y-2">
+        <Label>Имя участника</Label>
+        <Input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Например: Антон"
+          data-testid="edit-speaker-input"
+        />
+      </div>
+      <div className="flex justify-end gap-2">
+        <Button variant="outline" onClick={onCancel}>Отмена</Button>
+        <Button onClick={() => onSave(name)} data-testid="save-speaker-btn">Сохранить</Button>
+      </div>
+    </div>
+  );
+}
+
+function renderTranscript(content, speakers) {
+  if (!content) return null;
+  
+  let rendered = content;
+  
+  // Apply speaker names
+  speakers.forEach((s, index) => {
+    if (s.speaker_name !== s.speaker_label) {
+      rendered = rendered.replace(
+        new RegExp(`${s.speaker_label}:`, 'g'),
+        `${s.speaker_name}:`
+      );
+    }
+  });
+  
+  // Highlight uncertain fragments
+  rendered = rendered.replace(
+    /\[([^\]]+)\?\]/g,
+    '<span class="uncertain-fragment">$1</span>'
+  );
+  
+  return <span dangerouslySetInnerHTML={{ __html: rendered }} />;
+}
+
+function formatTime(seconds) {
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
