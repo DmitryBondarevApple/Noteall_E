@@ -368,32 +368,49 @@ async def process_transcription(project_id: str, filename: str):
     file_path = UPLOAD_DIR / filename
     
     try:
-        # Initialize Deepgram client
-        deepgram = DeepgramClient(DEEPGRAM_API_KEY)
-        
         # Read audio file
         with open(file_path, "rb") as audio_file:
             buffer_data = audio_file.read()
         
-        payload: FileSource = {
-            "buffer": buffer_data,
+        # Determine content type based on file extension
+        ext = Path(filename).suffix.lower()
+        content_types = {
+            '.mp3': 'audio/mpeg',
+            '.wav': 'audio/wav',
+            '.mp4': 'video/mp4',
+            '.webm': 'video/webm',
+            '.m4a': 'audio/mp4',
+            '.ogg': 'audio/ogg',
+            '.flac': 'audio/flac',
         }
+        content_type = content_types.get(ext, 'audio/mpeg')
         
-        # Configure options for Russian language with diarization
-        options = PrerecordedOptions(
-            model="nova-2",
-            language="ru",
-            smart_format=True,
-            punctuate=True,
-            diarize=True,
-            paragraphs=True,
-            utterances=True,
-        )
+        logger.info(f"Starting Deepgram transcription for project {project_id}, file: {filename}")
         
-        logger.info(f"Starting Deepgram transcription for project {project_id}")
+        # Call Deepgram API via HTTP
+        async with httpx.AsyncClient(timeout=300.0) as client:
+            response = await client.post(
+                "https://api.deepgram.com/v1/listen",
+                params={
+                    "model": "nova-2",
+                    "language": "ru",
+                    "smart_format": "true",
+                    "punctuate": "true",
+                    "diarize": "true",
+                    "paragraphs": "true",
+                    "utterances": "true",
+                },
+                headers={
+                    "Authorization": f"Token {DEEPGRAM_API_KEY}",
+                    "Content-Type": content_type,
+                },
+                content=buffer_data,
+            )
         
-        # Transcribe
-        response = deepgram.listen.rest.v("1").transcribe_file(payload, options)
+        if response.status_code != 200:
+            raise Exception(f"Deepgram API error: {response.status_code} - {response.text}")
+        
+        result = response.json()
         
         # Extract transcript with speakers
         transcript_text = ""
