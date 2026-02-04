@@ -13,9 +13,15 @@ from datetime import datetime, timezone, timedelta
 import jwt
 import bcrypt
 import shutil
+import httpx
+import asyncio
+from deepgram import DeepgramClient, PrerecordedOptions, FileSource
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
+
+# Deepgram Configuration
+DEEPGRAM_API_KEY = os.environ.get('DEEPGRAM_API_KEY')
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
