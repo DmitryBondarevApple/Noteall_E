@@ -374,7 +374,7 @@ async def upload_recording(
     return {"message": "File uploaded, transcription started", "filename": filename}
 
 async def call_gpt4o(system_message: str, user_message: str) -> str:
-    """Call GPT-4o via emergentintegrations"""
+    """Call GPT-4o via emergentintegrations for initial processing"""
     try:
         from emergentintegrations.llm.chat import LlmChat, UserMessage
         
@@ -391,12 +391,34 @@ async def call_gpt4o(system_message: str, user_message: str) -> str:
         logger.error(f"GPT-4o error: {e}")
         raise e
 
+async def call_gpt52(system_message: str, user_message: str) -> str:
+    """Call GPT-5.2 via OpenAI API for master prompt processing"""
+    try:
+        from openai import AsyncOpenAI
+        
+        client = AsyncOpenAI(api_key=OPENAI_API_KEY)
+        
+        response = await client.chat.completions.create(
+            model="gpt-5.2",
+            messages=[
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": user_message}
+            ],
+            temperature=0.3,
+        )
+        
+        return response.choices[0].message.content
+    except Exception as e:
+        logger.error(f"GPT-5.2 error: {e}")
+        raise e
+
 async def process_transcription(project_id: str, filename: str, language: str = "ru"):
     """
     Pipeline:
     1. Deepgram -> raw transcript
-    2. GPT-4o + master prompt -> processed transcript with uncertain fragments
-    3. Extract speakers for mapping
+    2. GPT-4o (Emergent) -> initial cleanup
+    3. GPT-5.2 (User's OpenAI) + User's Master Prompt -> final processed transcript
+    4. Extract speakers for mapping
     """
     now = datetime.now(timezone.utc).isoformat()
     file_path = UPLOAD_DIR / filename
