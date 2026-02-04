@@ -484,11 +484,10 @@ async def process_transcription(project_id: str, filename: str):
         # Create processed transcript with uncertain markers
         processed_text = transcript_text.strip()
         for uw in uncertain_words:
-            # Mark uncertain words
             processed_text = processed_text.replace(
                 uw["word"],
                 f"[{uw['word']}?]",
-                1  # Replace only first occurrence
+                1
             )
         
         # Save processed transcript
