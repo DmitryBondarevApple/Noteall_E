@@ -392,20 +392,19 @@ async def process_transcription(project_id: str, filename: str, language: str = 
         }
         content_type = content_types.get(ext, 'audio/mpeg')
         
-        logger.info(f"Starting Deepgram transcription for project {project_id}, file: {filename}")
+        logger.info(f"Starting Deepgram transcription for project {project_id}, file: {filename}, language: {language}")
         
-        # Call Deepgram API via HTTP
-        async with httpx.AsyncClient(timeout=300.0) as client:
+        # Call Deepgram API via HTTP with Nova-3 model
+        async with httpx.AsyncClient(timeout=600.0) as client:
             response = await client.post(
                 "https://api.deepgram.com/v1/listen",
                 params={
-                    "model": "nova-2",
-                    "language": "ru",
+                    "model": "nova-3",
+                    "language": language,
                     "smart_format": "true",
-                    "punctuate": "true",
                     "diarize": "true",
+                    "punctuate": "true",
                     "paragraphs": "true",
-                    "utterances": "true",
                 },
                 headers={
                     "Authorization": f"Token {DEEPGRAM_API_KEY}",
@@ -419,47 +418,50 @@ async def process_transcription(project_id: str, filename: str, language: str = 
         
         result = response.json()
         
-        # Extract transcript with speakers
-        transcript_text = ""
-        words_with_speakers = []
-        
-        results = result.get("results", {})
-        utterances = results.get("utterances", [])
-        channels = results.get("channels", [])
-        
-        if utterances:
-            for utterance in utterances:
-                speaker_num = utterance.get("speaker", 0)
-                speaker_label = f"Speaker {speaker_num + 1}"
-                transcript_text += f"{speaker_label}: {utterance.get('transcript', '')}\n\n"
-                
-                # Collect words with confidence
-                for word in utterance.get("words", []):
-                    words_with_speakers.append({
-                        "word": word.get("word", ""),
-                        "confidence": word.get("confidence", 1.0),
-                        "start": word.get("start", 0),
-                        "end": word.get("end", 0),
-                        "speaker": speaker_num
-                    })
-        elif channels:
-            # Fallback to channels if no utterances
-            for alt in channels[0].get("alternatives", []):
-                transcript_text = alt.get("transcript", "")
-                for word in alt.get("words", []):
-                    words_with_speakers.append({
-                        "word": word.get("word", ""),
-                        "confidence": word.get("confidence", 1.0),
-                        "start": word.get("start", 0),
-                        "end": word.get("end", 0),
-                        "speaker": word.get("speaker", 0)
-                    })
-        
-        if not transcript_text.strip():
-            raise Exception("Empty transcript received from Deepgram")
-        
         # Get duration from metadata
         duration = result.get("metadata", {}).get("duration", 0)
+        
+        # Extract transcript from channels (paragraphs format)
+        results = result.get("results", {})
+        channels = results.get("channels", [])
+        
+        if not channels:
+            raise Exception("No channels in Deepgram response")
+        
+        # Build transcript with speaker labels from paragraphs
+        transcript_lines = []
+        all_words = []
+        
+        alternatives = channels[0].get("alternatives", [])
+        if alternatives:
+            alt = alternatives[0]
+            
+            # Get all words with confidence scores
+            all_words = alt.get("words", [])
+            
+            # Use paragraphs for better formatting
+            paragraphs_data = alt.get("paragraphs", {})
+            paragraphs = paragraphs_data.get("paragraphs", [])
+            
+            if paragraphs:
+                for para in paragraphs:
+                    speaker = para.get("speaker", 0)
+                    sentences = para.get("sentences", [])
+                    
+                    for sentence in sentences:
+                        text = sentence.get("text", "")
+                        if text:
+                            transcript_lines.append(f"Speaker {speaker + 1}: {text}")
+            else:
+                # Fallback: use plain transcript
+                transcript_text = alt.get("transcript", "")
+                if transcript_text:
+                    transcript_lines.append(transcript_text)
+        
+        raw_transcript = "\n\n".join(transcript_lines)
+        
+        if not raw_transcript.strip():
+            raise Exception("Empty transcript received from Deepgram")
         
         # Save raw transcript
         raw_transcript_id = str(uuid.uuid4())
@@ -467,35 +469,43 @@ async def process_transcription(project_id: str, filename: str, language: str = 
             "id": raw_transcript_id,
             "project_id": project_id,
             "version_type": "raw",
-            "content": transcript_text.strip(),
+            "content": raw_transcript,
             "created_at": now
         })
         
-        # Find uncertain words (confidence < 0.85)
-        uncertain_words = []
-        for i, w in enumerate(words_with_speakers):
-            if w["confidence"] < 0.85:
+        # Find uncertain words (confidence < 0.80) - collect unique words only
+        uncertain_word_set = set()
+        uncertain_fragments = []
+        
+        for i, w in enumerate(all_words):
+            word_text = w.get("word", "").strip()
+            confidence = w.get("confidence", 1.0)
+            
+            if confidence < 0.80 and word_text and word_text not in uncertain_word_set:
+                uncertain_word_set.add(word_text)
+                
                 # Find context (surrounding words)
                 context_start = max(0, i - 3)
-                context_end = min(len(words_with_speakers), i + 4)
-                context = " ".join([x["word"] for x in words_with_speakers[context_start:context_end]])
+                context_end = min(len(all_words), i + 4)
+                context = " ".join([x.get("word", "") for x in all_words[context_start:context_end]])
                 
-                uncertain_words.append({
-                    "word": w["word"],
-                    "confidence": w["confidence"],
-                    "start": w["start"],
-                    "end": w["end"],
+                uncertain_fragments.append({
+                    "word": word_text,
+                    "confidence": confidence,
+                    "start": w.get("start", 0),
+                    "end": w.get("end", 0),
                     "context": context
                 })
         
-        # Create processed transcript with uncertain markers
-        processed_text = transcript_text.strip()
-        for uw in uncertain_words:
-            processed_text = processed_text.replace(
-                uw["word"],
-                f"[{uw['word']}?]",
-                1
-            )
+        # Create processed transcript - mark uncertain words ONCE
+        processed_transcript = raw_transcript
+        for uf in uncertain_fragments:
+            word = uf["word"]
+            # Use word boundary replacement to avoid partial matches
+            # Replace only the first occurrence
+            import re
+            pattern = re.compile(re.escape(word), re.IGNORECASE)
+            processed_transcript = pattern.sub(f"[{word}?]", processed_transcript, count=1)
         
         # Save processed transcript
         processed_transcript_id = str(uuid.uuid4())
@@ -503,32 +513,68 @@ async def process_transcription(project_id: str, filename: str, language: str = 
             "id": processed_transcript_id,
             "project_id": project_id,
             "version_type": "processed",
-            "content": processed_text,
+            "content": processed_transcript,
             "created_at": now
         })
         
-        # Create uncertain fragments (limit to 20)
-        for uw in uncertain_words[:20]:
+        # Create uncertain fragment records (limit to 30)
+        for uf in uncertain_fragments[:30]:
             fragment_id = str(uuid.uuid4())
             await db.uncertain_fragments.insert_one({
                 "id": fragment_id,
                 "project_id": project_id,
-                "original_text": uw["word"],
+                "original_text": uf["word"],
                 "corrected_text": None,
-                "context": uw["context"],
-                "start_time": uw["start"],
-                "end_time": uw["end"],
-                "suggestions": [uw["word"]],
+                "context": uf["context"],
+                "start_time": uf["start"],
+                "end_time": uf["end"],
+                "suggestions": [uf["word"]],
                 "status": "pending",
                 "created_at": now
             })
         
-        # Extract unique speakers
+        # Extract unique speakers from paragraphs
         unique_speakers = set()
-        if utterances:
-            for utterance in utterances:
-                if utterance.get("speaker") is not None:
-                    unique_speakers.add(utterance["speaker"])
+        if alternatives and paragraphs_data.get("paragraphs"):
+            for para in paragraphs_data["paragraphs"]:
+                speaker = para.get("speaker")
+                if speaker is not None:
+                    unique_speakers.add(speaker)
+        
+        if not unique_speakers:
+            unique_speakers = {0}
+        
+        for speaker_num in sorted(unique_speakers):
+            speaker_id = str(uuid.uuid4())
+            await db.speaker_maps.insert_one({
+                "id": speaker_id,
+                "project_id": project_id,
+                "speaker_label": f"Speaker {speaker_num + 1}",
+                "speaker_name": f"Speaker {speaker_num + 1}"
+            })
+        
+        # Update project status
+        new_status = "needs_review" if uncertain_fragments else "ready"
+        await db.projects.update_one(
+            {"id": project_id},
+            {"$set": {
+                "status": new_status,
+                "recording_duration": duration,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        
+        logger.info(f"Transcription completed for project {project_id}, status: {new_status}, duration: {duration}s, uncertain: {len(uncertain_fragments)}")
+        
+    except Exception as e:
+        logger.error(f"Transcription error for project {project_id}: {e}")
+        await db.projects.update_one(
+            {"id": project_id},
+            {"$set": {
+                "status": "error",
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
         
         if not unique_speakers:
             unique_speakers = {0}
