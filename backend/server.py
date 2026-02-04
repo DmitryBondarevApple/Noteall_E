@@ -415,39 +415,38 @@ async def process_transcription(project_id: str, filename: str):
         # Extract transcript with speakers
         transcript_text = ""
         words_with_speakers = []
-        current_speaker = None
-        current_text = []
         
-        if response.results and response.results.utterances:
-            for utterance in response.results.utterances:
-                speaker_label = f"Speaker {utterance.speaker + 1}" if utterance.speaker is not None else "Speaker 1"
-                transcript_text += f"{speaker_label}: {utterance.transcript}\n\n"
+        results = result.get("results", {})
+        utterances = results.get("utterances", [])
+        channels = results.get("channels", [])
+        
+        if utterances:
+            for utterance in utterances:
+                speaker_num = utterance.get("speaker", 0)
+                speaker_label = f"Speaker {speaker_num + 1}"
+                transcript_text += f"{speaker_label}: {utterance.get('transcript', '')}\n\n"
                 
                 # Collect words with confidence
-                if hasattr(utterance, 'words'):
-                    for word in utterance.words:
-                        words_with_speakers.append({
-                            "word": word.word,
-                            "confidence": word.confidence,
-                            "start": word.start,
-                            "end": word.end,
-                            "speaker": utterance.speaker
-                        })
-        elif response.results and response.results.channels:
+                for word in utterance.get("words", []):
+                    words_with_speakers.append({
+                        "word": word.get("word", ""),
+                        "confidence": word.get("confidence", 1.0),
+                        "start": word.get("start", 0),
+                        "end": word.get("end", 0),
+                        "speaker": speaker_num
+                    })
+        elif channels:
             # Fallback to channels if no utterances
-            for alt in response.results.channels[0].alternatives:
-                transcript_text = alt.transcript
-                if hasattr(alt, 'words'):
-                    words_with_speakers = [
-                        {
-                            "word": w.word,
-                            "confidence": w.confidence,
-                            "start": w.start,
-                            "end": w.end,
-                            "speaker": getattr(w, 'speaker', 0)
-                        }
-                        for w in alt.words
-                    ]
+            for alt in channels[0].get("alternatives", []):
+                transcript_text = alt.get("transcript", "")
+                for word in alt.get("words", []):
+                    words_with_speakers.append({
+                        "word": word.get("word", ""),
+                        "confidence": word.get("confidence", 1.0),
+                        "start": word.get("start", 0),
+                        "end": word.get("end", 0),
+                        "speaker": word.get("speaker", 0)
+                    })
         
         if not transcript_text.strip():
             raise Exception("Empty transcript received from Deepgram")
