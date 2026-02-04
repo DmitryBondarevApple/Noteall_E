@@ -516,15 +516,15 @@ async def process_transcription(project_id: str, filename: str):
                 "created_at": now
             })
         
-        # Extract unique speakers and create speaker map
+        # Extract unique speakers
         unique_speakers = set()
-        if response.results and response.results.utterances:
-            for utterance in response.results.utterances:
-                if utterance.speaker is not None:
-                    unique_speakers.add(utterance.speaker)
+        if utterances:
+            for utterance in utterances:
+                if utterance.get("speaker") is not None:
+                    unique_speakers.add(utterance["speaker"])
         
         if not unique_speakers:
-            unique_speakers = {0}  # Default single speaker
+            unique_speakers = {0}
         
         for speaker_num in sorted(unique_speakers):
             speaker_id = str(uuid.uuid4())
