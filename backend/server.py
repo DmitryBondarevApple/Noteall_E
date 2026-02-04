@@ -912,12 +912,11 @@ async def analyze_transcript(
     if not prompt:
         raise HTTPException(status_code=404, detail="Prompt not found")
     
-    # Call GPT-4o for analysis
+    # Call GPT-4o for analysis using user's OpenAI API
     try:
-        from emergentintegrations.llm.chat import LlmChat, UserMessage
+        from openai import AsyncOpenAI
         
-        api_key = os.environ.get('EMERGENT_LLM_KEY')
-        session_id = f"analysis-{project_id}-{str(uuid.uuid4())[:8]}"
+        client = AsyncOpenAI(api_key=OPENAI_API_KEY)
         
         system_message = f"""Ты - эксперт по анализу рабочих встреч. 
 Анализируй транскрипт встречи согласно инструкциям пользователя.
@@ -927,19 +926,20 @@ async def analyze_transcript(
 {prompt['content']}
 """
         
-        chat = LlmChat(
-            api_key=api_key,
-            session_id=session_id,
-            system_message=system_message
-        )
-        chat.with_model("openai", "gpt-4o")
-        
         user_text = f"Транскрипт встречи:\n\n{transcript['content']}"
         if data.additional_text:
             user_text += f"\n\nДополнительные указания:\n{data.additional_text}"
         
-        user_message = UserMessage(text=user_text)
-        response_text = await chat.send_message(user_message)
+        response = await client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": user_text}
+            ],
+            temperature=0.3,
+        )
+        
+        response_text = response.choices[0].message.content
         
     except Exception as e:
         logger.error(f"GPT analysis error: {e}")
