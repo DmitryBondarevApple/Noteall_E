@@ -466,12 +466,11 @@ async def process_transcription(project_id: str, filename: str):
         
         # Find uncertain words (confidence < 0.85)
         uncertain_words = []
-        for w in words_with_speakers:
+        for i, w in enumerate(words_with_speakers):
             if w["confidence"] < 0.85:
                 # Find context (surrounding words)
-                idx = words_with_speakers.index(w)
-                context_start = max(0, idx - 3)
-                context_end = min(len(words_with_speakers), idx + 4)
+                context_start = max(0, i - 3)
+                context_end = min(len(words_with_speakers), i + 4)
                 context = " ".join([x["word"] for x in words_with_speakers[context_start:context_end]])
                 
                 uncertain_words.append({
