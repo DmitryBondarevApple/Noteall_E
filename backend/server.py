@@ -516,39 +516,58 @@ async def process_transcription(project_id: str, filename: str, language: str = 
         
         logger.info(f"[{project_id}] Raw transcript saved, {len(raw_transcript)} chars, {len(unique_speakers)} speakers")
         
-        # ========== STEP 2: AI PROCESSING WITH MASTER PROMPT ==========
+        # ========== STEP 2: INITIAL AI CLEANUP (GPT-4o) ==========
         await db.projects.update_one(
             {"id": project_id},
             {"$set": {"status": "processing", "updated_at": datetime.now(timezone.utc).isoformat()}}
         )
         
-        # Get master prompt from database
-        master_prompt = await db.prompts.find_one({"prompt_type": "master"}, {"_id": 0})
-        if not master_prompt:
-            master_prompt_content = """Обработай транскрипт встречи:
+        logger.info(f"[{project_id}] Step 2: Initial cleanup with GPT-4o")
+        
+        initial_system = """Ты - эксперт по обработке транскриптов встреч.
+Твоя задача - первичная очистка транскрипта:
 1. Исправь очевидные ошибки распознавания речи
 2. Расставь знаки препинания правильно
-3. Выдели слова или фразы, в которых ты не уверен, в формате [слово?]
-4. Сохрани разметку спикеров (Speaker 1:, Speaker 2: и т.д.)
-5. НЕ меняй смысл текста, только исправляй ошибки распознавания
+3. Сохрани разметку спикеров (Speaker 1:, Speaker 2: и т.д.)
+4. НЕ меняй смысл текста
+5. НЕ выделяй спорные места - это будет сделано на следующем этапе
 
-Верни обработанный транскрипт."""
+Верни очищенный транскрипт."""
+
+        cleaned_transcript = await call_gpt4o(
+            system_message=initial_system,
+            user_message=f"Очисти этот транскрипт:\n\n{raw_transcript}"
+        )
+        
+        logger.info(f"[{project_id}] Initial cleanup done, {len(cleaned_transcript)} chars")
+        
+        # ========== STEP 3: MASTER PROMPT PROCESSING (GPT-5.2) ==========
+        logger.info(f"[{project_id}] Step 3: Processing with user's Master Prompt via GPT-5.2")
+        
+        # Get user's master prompt from database (by name "Мастер промпт")
+        user_master_prompt = await db.prompts.find_one(
+            {"name": "Мастер промпт", "prompt_type": "master"}, 
+            {"_id": 0}
+        )
+        
+        if not user_master_prompt:
+            # Fallback to any master prompt
+            user_master_prompt = await db.prompts.find_one({"prompt_type": "master"}, {"_id": 0})
+        
+        if user_master_prompt:
+            master_prompt_content = user_master_prompt["content"]
+            logger.info(f"[{project_id}] Using master prompt: {user_master_prompt.get('name', 'Unknown')}")
         else:
-            master_prompt_content = master_prompt["content"]
+            master_prompt_content = """Обработай транскрипт встречи:
+1. Выдели слова или фразы, в которых есть сомнения, в формате [слово?]
+2. Сохрани разметку спикеров
+3. Не меняй смысл текста"""
+            logger.info(f"[{project_id}] Using default master prompt (no user prompt found)")
         
-        logger.info(f"[{project_id}] Processing with master prompt via GPT-4o")
-        
-        system_message = f"""Ты - эксперт по обработке транскриптов встреч. 
-{master_prompt_content}
-
-ВАЖНО: 
-- Спорные или неразборчивые слова выделяй в формате [слово?]
-- Сохраняй структуру с метками спикеров
-- Не добавляй ничего от себя"""
-
-        processed_transcript = await call_gpt4o(
-            system_message=system_message,
-            user_message=f"Обработай этот транскрипт:\n\n{raw_transcript}"
+        # Call GPT-5.2 with user's master prompt
+        processed_transcript = await call_gpt52(
+            system_message=master_prompt_content,
+            user_message=cleaned_transcript
         )
         
         # Save processed transcript
