@@ -575,39 +575,8 @@ async def process_transcription(project_id: str, filename: str, language: str = 
                 "updated_at": datetime.now(timezone.utc).isoformat()
             }}
         )
-        
-        if not unique_speakers:
-            unique_speakers = {0}
-        
-        for speaker_num in sorted(unique_speakers):
-            speaker_id = str(uuid.uuid4())
-            await db.speaker_maps.insert_one({
-                "id": speaker_id,
-                "project_id": project_id,
-                "speaker_label": f"Speaker {speaker_num + 1}",
-                "speaker_name": f"Speaker {speaker_num + 1}"
-            })
-        
-        # Update project status
-        new_status = "needs_review" if uncertain_words else "ready"
-        await db.projects.update_one(
-            {"id": project_id},
-            {"$set": {
-                "status": new_status,
-                "recording_duration": duration,
-                "updated_at": datetime.now(timezone.utc).isoformat()
-            }}
-        )
-        
-        logger.info(f"Transcription completed for project {project_id}, status: {new_status}, duration: {duration}s")
-        
-    except Exception as e:
-        logger.error(f"Transcription error for project {project_id}: {e}")
-        await db.projects.update_one(
-            {"id": project_id},
-            {"$set": {
-                "status": "error",
-                "updated_at": datetime.now(timezone.utc).isoformat()
+
+# ==================== TRANSCRIPT ROUTES ====================
             }}
         )
 
