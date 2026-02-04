@@ -363,7 +363,7 @@ async def upload_recording(
     return {"message": "File uploaded, transcription started", "filename": filename}
 
 async def process_transcription(project_id: str, filename: str):
-    """Real Deepgram transcription"""
+    """Real Deepgram transcription via HTTP API"""
     now = datetime.now(timezone.utc).isoformat()
     file_path = UPLOAD_DIR / filename
     
