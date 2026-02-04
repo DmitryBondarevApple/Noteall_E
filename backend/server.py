@@ -557,16 +557,7 @@ async def process_transcription(project_id: str, filename: str):
                 "updated_at": datetime.now(timezone.utc).isoformat()
             }}
         )
-    
-    # Update project status
-    await db.projects.update_one(
-        {"id": project_id},
-        {"$set": {
-            "status": "needs_review",
-            "recording_duration": 135.0,
-            "updated_at": datetime.now(timezone.utc).isoformat()
-        }}
-    )
+
 
 # ==================== TRANSCRIPT ROUTES ====================
 
