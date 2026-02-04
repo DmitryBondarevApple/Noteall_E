@@ -577,11 +577,6 @@ async def process_transcription(project_id: str, filename: str, language: str = 
         )
 
 # ==================== TRANSCRIPT ROUTES ====================
-            }}
-        )
-
-
-# ==================== TRANSCRIPT ROUTES ====================
 
 @api_router.get("/projects/{project_id}/transcripts", response_model=List[TranscriptVersionResponse])
 async def get_transcripts(project_id: str, user = Depends(get_current_user)):
