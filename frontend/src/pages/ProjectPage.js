@@ -183,7 +183,7 @@ export default function ProjectPage() {
 
     setUploading(true);
     try {
-      await projectsApi.upload(projectId, file);
+      await projectsApi.upload(projectId, file, selectedLanguage);
       toast.success('Файл загружен, начинается транскрибация');
       loadData();
     } catch (error) {
