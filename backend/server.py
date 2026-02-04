@@ -15,12 +15,15 @@ import bcrypt
 import shutil
 import httpx
 import asyncio
+import re
+import json
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# Deepgram Configuration
+# API Keys
 DEEPGRAM_API_KEY = os.environ.get('DEEPGRAM_API_KEY')
+EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY')
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
