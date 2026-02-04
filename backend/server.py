@@ -24,6 +24,7 @@ load_dotenv(ROOT_DIR / '.env')
 # API Keys
 DEEPGRAM_API_KEY = os.environ.get('DEEPGRAM_API_KEY')
 EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY')
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
