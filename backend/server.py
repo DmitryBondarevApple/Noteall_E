@@ -546,7 +546,7 @@ async def process_transcription(project_id: str, filename: str):
             }}
         )
         
-        logger.info(f"Transcription completed for project {project_id}, status: {new_status}")
+        logger.info(f"Transcription completed for project {project_id}, status: {new_status}, duration: {duration}s")
         
     except Exception as e:
         logger.error(f"Transcription error for project {project_id}: {e}")
