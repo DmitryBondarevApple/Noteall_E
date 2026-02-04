@@ -332,11 +332,17 @@ async def delete_project(project_id: str, user = Depends(get_current_user)):
 async def upload_recording(
     project_id: str,
     file: UploadFile = File(...),
+    language: str = Form(default="ru"),
     user = Depends(get_current_user)
 ):
     project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Validate language
+    supported_languages = ["ru", "en", "de", "fr", "es", "it", "pt", "nl", "pl", "uk"]
+    if language not in supported_languages:
+        language = "ru"
     
     # Save file locally
     file_id = str(uuid.uuid4())
@@ -347,23 +353,24 @@ async def upload_recording(
     with open(file_path, "wb") as f:
         shutil.copyfileobj(file.file, f)
     
-    # Update project
+    # Update project with language setting
     await db.projects.update_one(
         {"id": project_id},
         {"$set": {
             "recording_filename": filename,
+            "language": language,
             "status": "transcribing",
             "updated_at": datetime.now(timezone.utc).isoformat()
         }}
     )
     
     # Start transcription in background
-    asyncio.create_task(process_transcription(project_id, filename))
+    asyncio.create_task(process_transcription(project_id, filename, language))
     
     return {"message": "File uploaded, transcription started", "filename": filename}
 
-async def process_transcription(project_id: str, filename: str):
-    """Real Deepgram transcription via HTTP API"""
+async def process_transcription(project_id: str, filename: str, language: str = "ru"):
+    """Real Deepgram transcription via HTTP API with Nova-3 model"""
     now = datetime.now(timezone.utc).isoformat()
     file_path = UPLOAD_DIR / filename
     
