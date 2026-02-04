@@ -86,6 +86,20 @@ export default function ProjectPage() {
   const [activeTab, setActiveTab] = useState('transcript');
   const [editingFragment, setEditingFragment] = useState(null);
   const [editingSpeaker, setEditingSpeaker] = useState(null);
+  const [selectedLanguage, setSelectedLanguage] = useState('ru');
+
+  const languageOptions = [
+    { value: 'ru', label: 'Русский' },
+    { value: 'en', label: 'English' },
+    { value: 'de', label: 'Deutsch' },
+    { value: 'fr', label: 'Français' },
+    { value: 'es', label: 'Español' },
+    { value: 'it', label: 'Italiano' },
+    { value: 'pt', label: 'Português' },
+    { value: 'nl', label: 'Nederlands' },
+    { value: 'pl', label: 'Polski' },
+    { value: 'uk', label: 'Українська' },
+  ];
 
   const loadData = useCallback(async () => {
     try {
