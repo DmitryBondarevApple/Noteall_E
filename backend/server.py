@@ -451,10 +451,8 @@ async def process_transcription(project_id: str, filename: str):
         if not transcript_text.strip():
             raise Exception("Empty transcript received from Deepgram")
         
-        # Calculate duration
-        duration = 0
-        if response.metadata and hasattr(response.metadata, 'duration'):
-            duration = response.metadata.duration
+        # Get duration from metadata
+        duration = result.get("metadata", {}).get("duration", 0)
         
         # Save raw transcript
         raw_transcript_id = str(uuid.uuid4())
