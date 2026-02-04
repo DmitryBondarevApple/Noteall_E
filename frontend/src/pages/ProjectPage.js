@@ -306,7 +306,25 @@ export default function ProjectPage() {
                 Поддерживаются форматы: MP3, WAV, MP4, WEBM и другие аудио/видео файлы
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-6">
+              {/* Language Selection */}
+              <div className="flex items-center gap-4">
+                <Label className="whitespace-nowrap">Язык записи:</Label>
+                <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                  <SelectTrigger className="w-48" data-testid="language-select">
+                    <SelectValue placeholder="Выберите язык" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {languageOptions.map((lang) => (
+                      <SelectItem key={lang.value} value={lang.value}>
+                        {lang.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Dropzone */}
               <div
                 className={`dropzone border-2 border-dashed rounded-xl p-12 text-center transition-all ${
                   dragActive ? 'active border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:border-slate-300'
