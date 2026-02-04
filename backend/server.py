@@ -15,7 +15,6 @@ import bcrypt
 import shutil
 import httpx
 import asyncio
-from deepgram import DeepgramClient, PrerecordedOptions, FileSource
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
