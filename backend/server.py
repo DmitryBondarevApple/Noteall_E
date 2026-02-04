@@ -358,100 +358,194 @@ async def upload_recording(
         }}
     )
     
-    # Start mock transcription
-    await process_transcription(project_id, filename)
+    # Start transcription in background
+    asyncio.create_task(process_transcription(project_id, filename))
     
-    return {"message": "File uploaded", "filename": filename}
+    return {"message": "File uploaded, transcription started", "filename": filename}
 
 async def process_transcription(project_id: str, filename: str):
-    """Mock Deepgram transcription - will be replaced with real API"""
+    """Real Deepgram transcription"""
     now = datetime.now(timezone.utc).isoformat()
+    file_path = UPLOAD_DIR / filename
     
-    # Create mock raw transcript
-    mock_raw_transcript = """Speaker 1: Добрый день всем. Начинаем наше еженедельное совещание по проекту.
-
-Speaker 2: Привет! Готов представить статус по своей части.
-
-Speaker 1: Отлично. Давайте начнем с обзора задач за прошлую неделю.
-
-Speaker 2: У нас были сложности с интеграцией API. Пришлось переделать архитектуру.
-
-Speaker 1: Понятно. Какие сроки по завершению?
-
-Speaker 2: Думаю, до конца этой недели закончим основную часть.
-
-Speaker 1: Хорошо. Есть какие-то риски?
-
-Speaker 2: Да, возможны задержки если будут проблемы с тестированием.
-
-Speaker 1: Договорились. Тогда запланируем дополнительную сессию на четверг для ревью."""
-
-    # Save raw transcript
-    raw_transcript_id = str(uuid.uuid4())
-    await db.transcripts.insert_one({
-        "id": raw_transcript_id,
-        "project_id": project_id,
-        "version_type": "raw",
-        "content": mock_raw_transcript,
-        "created_at": now
-    })
-    
-    # Create mock processed transcript with uncertain fragments
-    mock_processed_transcript = mock_raw_transcript.replace(
-        "архитектуру",
-        "[архитектуру?]"
-    ).replace(
-        "ревью",
-        "[ревью?]"
-    )
-    
-    processed_transcript_id = str(uuid.uuid4())
-    await db.transcripts.insert_one({
-        "id": processed_transcript_id,
-        "project_id": project_id,
-        "version_type": "processed",
-        "content": mock_processed_transcript,
-        "created_at": now
-    })
-    
-    # Create uncertain fragments
-    fragments = [
-        {
-            "id": str(uuid.uuid4()),
-            "project_id": project_id,
-            "original_text": "архитектуру",
-            "corrected_text": None,
-            "context": "Пришлось переделать архитектуру.",
-            "start_time": 45.5,
-            "end_time": 46.2,
-            "suggestions": ["архитектуру", "инфраструктуру", "структуру"],
-            "status": "pending",
-            "created_at": now
-        },
-        {
-            "id": str(uuid.uuid4()),
-            "project_id": project_id,
-            "original_text": "ревью",
-            "corrected_text": None,
-            "context": "на четверг для ревью.",
-            "start_time": 120.3,
-            "end_time": 121.0,
-            "suggestions": ["ревью", "review", "обзора"],
-            "status": "pending",
-            "created_at": now
+    try:
+        # Initialize Deepgram client
+        deepgram = DeepgramClient(DEEPGRAM_API_KEY)
+        
+        # Read audio file
+        with open(file_path, "rb") as audio_file:
+            buffer_data = audio_file.read()
+        
+        payload: FileSource = {
+            "buffer": buffer_data,
         }
-    ]
-    
-    for fragment in fragments:
-        await db.uncertain_fragments.insert_one(fragment)
-    
-    # Create default speaker map
-    speakers = [
-        {"id": str(uuid.uuid4()), "project_id": project_id, "speaker_label": "Speaker 1", "speaker_name": "Speaker 1"},
-        {"id": str(uuid.uuid4()), "project_id": project_id, "speaker_label": "Speaker 2", "speaker_name": "Speaker 2"}
-    ]
-    for speaker in speakers:
-        await db.speaker_maps.insert_one(speaker)
+        
+        # Configure options for Russian language with diarization
+        options = PrerecordedOptions(
+            model="nova-2",
+            language="ru",
+            smart_format=True,
+            punctuate=True,
+            diarize=True,
+            paragraphs=True,
+            utterances=True,
+        )
+        
+        logger.info(f"Starting Deepgram transcription for project {project_id}")
+        
+        # Transcribe
+        response = deepgram.listen.rest.v("1").transcribe_file(payload, options)
+        
+        # Extract transcript with speakers
+        transcript_text = ""
+        words_with_speakers = []
+        current_speaker = None
+        current_text = []
+        
+        if response.results and response.results.utterances:
+            for utterance in response.results.utterances:
+                speaker_label = f"Speaker {utterance.speaker + 1}" if utterance.speaker is not None else "Speaker 1"
+                transcript_text += f"{speaker_label}: {utterance.transcript}\n\n"
+                
+                # Collect words with confidence
+                if hasattr(utterance, 'words'):
+                    for word in utterance.words:
+                        words_with_speakers.append({
+                            "word": word.word,
+                            "confidence": word.confidence,
+                            "start": word.start,
+                            "end": word.end,
+                            "speaker": utterance.speaker
+                        })
+        elif response.results and response.results.channels:
+            # Fallback to channels if no utterances
+            for alt in response.results.channels[0].alternatives:
+                transcript_text = alt.transcript
+                if hasattr(alt, 'words'):
+                    words_with_speakers = [
+                        {
+                            "word": w.word,
+                            "confidence": w.confidence,
+                            "start": w.start,
+                            "end": w.end,
+                            "speaker": getattr(w, 'speaker', 0)
+                        }
+                        for w in alt.words
+                    ]
+        
+        if not transcript_text.strip():
+            raise Exception("Empty transcript received from Deepgram")
+        
+        # Calculate duration
+        duration = 0
+        if response.metadata and hasattr(response.metadata, 'duration'):
+            duration = response.metadata.duration
+        
+        # Save raw transcript
+        raw_transcript_id = str(uuid.uuid4())
+        await db.transcripts.insert_one({
+            "id": raw_transcript_id,
+            "project_id": project_id,
+            "version_type": "raw",
+            "content": transcript_text.strip(),
+            "created_at": now
+        })
+        
+        # Find uncertain words (confidence < 0.85)
+        uncertain_words = []
+        for w in words_with_speakers:
+            if w["confidence"] < 0.85:
+                # Find context (surrounding words)
+                idx = words_with_speakers.index(w)
+                context_start = max(0, idx - 3)
+                context_end = min(len(words_with_speakers), idx + 4)
+                context = " ".join([x["word"] for x in words_with_speakers[context_start:context_end]])
+                
+                uncertain_words.append({
+                    "word": w["word"],
+                    "confidence": w["confidence"],
+                    "start": w["start"],
+                    "end": w["end"],
+                    "context": context
+                })
+        
+        # Create processed transcript with uncertain markers
+        processed_text = transcript_text.strip()
+        for uw in uncertain_words:
+            # Mark uncertain words
+            processed_text = processed_text.replace(
+                uw["word"],
+                f"[{uw['word']}?]",
+                1  # Replace only first occurrence
+            )
+        
+        # Save processed transcript
+        processed_transcript_id = str(uuid.uuid4())
+        await db.transcripts.insert_one({
+            "id": processed_transcript_id,
+            "project_id": project_id,
+            "version_type": "processed",
+            "content": processed_text,
+            "created_at": now
+        })
+        
+        # Create uncertain fragments
+        for uw in uncertain_words[:20]:  # Limit to 20 fragments
+            fragment_id = str(uuid.uuid4())
+            await db.uncertain_fragments.insert_one({
+                "id": fragment_id,
+                "project_id": project_id,
+                "original_text": uw["word"],
+                "corrected_text": None,
+                "context": uw["context"],
+                "start_time": uw["start"],
+                "end_time": uw["end"],
+                "suggestions": [uw["word"]],  # Could be enhanced with spell-check suggestions
+                "status": "pending",
+                "created_at": now
+            })
+        
+        # Extract unique speakers and create speaker map
+        unique_speakers = set()
+        if response.results and response.results.utterances:
+            for utterance in response.results.utterances:
+                if utterance.speaker is not None:
+                    unique_speakers.add(utterance.speaker)
+        
+        if not unique_speakers:
+            unique_speakers = {0}  # Default single speaker
+        
+        for speaker_num in sorted(unique_speakers):
+            speaker_id = str(uuid.uuid4())
+            await db.speaker_maps.insert_one({
+                "id": speaker_id,
+                "project_id": project_id,
+                "speaker_label": f"Speaker {speaker_num + 1}",
+                "speaker_name": f"Speaker {speaker_num + 1}"
+            })
+        
+        # Update project status
+        new_status = "needs_review" if uncertain_words else "ready"
+        await db.projects.update_one(
+            {"id": project_id},
+            {"$set": {
+                "status": new_status,
+                "recording_duration": duration,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        
+        logger.info(f"Transcription completed for project {project_id}, status: {new_status}")
+        
+    except Exception as e:
+        logger.error(f"Transcription error for project {project_id}: {e}")
+        await db.projects.update_one(
+            {"id": project_id},
+            {"$set": {
+                "status": "error",
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
     
     # Update project status
     await db.projects.update_one(
