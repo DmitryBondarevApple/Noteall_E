@@ -500,8 +500,8 @@ async def process_transcription(project_id: str, filename: str):
             "created_at": now
         })
         
-        # Create uncertain fragments
-        for uw in uncertain_words[:20]:  # Limit to 20 fragments
+        # Create uncertain fragments (limit to 20)
+        for uw in uncertain_words[:20]:
             fragment_id = str(uuid.uuid4())
             await db.uncertain_fragments.insert_one({
                 "id": fragment_id,
@@ -511,7 +511,7 @@ async def process_transcription(project_id: str, filename: str):
                 "context": uw["context"],
                 "start_time": uw["start"],
                 "end_time": uw["end"],
-                "suggestions": [uw["word"]],  # Could be enhanced with spell-check suggestions
+                "suggestions": [uw["word"]],
                 "status": "pending",
                 "created_at": now
             })
