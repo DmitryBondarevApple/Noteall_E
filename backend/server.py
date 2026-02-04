@@ -374,19 +374,22 @@ async def upload_recording(
     return {"message": "File uploaded, transcription started", "filename": filename}
 
 async def call_gpt4o(system_message: str, user_message: str) -> str:
-    """Call GPT-4o via emergentintegrations for initial processing"""
+    """Call GPT-4o via user's OpenAI API for initial processing"""
     try:
-        from emergentintegrations.llm.chat import LlmChat, UserMessage
+        from openai import AsyncOpenAI
         
-        chat = LlmChat(
-            api_key=EMERGENT_LLM_KEY,
-            session_id=f"transcription-{uuid.uuid4()}",
-            system_message=system_message
+        client = AsyncOpenAI(api_key=OPENAI_API_KEY)
+        
+        response = await client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": user_message}
+            ],
+            temperature=0.3,
         )
-        chat.with_model("openai", "gpt-4o")
         
-        response = await chat.send_message(UserMessage(text=user_message))
-        return response
+        return response.choices[0].message.content
     except Exception as e:
         logger.error(f"GPT-4o error: {e}")
         raise e
