@@ -372,32 +372,53 @@ async def upload_recording(
     
     return {"message": "File uploaded, transcription started", "filename": filename}
 
+async def call_gpt4o(system_message: str, user_message: str) -> str:
+    """Call GPT-4o via emergentintegrations"""
+    try:
+        from emergentintegrations.llm.chat import LlmChat, UserMessage
+        
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=f"transcription-{uuid.uuid4()}",
+            system_message=system_message
+        )
+        chat.with_model("openai", "gpt-4o")
+        
+        response = await chat.send_message(UserMessage(text=user_message))
+        return response
+    except Exception as e:
+        logger.error(f"GPT-4o error: {e}")
+        raise e
+
 async def process_transcription(project_id: str, filename: str, language: str = "ru"):
-    """Real Deepgram transcription via HTTP API with Nova-3 model"""
+    """
+    Pipeline:
+    1. Deepgram -> raw transcript
+    2. GPT-4o + master prompt -> processed transcript with uncertain fragments
+    3. Extract speakers for mapping
+    """
     now = datetime.now(timezone.utc).isoformat()
     file_path = UPLOAD_DIR / filename
     
     try:
-        # Read audio file
+        # ========== STEP 1: DEEPGRAM TRANSCRIPTION ==========
+        await db.projects.update_one(
+            {"id": project_id},
+            {"$set": {"status": "transcribing", "updated_at": now}}
+        )
+        
         with open(file_path, "rb") as audio_file:
             buffer_data = audio_file.read()
         
-        # Determine content type based on file extension
         ext = Path(filename).suffix.lower()
         content_types = {
-            '.mp3': 'audio/mpeg',
-            '.wav': 'audio/wav',
-            '.mp4': 'video/mp4',
-            '.webm': 'video/webm',
-            '.m4a': 'audio/mp4',
-            '.ogg': 'audio/ogg',
-            '.flac': 'audio/flac',
+            '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.mp4': 'video/mp4',
+            '.webm': 'video/webm', '.m4a': 'audio/mp4', '.ogg': 'audio/ogg', '.flac': 'audio/flac',
         }
         content_type = content_types.get(ext, 'audio/mpeg')
         
-        logger.info(f"Starting Deepgram transcription for project {project_id}, file: {filename}, language: {language}")
+        logger.info(f"[{project_id}] Starting Deepgram transcription, language: {language}")
         
-        # Call Deepgram API via HTTP with Nova-3 model
         async with httpx.AsyncClient(timeout=600.0) as client:
             response = await client.post(
                 "https://api.deepgram.com/v1/listen",
@@ -420,46 +441,41 @@ async def process_transcription(project_id: str, filename: str, language: str = 
             raise Exception(f"Deepgram API error: {response.status_code} - {response.text}")
         
         result = response.json()
-        
-        # Get duration from metadata
         duration = result.get("metadata", {}).get("duration", 0)
         
-        # Extract transcript from channels (paragraphs format)
+        # Extract raw transcript
         results = result.get("results", {})
         channels = results.get("channels", [])
         
         if not channels:
             raise Exception("No channels in Deepgram response")
         
-        # Build transcript with speaker labels from paragraphs
-        transcript_lines = []
-        all_words = []
-        
         alternatives = channels[0].get("alternatives", [])
-        if alternatives:
-            alt = alternatives[0]
-            
-            # Get all words with confidence scores
-            all_words = alt.get("words", [])
-            
-            # Use paragraphs for better formatting
-            paragraphs_data = alt.get("paragraphs", {})
-            paragraphs = paragraphs_data.get("paragraphs", [])
-            
-            if paragraphs:
-                for para in paragraphs:
-                    speaker = para.get("speaker", 0)
-                    sentences = para.get("sentences", [])
-                    
-                    for sentence in sentences:
-                        text = sentence.get("text", "")
-                        if text:
-                            transcript_lines.append(f"Speaker {speaker + 1}: {text}")
-            else:
-                # Fallback: use plain transcript
-                transcript_text = alt.get("transcript", "")
-                if transcript_text:
-                    transcript_lines.append(transcript_text)
+        if not alternatives:
+            raise Exception("No alternatives in Deepgram response")
+        
+        alt = alternatives[0]
+        paragraphs_data = alt.get("paragraphs", {})
+        paragraphs = paragraphs_data.get("paragraphs", [])
+        
+        # Build raw transcript with speaker labels
+        transcript_lines = []
+        unique_speakers = set()
+        
+        if paragraphs:
+            for para in paragraphs:
+                speaker = para.get("speaker", 0)
+                unique_speakers.add(speaker)
+                sentences = para.get("sentences", [])
+                for sentence in sentences:
+                    text = sentence.get("text", "")
+                    if text:
+                        transcript_lines.append(f"Speaker {speaker + 1}: {text}")
+        else:
+            transcript_text = alt.get("transcript", "")
+            if transcript_text:
+                transcript_lines.append(transcript_text)
+                unique_speakers.add(0)
         
         raw_transcript = "\n\n".join(transcript_lines)
         
@@ -467,97 +483,110 @@ async def process_transcription(project_id: str, filename: str, language: str = 
             raise Exception("Empty transcript received from Deepgram")
         
         # Save raw transcript
-        raw_transcript_id = str(uuid.uuid4())
         await db.transcripts.insert_one({
-            "id": raw_transcript_id,
+            "id": str(uuid.uuid4()),
             "project_id": project_id,
             "version_type": "raw",
             "content": raw_transcript,
             "created_at": now
         })
         
-        # Find uncertain words (confidence < 0.80) - collect unique words only
-        uncertain_word_set = set()
-        uncertain_fragments = []
+        logger.info(f"[{project_id}] Raw transcript saved, {len(raw_transcript)} chars, {len(unique_speakers)} speakers")
         
-        for i, w in enumerate(all_words):
-            word_text = w.get("word", "").strip()
-            confidence = w.get("confidence", 1.0)
-            
-            if confidence < 0.80 and word_text and word_text not in uncertain_word_set:
-                uncertain_word_set.add(word_text)
-                
-                # Find context (surrounding words)
-                context_start = max(0, i - 3)
-                context_end = min(len(all_words), i + 4)
-                context = " ".join([x.get("word", "") for x in all_words[context_start:context_end]])
-                
-                uncertain_fragments.append({
-                    "word": word_text,
-                    "confidence": confidence,
-                    "start": w.get("start", 0),
-                    "end": w.get("end", 0),
-                    "context": context
-                })
+        # ========== STEP 2: AI PROCESSING WITH MASTER PROMPT ==========
+        await db.projects.update_one(
+            {"id": project_id},
+            {"$set": {"status": "processing", "updated_at": datetime.now(timezone.utc).isoformat()}}
+        )
         
-        # Create processed transcript - mark uncertain words ONCE
-        processed_transcript = raw_transcript
-        for uf in uncertain_fragments:
-            word = uf["word"]
-            # Use word boundary replacement to avoid partial matches
-            # Replace only the first occurrence
-            import re
-            pattern = re.compile(re.escape(word), re.IGNORECASE)
-            processed_transcript = pattern.sub(f"[{word}?]", processed_transcript, count=1)
+        # Get master prompt from database
+        master_prompt = await db.prompts.find_one({"prompt_type": "master"}, {"_id": 0})
+        if not master_prompt:
+            master_prompt_content = """Обработай транскрипт встречи:
+1. Исправь очевидные ошибки распознавания речи
+2. Расставь знаки препинания правильно
+3. Выдели слова или фразы, в которых ты не уверен, в формате [слово?]
+4. Сохрани разметку спикеров (Speaker 1:, Speaker 2: и т.д.)
+5. НЕ меняй смысл текста, только исправляй ошибки распознавания
+
+Верни обработанный транскрипт."""
+        else:
+            master_prompt_content = master_prompt["content"]
+        
+        logger.info(f"[{project_id}] Processing with master prompt via GPT-4o")
+        
+        system_message = f"""Ты - эксперт по обработке транскриптов встреч. 
+{master_prompt_content}
+
+ВАЖНО: 
+- Спорные или неразборчивые слова выделяй в формате [слово?]
+- Сохраняй структуру с метками спикеров
+- Не добавляй ничего от себя"""
+
+        processed_transcript = await call_gpt4o(
+            system_message=system_message,
+            user_message=f"Обработай этот транскрипт:\n\n{raw_transcript}"
+        )
         
         # Save processed transcript
-        processed_transcript_id = str(uuid.uuid4())
         await db.transcripts.insert_one({
-            "id": processed_transcript_id,
+            "id": str(uuid.uuid4()),
             "project_id": project_id,
             "version_type": "processed",
             "content": processed_transcript,
-            "created_at": now
+            "created_at": datetime.now(timezone.utc).isoformat()
         })
         
-        # Create uncertain fragment records (limit to 30)
-        for uf in uncertain_fragments[:30]:
-            fragment_id = str(uuid.uuid4())
-            await db.uncertain_fragments.insert_one({
-                "id": fragment_id,
-                "project_id": project_id,
-                "original_text": uf["word"],
-                "corrected_text": None,
-                "context": uf["context"],
-                "start_time": uf["start"],
-                "end_time": uf["end"],
-                "suggestions": [uf["word"]],
-                "status": "pending",
-                "created_at": now
-            })
+        logger.info(f"[{project_id}] Processed transcript saved")
         
-        # Extract unique speakers from paragraphs
-        unique_speakers = set()
-        if alternatives and paragraphs_data.get("paragraphs"):
-            for para in paragraphs_data["paragraphs"]:
-                speaker = para.get("speaker")
-                if speaker is not None:
-                    unique_speakers.add(speaker)
+        # ========== STEP 3: EXTRACT UNCERTAIN FRAGMENTS ==========
+        # Find all [word?] patterns in processed transcript
+        uncertain_pattern = re.compile(r'\[([^\]]+)\?\]')
+        matches = uncertain_pattern.findall(processed_transcript)
         
+        # Create uncertain fragment records
+        seen_words = set()
+        for match in matches:
+            word = match.strip()
+            if word and word not in seen_words:
+                seen_words.add(word)
+                
+                # Find context around the word
+                context_match = re.search(
+                    rf'.{{0,30}}\[{re.escape(word)}\?\].{{0,30}}',
+                    processed_transcript
+                )
+                context = context_match.group(0) if context_match else word
+                
+                await db.uncertain_fragments.insert_one({
+                    "id": str(uuid.uuid4()),
+                    "project_id": project_id,
+                    "original_text": word,
+                    "corrected_text": None,
+                    "context": context,
+                    "start_time": None,
+                    "end_time": None,
+                    "suggestions": [word],
+                    "status": "pending",
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                })
+        
+        logger.info(f"[{project_id}] Found {len(seen_words)} uncertain fragments")
+        
+        # ========== STEP 4: CREATE SPEAKER MAP ==========
         if not unique_speakers:
             unique_speakers = {0}
         
         for speaker_num in sorted(unique_speakers):
-            speaker_id = str(uuid.uuid4())
             await db.speaker_maps.insert_one({
-                "id": speaker_id,
+                "id": str(uuid.uuid4()),
                 "project_id": project_id,
                 "speaker_label": f"Speaker {speaker_num + 1}",
                 "speaker_name": f"Speaker {speaker_num + 1}"
             })
         
-        # Update project status
-        new_status = "needs_review" if uncertain_fragments else "ready"
+        # ========== STEP 5: UPDATE PROJECT STATUS ==========
+        new_status = "needs_review" if seen_words else "ready"
         await db.projects.update_one(
             {"id": project_id},
             {"$set": {
@@ -567,10 +596,10 @@ async def process_transcription(project_id: str, filename: str, language: str = 
             }}
         )
         
-        logger.info(f"Transcription completed for project {project_id}, status: {new_status}, duration: {duration}s, uncertain: {len(uncertain_fragments)}")
+        logger.info(f"[{project_id}] Transcription pipeline completed, status: {new_status}, duration: {duration}s")
         
     except Exception as e:
-        logger.error(f"Transcription error for project {project_id}: {e}")
+        logger.error(f"[{project_id}] Transcription error: {e}")
         await db.projects.update_one(
             {"id": project_id},
             {"$set": {
