@@ -49,7 +49,9 @@ import {
   Check,
   X,
   Send,
-  History
+  History,
+  Pencil,
+  Save
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
