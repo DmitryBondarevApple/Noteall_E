@@ -521,9 +521,9 @@ export default function ProjectPage() {
                 <CardContent>
                   {getTranscript('processed') ? (
                     <ScrollArea className="h-[500px] rounded-lg border p-6 bg-white">
-                      <pre className="whitespace-pre-wrap text-sm leading-relaxed font-sans" data-testid="processed-transcript-content">
-                        {applySpeakerNames(getTranscript('processed').content, speakers)}
-                      </pre>
+                      <div className="prose prose-sm max-w-none" data-testid="processed-transcript-content">
+                        <Markdown>{applySpeakerNames(getTranscript('processed').content, speakers)}</Markdown>
+                      </div>
                     </ScrollArea>
                   ) : (
                     <div className="text-center py-16 text-muted-foreground">
