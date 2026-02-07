@@ -461,7 +461,7 @@ export default function ProjectPage() {
                   {currentTranscript ? (
                     <ScrollArea className="h-[500px] rounded-lg border p-6 bg-white">
                       <div className="prose prose-slate max-w-none text-sm leading-relaxed" data-testid="transcript-content">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
                           {applySpekersToTranscript(currentTranscript.content, speakers)}
                         </ReactMarkdown>
                       </div>
