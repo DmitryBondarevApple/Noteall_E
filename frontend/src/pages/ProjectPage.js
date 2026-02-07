@@ -480,7 +480,7 @@ export default function ProjectPage() {
                   {getTranscript('raw') ? (
                     <ScrollArea className="h-[500px] rounded-lg border p-6 bg-white">
                       <pre className="whitespace-pre-wrap text-sm leading-relaxed font-sans" data-testid="raw-transcript-content">
-                        {getTranscript('raw').content}
+                        {applySpeakerNames(getTranscript('raw').content, speakers)}
                       </pre>
                     </ScrollArea>
                   ) : (
@@ -506,7 +506,7 @@ export default function ProjectPage() {
                   {getTranscript('processed') ? (
                     <ScrollArea className="h-[500px] rounded-lg border p-6 bg-white">
                       <pre className="whitespace-pre-wrap text-sm leading-relaxed font-sans" data-testid="processed-transcript-content">
-                        {getTranscript('processed').content}
+                        {applySpeakerNames(getTranscript('processed').content, speakers)}
                       </pre>
                     </ScrollArea>
                   ) : (
