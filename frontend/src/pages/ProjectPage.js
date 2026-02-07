@@ -543,50 +543,6 @@ export default function ProjectPage() {
                 </CardContent>
               </Card>
             </TabsContent>
-                  <div>
-                    <CardTitle>Транскрипт</CardTitle>
-                    <CardDescription>
-                      {currentTranscript?.version_type === 'confirmed' 
-                        ? 'Финальная версия'
-                        : currentTranscript?.version_type === 'processed'
-                        ? 'Обработанная версия (требует проверки)'
-                        : 'Исходная версия'}
-                    </CardDescription>
-                  </div>
-                  {project?.status === 'needs_review' && (
-                    <Button
-                      onClick={handleConfirmTranscript}
-                      disabled={confirming || pendingFragments.length > 0}
-                      className="gap-2"
-                      data-testid="confirm-transcript-btn"
-                    >
-                      {confirming ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <CheckCircle2 className="w-4 h-4" />
-                      )}
-                      Подтвердить транскрипт
-                    </Button>
-                  )}
-                </CardHeader>
-                <CardContent>
-                  {currentTranscript ? (
-                    <ScrollArea className="h-[500px] rounded-lg border p-6 bg-white">
-                      <div className="prose prose-slate max-w-none text-sm leading-relaxed" data-testid="transcript-content">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
-                          {applySpekersToTranscript(currentTranscript.content, speakers)}
-                        </ReactMarkdown>
-                      </div>
-                    </ScrollArea>
-                  ) : (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
-                      <p>Транскрибация в процессе...</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
 
             {/* Review Tab */}
             <TabsContent value="review">
