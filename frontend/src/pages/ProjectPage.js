@@ -195,7 +195,7 @@ export default function ProjectPage() {
 
     setUploading(true);
     try {
-      await projectsApi.upload(projectId, file, selectedLanguage);
+      await projectsApi.upload(projectId, file, selectedLanguage, selectedReasoningEffort);
       toast.success('Файл загружен, начинается транскрибация');
       loadData();
     } catch (error) {
