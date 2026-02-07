@@ -442,79 +442,108 @@ export default function ProjectPage() {
             <TabsContent value="review">
               <Card>
                 <CardHeader>
-                  <CardTitle>Спорные фрагменты</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <AlertCircle className="w-5 h-5" />
+                    Проверка сомнительных мест
+                  </CardTitle>
                   <CardDescription>
-                    Проверьте и исправьте слова, распознанные с низкой уверенностью
+                    Проверьте слова, в которых могут быть ошибки распознавания. 
+                    {pendingFragments.length > 0 && (
+                      <span className="font-medium text-orange-600"> Осталось проверить: {pendingFragments.length}</span>
+                    )}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   {fragments.length === 0 ? (
                     <div className="text-center py-12 text-muted-foreground">
                       <CheckCircle2 className="w-8 h-8 mx-auto mb-4 text-green-500" />
-                      <p>Нет спорных фрагментов</p>
+                      <p>Нет сомнительных фрагментов для проверки</p>
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {fragments.map((fragment) => (
-                        <Card key={fragment.id} className={`${fragment.status === 'confirmed' ? 'bg-green-50 border-green-200' : 'bg-orange-50 border-orange-200'}`}>
-                          <CardContent className="p-4">
-                            <div className="flex items-start justify-between gap-4">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <Badge variant={fragment.status === 'confirmed' ? 'default' : 'destructive'}>
-                                    {fragment.status === 'confirmed' ? 'Подтверждено' : 'Требует проверки'}
-                                  </Badge>
-                                  {fragment.start_time && (
-                                    <span className="text-xs text-muted-foreground">
-                                      {formatTime(fragment.start_time)}
-                                    </span>
+                      {/* Summary */}
+                      <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-lg text-sm">
+                        <span>Всего: <strong>{fragments.length}</strong></span>
+                        <span className="text-green-600">Проверено: <strong>{fragments.filter(f => f.status === 'confirmed').length}</strong></span>
+                        <span className="text-orange-600">Ожидает: <strong>{pendingFragments.length}</strong></span>
+                      </div>
+                      
+                      {/* Fragment cards */}
+                      <div className="space-y-3">
+                        {fragments.map((fragment, index) => (
+                          <Card 
+                            key={fragment.id} 
+                            className={`transition-all ${
+                              fragment.status === 'confirmed' 
+                                ? 'bg-green-50/50 border-green-200' 
+                                : 'bg-orange-50/50 border-orange-200 hover:border-orange-300'
+                            }`}
+                          >
+                            <CardContent className="p-4">
+                              <div className="space-y-3">
+                                {/* Header row */}
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs text-muted-foreground font-mono">#{index + 1}</span>
+                                    <Badge 
+                                      variant={fragment.status === 'confirmed' ? 'default' : 'destructive'}
+                                      className={fragment.status === 'confirmed' ? 'bg-green-600' : ''}
+                                    >
+                                      {fragment.status === 'confirmed' ? 'Проверено' : 'Требует проверки'}
+                                    </Badge>
+                                  </div>
+                                  {fragment.status !== 'confirmed' && (
+                                    <div className="flex items-center gap-2">
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-8"
+                                        onClick={() => handleConfirmFragment(fragment, fragment.original_text)}
+                                        data-testid={`confirm-as-is-${fragment.id}`}
+                                      >
+                                        <Check className="w-3 h-3 mr-1" />
+                                        Оставить как есть
+                                      </Button>
+                                      <Button
+                                        variant="default"
+                                        size="sm"
+                                        className="h-8"
+                                        onClick={() => setEditingFragment(fragment)}
+                                        data-testid={`edit-fragment-${fragment.id}`}
+                                      >
+                                        Исправить
+                                      </Button>
+                                    </div>
                                   )}
                                 </div>
-                                <p className="text-sm text-muted-foreground mb-2">
-                                  Контекст: "...{fragment.context}..."
-                                </p>
-                                <div className="flex items-center gap-2">
-                                  <span className="font-medium">Исходное:</span>
-                                  <code className="bg-white px-2 py-1 rounded text-sm">{fragment.original_text}</code>
-                                  {fragment.corrected_text && (
+                                
+                                {/* Context with highlighted word */}
+                                <div className="bg-white rounded-lg p-4 border">
+                                  <p className="text-sm leading-relaxed">
+                                    {renderContextWithHighlight(fragment.context, fragment.original_text)}
+                                  </p>
+                                </div>
+                                
+                                {/* Current word and correction */}
+                                <div className="flex items-center gap-3 text-sm">
+                                  <span className="text-muted-foreground">Сомнительное слово:</span>
+                                  <code className="bg-orange-100 text-orange-800 px-2 py-1 rounded font-medium">
+                                    {fragment.original_text}
+                                  </code>
+                                  {fragment.corrected_text && fragment.corrected_text !== fragment.original_text && (
                                     <>
-                                      <span>→</span>
-                                      <code className="bg-green-100 px-2 py-1 rounded text-sm">{fragment.corrected_text}</code>
+                                      <span className="text-muted-foreground">→</span>
+                                      <code className="bg-green-100 text-green-800 px-2 py-1 rounded font-medium">
+                                        {fragment.corrected_text}
+                                      </code>
                                     </>
                                   )}
                                 </div>
-                                {fragment.suggestions?.length > 0 && fragment.status !== 'confirmed' && (
-                                  <div className="mt-2 flex items-center gap-2 flex-wrap">
-                                    <span className="text-sm text-muted-foreground">Варианты:</span>
-                                    {fragment.suggestions.map((s, i) => (
-                                      <Button
-                                        key={i}
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-7"
-                                        onClick={() => handleConfirmFragment(fragment, s)}
-                                        data-testid={`suggestion-${fragment.id}-${i}`}
-                                      >
-                                        {s}
-                                      </Button>
-                                    ))}
-                                  </div>
-                                )}
                               </div>
-                              {fragment.status !== 'confirmed' && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => setEditingFragment(fragment)}
-                                  data-testid={`edit-fragment-${fragment.id}`}
-                                >
-                                  Исправить
-                                </Button>
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </CardContent>
