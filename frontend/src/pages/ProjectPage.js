@@ -816,9 +816,9 @@ export default function ProjectPage() {
                                     + {chat.additional_text}
                                   </p>
                                 )}
-                                <pre className="whitespace-pre-wrap text-sm leading-relaxed font-sans" data-testid={`chat-response-${chat.id}`}>
-                                  {chat.response_text}
-                                </pre>
+                                <div className="prose prose-sm max-w-none" data-testid={`chat-response-${chat.id}`}>
+                                  <Markdown>{chat.response_text}</Markdown>
+                                </div>
                               </CardContent>
                             </Card>
                           ))}
