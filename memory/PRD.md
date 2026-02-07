@@ -53,6 +53,9 @@ Platform for transcribing and analyzing work meetings. Users upload audio/video,
 - [x] Reasoning depth applied during analysis (uses call_gpt52 with reasoning_effort)
 - [x] Reasoning depth selector moved to sticky tab bar
 - [x] Markdown rendering enabled for "Обработанный текст" and "Анализ" tabs
+- [x] Fragment corrections from Review tab now update Processed text (replace [word?] markers, persist to backend)
+- [x] Review tab shows full sentences instead of truncated 80-char context
+- [x] Processed text tab has edit mode (Редактировать/Сохранить/Отмена)
 
 ## Known Issues
 - Automated transcript pipeline disabled (manual "Обработать" button is workaround)
