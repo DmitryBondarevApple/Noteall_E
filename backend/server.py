@@ -745,67 +745,8 @@ async def parse_uncertain_fragments(project_id: str, text: str):
                 })
     
     logger.info(f"[{project_id}] Parsed {len(seen_words)} uncertain fragments")
-        
-        # ========== STEP 3: MASTER PROMPT PROCESSING (GPT-5.2) ==========
-        logger.info(f"[{project_id}] Step 3: Processing with user's Master Prompt via GPT-5.2")
-        
-        # Get user's master prompt from database - ONLY user's prompt, no modifications
-        user_master_prompt = await db.prompts.find_one(
-            {"prompt_type": "master"}, 
-            {"_id": 0}
-        )
-        
-        if not user_master_prompt:
-            logger.error(f"[{project_id}] No master prompt found in database!")
-            raise Exception("Master prompt not configured. Please create a master prompt in Prompts settings.")
-        
-        master_prompt_content = user_master_prompt["content"]
-        logger.info(f"[{project_id}] Using master prompt: '{user_master_prompt.get('name', 'Unknown')}' (length: {len(master_prompt_content)} chars)")
-        
-        # Call GPT-5.2 with EXACTLY user's master prompt - NO modifications
-        processed_transcript = await call_gpt52(
-            system_message=master_prompt_content,
-            user_message=cleaned_transcript,
-            reasoning_effort=reasoning_effort
-        )
-        
-        logger.info(f"[{project_id}] GPT-5.2 processing complete, result length: {len(processed_transcript)} chars")
-        
-        # ========== STEP 3.5: PARSE AND SEPARATE UNCERTAIN SECTION ==========
-        # Look for section with uncertain words at the end
-        main_text = processed_transcript
-        uncertain_section = ""
-        
-        # Common patterns for the uncertain section header
-        uncertain_headers = [
-            r'Сомнительные места[^:]*:',
-            r'Сомнительные[^:]*:',
-            r'Возможные ошибки[^:]*:',
-            r'Список сомнительных[^:]*:',
-            r'Сомнения[^:]*:',
-            r'Уточнить[^:]*:',
-            r'Ошибки распознавания[^:]*:',
-        ]
-        
-        for header_pattern in uncertain_headers:
-            match = re.search(header_pattern, processed_transcript, re.IGNORECASE)
-            if match:
-                split_pos = match.start()
-                main_text = processed_transcript[:split_pos].strip()
-                uncertain_section = processed_transcript[split_pos:].strip()
-                logger.info(f"[{project_id}] Found uncertain section at position {split_pos}")
-                break
-        
-        # Save processed transcript (main text only, without uncertain section)
-        await db.transcripts.insert_one({
-            "id": str(uuid.uuid4()),
-            "project_id": project_id,
-            "version_type": "processed",
-            "content": main_text,
-            "created_at": datetime.now(timezone.utc).isoformat()
-        })
-        
-        logger.info(f"[{project_id}] Processed transcript saved, {len(main_text)} chars")
+
+# ==================== TRANSCRIPT ROUTES ====================
         
         # ========== STEP 4: EXTRACT UNCERTAIN FRAGMENTS ==========
         uncertain_items = []
