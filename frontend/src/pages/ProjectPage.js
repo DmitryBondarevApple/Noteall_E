@@ -92,6 +92,9 @@ export default function ProjectPage() {
   const [editingSpeaker, setEditingSpeaker] = useState(null);
   const [selectedLanguage, setSelectedLanguage] = useState('ru');
   const [selectedReasoningEffort, setSelectedReasoningEffort] = useState('high');
+  const [isEditingProcessed, setIsEditingProcessed] = useState(false);
+  const [editProcessedText, setEditProcessedText] = useState('');
+  const [savingProcessed, setSavingProcessed] = useState(false);
 
   const languageOptions = [
     { value: 'ru', label: 'Русский' },
