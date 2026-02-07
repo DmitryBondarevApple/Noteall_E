@@ -53,6 +53,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
+import Markdown from 'react-markdown';
 import { ru } from 'date-fns/locale';
 
 const statusConfig = {
