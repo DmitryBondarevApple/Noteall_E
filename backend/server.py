@@ -607,11 +607,13 @@ async def process_transcription(project_id: str, filename: str, language: str = 
         
         # Common patterns for the uncertain section header
         uncertain_headers = [
+            r'Сомнительные места[^:]*:',
             r'Сомнительные[^:]*:',
             r'Возможные ошибки[^:]*:',
             r'Список сомнительных[^:]*:',
             r'Сомнения[^:]*:',
             r'Уточнить[^:]*:',
+            r'Ошибки распознавания[^:]*:',
         ]
         
         for header_pattern in uncertain_headers:
