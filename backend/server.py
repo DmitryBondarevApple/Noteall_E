@@ -337,6 +337,7 @@ async def upload_recording(
     project_id: str,
     file: UploadFile = File(...),
     language: str = Form(default="ru"),
+    reasoning_effort: str = Form(default="high"),
     user = Depends(get_current_user)
 ):
     project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
@@ -348,6 +349,11 @@ async def upload_recording(
     if language not in supported_languages:
         language = "ru"
     
+    # Validate reasoning effort
+    valid_efforts = ["auto", "minimal", "low", "medium", "high", "xhigh"]
+    if reasoning_effort not in valid_efforts:
+        reasoning_effort = "high"
+    
     # Save file locally
     file_id = str(uuid.uuid4())
     file_ext = Path(file.filename).suffix
@@ -357,19 +363,20 @@ async def upload_recording(
     with open(file_path, "wb") as f:
         shutil.copyfileobj(file.file, f)
     
-    # Update project with language setting
+    # Update project with settings
     await db.projects.update_one(
         {"id": project_id},
         {"$set": {
             "recording_filename": filename,
             "language": language,
+            "reasoning_effort": reasoning_effort,
             "status": "transcribing",
             "updated_at": datetime.now(timezone.utc).isoformat()
         }}
     )
     
     # Start transcription in background
-    asyncio.create_task(process_transcription(project_id, filename, language))
+    asyncio.create_task(process_transcription(project_id, filename, language, reasoning_effort))
     
     return {"message": "File uploaded, transcription started", "filename": filename}
 
