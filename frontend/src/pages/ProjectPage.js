@@ -273,7 +273,8 @@ export default function ProjectPage() {
     try {
       const response = await chatApi.analyze(projectId, {
         prompt_id: selectedPrompt,
-        additional_text: additionalText
+        additional_text: additionalText,
+        reasoning_effort: selectedReasoningEffort
       });
       setChatHistory([response.data, ...chatHistory]);
       setAdditionalText('');
