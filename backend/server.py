@@ -779,7 +779,7 @@ async def update_transcript_content(
     result = await db.transcripts.find_one_and_update(
         {"project_id": project_id, "version_type": version_type},
         {"$set": {"content": data.content}},
-        return_document=True
+        return_document=ReturnDocument.AFTER
     )
     if not result:
         raise HTTPException(status_code=404, detail="Transcript not found")
