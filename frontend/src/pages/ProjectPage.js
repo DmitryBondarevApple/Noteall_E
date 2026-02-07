@@ -688,7 +688,12 @@ export default function ProjectPage() {
                       
                       {/* Fragment cards */}
                       <div className="space-y-3">
-                        {fragments.map((fragment, index) => (
+                        {fragments.map((fragment, index) => {
+                          const fullSentence = extractFullSentence(
+                            getTranscript('processed')?.content || '',
+                            fragment.original_text
+                          );
+                          return (
                           <Card 
                             key={fragment.id} 
                             className={`transition-all ${
@@ -735,10 +740,10 @@ export default function ProjectPage() {
                                   )}
                                 </div>
                                 
-                                {/* Context with highlighted word */}
+                                {/* Full sentence with highlighted word */}
                                 <div className="bg-white rounded-lg p-4 border">
                                   <p className="text-sm leading-relaxed">
-                                    {renderContextWithHighlight(fragment.context, fragment.original_text)}
+                                    {renderContextWithHighlight(fullSentence || fragment.context, fragment.original_text)}
                                   </p>
                                 </div>
                                 
@@ -760,7 +765,8 @@ export default function ProjectPage() {
                               </div>
                             </CardContent>
                           </Card>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   )}
