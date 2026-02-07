@@ -418,11 +418,15 @@ export default function ProjectPage() {
         {/* Main Content Tabs */}
         {project?.status !== 'new' && (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <div className="sticky top-[73px] z-40 bg-slate-50 py-2 -mx-6 px-6">
+            <div className="sticky top-[73px] z-40 bg-slate-50 py-2 -mx-6 px-6 flex items-center justify-between">
               <TabsList className="bg-white border p-1 shadow-sm">
                 <TabsTrigger value="transcript" className="gap-2" data-testid="transcript-tab">
                   <FileText className="w-4 h-4" />
                   Транскрипт
+                </TabsTrigger>
+                <TabsTrigger value="processed" className="gap-2" data-testid="processed-tab">
+                  <CheckCircle2 className="w-4 h-4" />
+                  Обработанный текст
                 </TabsTrigger>
                 <TabsTrigger value="review" className="gap-2" data-testid="review-tab">
                   <AlertCircle className="w-4 h-4" />
@@ -442,12 +446,103 @@ export default function ProjectPage() {
                   Анализ
                 </TabsTrigger>
               </TabsList>
+              
+              {/* Process Button */}
+              <Button
+                onClick={handleProcessWithGPT}
+                disabled={processing || !getTranscript('raw')}
+                className="gap-2"
+                data-testid="process-btn"
+              >
+                {processing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Обработка...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    Обработать
+                  </>
+                )}
+              </Button>
             </div>
 
-            {/* Transcript Tab */}
+            {/* Transcript Tab - Raw */}
             <TabsContent value="transcript">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>Исходный транскрипт</CardTitle>
+                    <CardDescription>
+                      Результат распознавания от Deepgram (без обработки)
+                    </CardDescription>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {getTranscript('raw') ? (
+                    <ScrollArea className="h-[500px] rounded-lg border p-6 bg-white">
+                      <pre className="whitespace-pre-wrap text-sm leading-relaxed font-sans" data-testid="raw-transcript-content">
+                        {getTranscript('raw').content}
+                      </pre>
+                    </ScrollArea>
+                  ) : (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+                      <p>Транскрибация в процессе...</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Processed Tab */}
+            <TabsContent value="processed">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Обработанный текст</CardTitle>
+                  <CardDescription>
+                    Результат обработки мастер-промптом через GPT-5.2
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {getTranscript('processed') ? (
+                    <ScrollArea className="h-[500px] rounded-lg border p-6 bg-white">
+                      <pre className="whitespace-pre-wrap text-sm leading-relaxed font-sans" data-testid="processed-transcript-content">
+                        {getTranscript('processed').content}
+                      </pre>
+                    </ScrollArea>
+                  ) : (
+                    <div className="text-center py-16 text-muted-foreground">
+                      <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
+                        <FileText className="w-8 h-8 text-slate-400" />
+                      </div>
+                      <h3 className="text-lg font-medium mb-2">Текст ещё не обработан</h3>
+                      <p className="mb-6 max-w-md mx-auto">
+                        Нажмите кнопку "Обработать" чтобы отправить транскрипт на обработку с вашим мастер-промптом
+                      </p>
+                      <Button
+                        onClick={handleProcessWithGPT}
+                        disabled={processing || !getTranscript('raw')}
+                        className="gap-2"
+                      >
+                        {processing ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Обработка...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4" />
+                            Обработать текст
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
                   <div>
                     <CardTitle>Транскрипт</CardTitle>
                     <CardDescription>
