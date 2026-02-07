@@ -394,21 +394,30 @@ async def call_gpt4o(system_message: str, user_message: str) -> str:
         logger.error(f"GPT-4o error: {e}")
         raise e
 
-async def call_gpt52(system_message: str, user_message: str) -> str:
-    """Call GPT-5.2 via OpenAI API for master prompt processing"""
+async def call_gpt52(system_message: str, user_message: str, reasoning_effort: str = "high") -> str:
+    """
+    Call GPT-5.2 via OpenAI API for master prompt processing
+    reasoning_effort: 'minimal', 'low', 'medium', 'high', 'xhigh' (deep thinking)
+    """
     try:
         from openai import AsyncOpenAI
         
         client = AsyncOpenAI(api_key=OPENAI_API_KEY)
         
-        response = await client.chat.completions.create(
-            model="gpt-5.2",
-            messages=[
+        # Build request params
+        params = {
+            "model": "gpt-5.2",
+            "messages": [
                 {"role": "system", "content": system_message},
                 {"role": "user", "content": user_message}
             ],
-            temperature=0.3,
-        )
+        }
+        
+        # Add reasoning effort parameter for deep thinking modes
+        if reasoning_effort and reasoning_effort != "auto":
+            params["reasoning"] = {"effort": reasoning_effort}
+        
+        response = await client.chat.completions.create(**params)
         
         return response.choices[0].message.content
     except Exception as e:
