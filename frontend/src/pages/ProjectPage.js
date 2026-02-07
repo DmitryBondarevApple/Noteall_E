@@ -732,8 +732,10 @@ export default function ProjectPage() {
                                     + {chat.additional_text}
                                   </p>
                                 )}
-                                <div className="prose prose-sm max-w-none whitespace-pre-wrap" data-testid={`chat-response-${chat.id}`}>
-                                  {chat.response_text}
+                                <div className="prose prose-sm max-w-none" data-testid={`chat-response-${chat.id}`}>
+                                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                    {chat.response_text}
+                                  </ReactMarkdown>
                                 </div>
                               </CardContent>
                             </Card>
