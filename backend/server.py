@@ -594,8 +594,20 @@ async def process_transcription(project_id: str, filename: str, language: str = 
             logger.info(f"[{project_id}] Using default master prompt (no user prompt found)")
         
         # Call GPT-5.2 with user's master prompt
+        # Add explicit instruction to output uncertain section
+        enhanced_prompt = master_prompt_content + """
+
+ВАЖНО: В конце текста ОБЯЗАТЕЛЬНО добавь секцию:
+
+Сомнительные места:
+1. слово1 - контекст или пояснение
+2. слово2 - контекст или пояснение
+...
+
+Перечисли ВСЕ слова, в которых ты сомневаешься или которые могут быть ошибками распознавания."""
+
         processed_transcript = await call_gpt52(
-            system_message=master_prompt_content,
+            system_message=enhanced_prompt,
             user_message=cleaned_transcript,
             reasoning_effort=reasoning_effort
         )
