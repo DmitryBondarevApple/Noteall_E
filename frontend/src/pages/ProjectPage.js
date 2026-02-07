@@ -884,10 +884,10 @@ function applySpekersToTranscript(content, speakers) {
     }
   });
   
-  // Convert [word?] to highlighted format for markdown
+  // Convert [word?] to <mark> for highlighting
   result = result.replace(
     /\[+([^\[\]]+?)\?+\]+/g,
-    '==$1=='
+    '<mark>$1</mark>'
   );
   
   return result;
