@@ -1059,6 +1059,21 @@ function applySpeakerNames(content, speakers) {
   return result;
 }
 
+function extractFullSentence(content, word) {
+  if (!content || !word) return null;
+  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const pattern = new RegExp(`\\[+${escaped}\\?+\\]+|${escaped}`, 'i');
+  const match = content.match(pattern);
+  if (!match) return null;
+  const pos = match.index;
+  // Find sentence boundaries: newline or Speaker label
+  let start = pos;
+  while (start > 0 && content[start - 1] !== '\n') start--;
+  let end = pos + match[0].length;
+  while (end < content.length && content[end] !== '\n') end++;
+  return content.slice(start, end).trim();
+}
+
 function renderContextWithHighlight(context, word) {
   if (!context || !word) return context;
   
