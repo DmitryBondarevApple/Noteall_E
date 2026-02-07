@@ -868,27 +868,20 @@ function applySpekersToTranscript(content, speakers) {
   
   let result = content;
   
-  // Apply speaker names
+  // Apply speaker name substitutions (if user renamed them)
   speakers.forEach((s) => {
-    if (s.speaker_name !== s.speaker_label) {
-      result = result.replace(
-        new RegExp(`${s.speaker_label}:`, 'g'),
-        `**${s.speaker_name}:**`
-      );
-    } else {
-      // Make speaker labels bold
-      result = result.replace(
-        new RegExp(`(${s.speaker_label}:)`, 'g'),
-        `**$1**`
-      );
+    if (s.speaker_name && s.speaker_name !== s.speaker_label) {
+      // Replace Speaker X: with actual name
+      const pattern = new RegExp(`(${s.speaker_label}):`, 'g');
+      result = result.replace(pattern, `**${s.speaker_name}:**`);
     }
   });
   
-  // Convert [word?] to <mark> for highlighting
-  result = result.replace(
-    /\[+([^\[\]]+?)\?+\]+/g,
-    '<mark>$1</mark>'
-  );
+  // Make remaining Speaker labels bold (those not renamed)
+  result = result.replace(/(Speaker \d+):/g, '**$1:**');
+  
+  // Convert [word?] or [[word?]?] patterns to <mark> for highlighting
+  result = result.replace(/\[+([^\[\]]+?)\?+\]+/g, '<mark>$1</mark>');
   
   return result;
 }
