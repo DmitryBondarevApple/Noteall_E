@@ -89,6 +89,7 @@ export default function ProjectPage() {
   const [editingFragment, setEditingFragment] = useState(null);
   const [editingSpeaker, setEditingSpeaker] = useState(null);
   const [selectedLanguage, setSelectedLanguage] = useState('ru');
+  const [selectedReasoningEffort, setSelectedReasoningEffort] = useState('high');
 
   const languageOptions = [
     { value: 'ru', label: 'Русский' },
@@ -101,6 +102,15 @@ export default function ProjectPage() {
     { value: 'nl', label: 'Nederlands' },
     { value: 'pl', label: 'Polski' },
     { value: 'uk', label: 'Українська' },
+  ];
+
+  const reasoningEffortOptions = [
+    { value: 'auto', label: 'Auto', description: 'Автоматический выбор' },
+    { value: 'minimal', label: 'Minimal', description: 'Быстрый ответ' },
+    { value: 'low', label: 'Low', description: 'Лёгкий анализ' },
+    { value: 'medium', label: 'Medium', description: 'Средний анализ' },
+    { value: 'high', label: 'High', description: 'Глубокий анализ' },
+    { value: 'xhigh', label: 'Deep Thinking', description: 'Максимальный анализ' },
   ];
 
   const loadData = useCallback(async () => {
