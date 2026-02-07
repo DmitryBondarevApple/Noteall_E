@@ -586,7 +586,8 @@ async def process_transcription(project_id: str, filename: str, language: str = 
         # Call GPT-5.2 with user's master prompt
         processed_transcript = await call_gpt52(
             system_message=master_prompt_content,
-            user_message=cleaned_transcript
+            user_message=cleaned_transcript,
+            reasoning_effort=reasoning_effort
         )
         
         # ========== STEP 3.5: PARSE AND SEPARATE UNCERTAIN SECTION ==========
