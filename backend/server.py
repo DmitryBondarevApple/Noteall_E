@@ -404,7 +404,7 @@ async def call_gpt4o(system_message: str, user_message: str) -> str:
 async def call_gpt52(system_message: str, user_message: str, reasoning_effort: str = "high") -> str:
     """
     Call GPT-5.2 via OpenAI API for master prompt processing
-    reasoning_effort: 'minimal', 'low', 'medium', 'high', 'xhigh' (deep thinking)
+    reasoning_effort: 'auto', 'minimal', 'low', 'medium', 'high', 'xhigh' (deep thinking)
     """
     try:
         from openai import AsyncOpenAI
@@ -420,9 +420,19 @@ async def call_gpt52(system_message: str, user_message: str, reasoning_effort: s
             ],
         }
         
-        # Add reasoning effort parameter for deep thinking modes
-        if reasoning_effort and reasoning_effort != "auto":
-            params["reasoning"] = {"effort": reasoning_effort}
+        # Map reasoning effort to model parameters
+        # For GPT-5.2, use temperature and max_completion_tokens based on effort
+        effort_config = {
+            "auto": {"temperature": 0.5},
+            "minimal": {"temperature": 0.7, "max_completion_tokens": 2000},
+            "low": {"temperature": 0.5, "max_completion_tokens": 4000},
+            "medium": {"temperature": 0.3, "max_completion_tokens": 8000},
+            "high": {"temperature": 0.2, "max_completion_tokens": 16000},
+            "xhigh": {"temperature": 0.1, "max_completion_tokens": 32000},
+        }
+        
+        config = effort_config.get(reasoning_effort, effort_config["high"])
+        params.update(config)
         
         response = await client.chat.completions.create(**params)
         
