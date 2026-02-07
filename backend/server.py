@@ -545,30 +545,206 @@ async def process_transcription(project_id: str, filename: str, language: str = 
         
         logger.info(f"[{project_id}] Raw transcript saved, {len(raw_transcript)} chars, {len(unique_speakers)} speakers")
         
-        # ========== STEP 2: INITIAL AI CLEANUP (GPT-4o) ==========
+        # ========== STEP 2: CREATE SPEAKER MAP ==========
+        if not unique_speakers:
+            unique_speakers = {0}
+        
+        for speaker_num in sorted(unique_speakers):
+            await db.speaker_maps.insert_one({
+                "id": str(uuid.uuid4()),
+                "project_id": project_id,
+                "speaker_label": f"Speaker {speaker_num + 1}",
+                "speaker_name": f"Speaker {speaker_num + 1}"
+            })
+        
+        # ========== STEP 3: UPDATE PROJECT STATUS ==========
+        # Set to ready for review - user will manually trigger GPT processing
         await db.projects.update_one(
             {"id": project_id},
-            {"$set": {"status": "processing", "updated_at": datetime.now(timezone.utc).isoformat()}}
+            {"$set": {
+                "status": "ready",
+                "recording_duration": duration,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }}
         )
         
-        logger.info(f"[{project_id}] Step 2: Initial cleanup with GPT-4o")
+        logger.info(f"[{project_id}] Transcription complete, ready for manual processing")
         
-        initial_system = """Ты - эксперт по обработке транскриптов встреч.
-Твоя задача - первичная очистка транскрипта:
-1. Исправь очевидные ошибки распознавания речи
-2. Расставь знаки препинания правильно
-3. Сохрани разметку спикеров (Speaker 1:, Speaker 2: и т.д.)
-4. НЕ меняй смысл текста
-5. НЕ выделяй спорные места - это будет сделано на следующем этапе
+    except Exception as e:
+        logger.error(f"[{project_id}] Transcription error: {e}")
+        await db.projects.update_one(
+            {"id": project_id},
+            {"$set": {
+                "status": "error",
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
 
-Верни очищенный транскрипт."""
+# ========== MANUAL GPT PROCESSING ENDPOINT ==========
 
-        cleaned_transcript = await call_gpt4o(
-            system_message=initial_system,
-            user_message=f"Очисти этот транскрипт:\n\n{raw_transcript}"
+@api_router.post("/projects/{project_id}/process")
+async def process_transcript_with_gpt(
+    project_id: str,
+    user = Depends(get_current_user)
+):
+    """Manually trigger GPT processing of transcript with master prompt"""
+    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Get raw transcript
+    raw_transcript = await db.transcripts.find_one(
+        {"project_id": project_id, "version_type": "raw"},
+        {"_id": 0}
+    )
+    if not raw_transcript:
+        raise HTTPException(status_code=400, detail="No raw transcript found")
+    
+    # Get master prompt
+    master_prompt = await db.prompts.find_one({"prompt_type": "master"}, {"_id": 0})
+    if not master_prompt:
+        raise HTTPException(status_code=400, detail="Master prompt not configured")
+    
+    logger.info(f"[{project_id}] Starting manual GPT processing with master prompt: '{master_prompt.get('name')}'")
+    
+    # Update status
+    await db.projects.update_one(
+        {"id": project_id},
+        {"$set": {"status": "processing", "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    try:
+        # Get reasoning effort from project settings
+        reasoning_effort = project.get("reasoning_effort", "high")
+        
+        # Call GPT-5.2 with user's master prompt
+        processed_text = await call_gpt52(
+            system_message=master_prompt["content"],
+            user_message=raw_transcript["content"],
+            reasoning_effort=reasoning_effort
         )
         
-        logger.info(f"[{project_id}] Initial cleanup done, {len(cleaned_transcript)} chars")
+        logger.info(f"[{project_id}] GPT processing complete, result: {len(processed_text)} chars")
+        
+        # Delete old processed transcript if exists
+        await db.transcripts.delete_many({"project_id": project_id, "version_type": "processed"})
+        
+        # Save processed transcript
+        await db.transcripts.insert_one({
+            "id": str(uuid.uuid4()),
+            "project_id": project_id,
+            "version_type": "processed",
+            "content": processed_text,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        })
+        
+        # Parse uncertain fragments from processed text
+        await parse_uncertain_fragments(project_id, processed_text)
+        
+        # Update status
+        await db.projects.update_one(
+            {"id": project_id},
+            {"$set": {"status": "ready", "updated_at": datetime.now(timezone.utc).isoformat()}}
+        )
+        
+        return {"message": "Processing complete", "length": len(processed_text)}
+        
+    except Exception as e:
+        logger.error(f"[{project_id}] GPT processing error: {e}")
+        await db.projects.update_one(
+            {"id": project_id},
+            {"$set": {"status": "ready", "updated_at": datetime.now(timezone.utc).isoformat()}}
+        )
+        raise HTTPException(status_code=500, detail=str(e))
+
+async def parse_uncertain_fragments(project_id: str, text: str):
+    """Parse uncertain fragments from processed text"""
+    # Delete old fragments
+    await db.uncertain_fragments.delete_many({"project_id": project_id})
+    
+    # Look for section "Сомнительные места"
+    uncertain_headers = [
+        r'Сомнительные места[^:]*:',
+        r'Сомнительные[^:]*:',
+        r'Возможные ошибки[^:]*:',
+        r'Ошибки распознавания[^:]*:',
+    ]
+    
+    uncertain_section = ""
+    main_text = text
+    
+    for header_pattern in uncertain_headers:
+        match = re.search(header_pattern, text, re.IGNORECASE)
+        if match:
+            split_pos = match.start()
+            main_text = text[:split_pos].strip()
+            uncertain_section = text[split_pos:].strip()
+            break
+    
+    # Parse [word?] patterns in main text
+    bracket_pattern = re.compile(r'\[+([^\[\]]+?)\?+\]+')
+    seen_words = set()
+    
+    for match in bracket_pattern.finditer(main_text):
+        word = match.group(1).strip()
+        if word and word.lower() not in seen_words:
+            seen_words.add(word.lower())
+            
+            # Get context
+            pos = match.start()
+            context_start = max(0, pos - 80)
+            context_end = min(len(main_text), match.end() + 80)
+            context = main_text[context_start:context_end]
+            
+            await db.uncertain_fragments.insert_one({
+                "id": str(uuid.uuid4()),
+                "project_id": project_id,
+                "original_text": word,
+                "corrected_text": None,
+                "context": context.strip(),
+                "start_time": None,
+                "end_time": None,
+                "suggestions": [word],
+                "status": "pending",
+                "created_at": datetime.now(timezone.utc).isoformat()
+            })
+    
+    # Parse numbered list from uncertain section
+    if uncertain_section:
+        list_pattern = re.compile(r'(?:^\d+[\.\)]\s*|\n\d+[\.\)]\s*|\n[-•]\s*)([^\n]+)', re.MULTILINE)
+        for match in list_pattern.finditer(uncertain_section):
+            item_text = match.group(1).strip()
+            
+            # Extract word in quotes or brackets
+            word_match = re.search(r'[«"\'"\[]([^»"\'"\]]+)[»"\'"\]]', item_text)
+            if word_match:
+                word = word_match.group(1).strip()
+            else:
+                word = item_text.split(' - ')[0].split(':')[0].strip()
+                word = re.sub(r'^[\[\(«"\']+|[\]\)»"\']+$', '', word)
+            
+            if word and len(word) > 1 and word.lower() not in seen_words:
+                seen_words.add(word.lower())
+                
+                # Find context in main text
+                word_in_text = re.search(rf'.{{0,80}}{re.escape(word)}.{{0,80}}', main_text, re.IGNORECASE)
+                context = word_in_text.group(0) if word_in_text else item_text
+                
+                await db.uncertain_fragments.insert_one({
+                    "id": str(uuid.uuid4()),
+                    "project_id": project_id,
+                    "original_text": word,
+                    "corrected_text": None,
+                    "context": context.strip(),
+                    "start_time": None,
+                    "end_time": None,
+                    "suggestions": [word],
+                    "status": "pending",
+                    "source": "list",
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                })
+    
+    logger.info(f"[{project_id}] Parsed {len(seen_words)} uncertain fragments")
         
         # ========== STEP 3: MASTER PROMPT PROCESSING (GPT-5.2) ==========
         logger.info(f"[{project_id}] Step 3: Processing with user's Master Prompt via GPT-5.2")
