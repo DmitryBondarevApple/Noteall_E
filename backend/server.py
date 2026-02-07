@@ -573,50 +573,131 @@ async def process_transcription(project_id: str, filename: str, language: str = 
             user_message=cleaned_transcript
         )
         
-        # Save processed transcript
+        # ========== STEP 3.5: PARSE AND SEPARATE UNCERTAIN SECTION ==========
+        # Look for section with uncertain words at the end
+        main_text = processed_transcript
+        uncertain_section = ""
+        
+        # Common patterns for the uncertain section header
+        uncertain_headers = [
+            r'Сомнительные[^:]*:',
+            r'Возможные ошибки[^:]*:',
+            r'Список сомнительных[^:]*:',
+            r'Сомнения[^:]*:',
+            r'Уточнить[^:]*:',
+        ]
+        
+        for header_pattern in uncertain_headers:
+            match = re.search(header_pattern, processed_transcript, re.IGNORECASE)
+            if match:
+                split_pos = match.start()
+                main_text = processed_transcript[:split_pos].strip()
+                uncertain_section = processed_transcript[split_pos:].strip()
+                logger.info(f"[{project_id}] Found uncertain section at position {split_pos}")
+                break
+        
+        # Save processed transcript (main text only, without uncertain section)
         await db.transcripts.insert_one({
             "id": str(uuid.uuid4()),
             "project_id": project_id,
             "version_type": "processed",
-            "content": processed_transcript,
+            "content": main_text,
             "created_at": datetime.now(timezone.utc).isoformat()
         })
         
-        logger.info(f"[{project_id}] Processed transcript saved")
+        logger.info(f"[{project_id}] Processed transcript saved, {len(main_text)} chars")
         
-        # ========== STEP 3: EXTRACT UNCERTAIN FRAGMENTS ==========
-        # Find all [word?] patterns in processed transcript
-        uncertain_pattern = re.compile(r'\[([^\]]+)\?\]')
-        matches = uncertain_pattern.findall(processed_transcript)
+        # ========== STEP 4: EXTRACT UNCERTAIN FRAGMENTS ==========
+        uncertain_items = []
         
-        # Create uncertain fragment records
-        seen_words = set()
-        for match in matches:
-            word = match.strip()
-            if word and word not in seen_words:
-                seen_words.add(word)
+        # Method 1: Parse [word?] patterns in the main text
+        bracket_pattern = re.compile(r'\[+([^\[\]]+?)\?+\]+')
+        for match in bracket_pattern.finditer(main_text):
+            word = match.group(1).strip()
+            position = match.start()
+            
+            # Get extended context (100 chars before and after)
+            context_start = max(0, position - 100)
+            context_end = min(len(main_text), match.end() + 100)
+            context = main_text[context_start:context_end]
+            
+            # Clean up context - make it a full sentence if possible
+            # Find sentence boundaries
+            if context_start > 0:
+                # Try to start from beginning of sentence
+                sentence_start = context.rfind('. ', 0, 50)
+                if sentence_start != -1:
+                    context = context[sentence_start + 2:]
+            
+            uncertain_items.append({
+                "word": word,
+                "context": context.strip(),
+                "position": position,
+                "source": "inline"
+            })
+        
+        # Method 2: Parse numbered list from uncertain section
+        if uncertain_section:
+            # Pattern for numbered items: "1. слово" or "1) слово" or "- слово"
+            list_pattern = re.compile(r'(?:^\d+[\.\)]\s*|\n\d+[\.\)]\s*|\n[-•]\s*)([^\n]+)', re.MULTILINE)
+            for match in list_pattern.finditer(uncertain_section):
+                item_text = match.group(1).strip()
                 
-                # Find context around the word
-                context_match = re.search(
-                    rf'.{{0,30}}\[{re.escape(word)}\?\].{{0,30}}',
-                    processed_transcript
-                )
-                context = context_match.group(0) if context_match else word
+                # Try to extract the word in quotes or brackets
+                word_match = re.search(r'[«"\'"\[]([^»"\'"\]]+)[»"\'"\]]', item_text)
+                if word_match:
+                    word = word_match.group(1).strip()
+                else:
+                    # Just take first word or phrase
+                    word = item_text.split(' - ')[0].split(':')[0].strip()
+                    word = re.sub(r'^[\[\(«"\']+|[\]\)»"\']+$', '', word)
+                
+                if word and len(word) > 1:
+                    # Try to find this word in main text for context
+                    word_in_text = re.search(
+                        rf'.{{0,100}}{re.escape(word)}.{{0,100}}',
+                        main_text,
+                        re.IGNORECASE
+                    )
+                    context = word_in_text.group(0) if word_in_text else item_text
+                    
+                    uncertain_items.append({
+                        "word": word,
+                        "context": context.strip(),
+                        "position": -1,
+                        "source": "list",
+                        "original_line": item_text
+                    })
+        
+        # Deduplicate and save uncertain fragments
+        seen_words = set()
+        fragments_saved = 0
+        
+        for item in uncertain_items:
+            word = item["word"]
+            # Normalize for dedup
+            word_lower = word.lower().strip()
+            
+            if word_lower and word_lower not in seen_words and len(word_lower) > 1:
+                seen_words.add(word_lower)
                 
                 await db.uncertain_fragments.insert_one({
                     "id": str(uuid.uuid4()),
                     "project_id": project_id,
                     "original_text": word,
                     "corrected_text": None,
-                    "context": context,
+                    "context": item["context"],
                     "start_time": None,
                     "end_time": None,
                     "suggestions": [word],
                     "status": "pending",
+                    "source": item.get("source", "inline"),
+                    "original_line": item.get("original_line", ""),
                     "created_at": datetime.now(timezone.utc).isoformat()
                 })
+                fragments_saved += 1
         
-        logger.info(f"[{project_id}] Found {len(seen_words)} uncertain fragments")
+        logger.info(f"[{project_id}] Saved {fragments_saved} uncertain fragments")
         
         # ========== STEP 4: CREATE SPEAKER MAP ==========
         if not unique_speakers:
