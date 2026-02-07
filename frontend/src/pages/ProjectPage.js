@@ -838,13 +838,62 @@ function renderTranscript(content, speakers) {
     }
   });
   
-  // Highlight uncertain fragments
+  // Highlight uncertain fragments - handle nested brackets
   rendered = rendered.replace(
-    /\[([^\]]+)\?\]/g,
+    /\[+([^\[\]]+?)\?+\]+/g,
     '<span class="uncertain-fragment">$1</span>'
   );
   
   return <span dangerouslySetInnerHTML={{ __html: rendered }} />;
+}
+
+function renderContextWithHighlight(context, word) {
+  if (!context || !word) return context;
+  
+  // Escape special regex characters in the word
+  const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  
+  // Try to find the word with brackets first
+  const bracketPattern = new RegExp(`\\[+${escapedWord}\\?+\\]+`, 'gi');
+  const plainPattern = new RegExp(`(${escapedWord})`, 'gi');
+  
+  let parts = [];
+  let lastIndex = 0;
+  let match;
+  
+  // First try bracket pattern
+  let hasMatch = false;
+  const testBracket = context.match(bracketPattern);
+  const testPlain = context.match(plainPattern);
+  
+  const pattern = testBracket ? bracketPattern : plainPattern;
+  const contextCopy = context;
+  
+  while ((match = pattern.exec(contextCopy)) !== null) {
+    hasMatch = true;
+    // Add text before match
+    if (match.index > lastIndex) {
+      parts.push(
+        <span key={`text-${lastIndex}`}>{contextCopy.slice(lastIndex, match.index)}</span>
+      );
+    }
+    // Add highlighted match
+    parts.push(
+      <mark key={`mark-${match.index}`} className="bg-orange-200 text-orange-900 px-1 rounded font-medium">
+        {testBracket ? word : match[0]}
+      </mark>
+    );
+    lastIndex = match.index + match[0].length;
+  }
+  
+  // Add remaining text
+  if (lastIndex < contextCopy.length) {
+    parts.push(
+      <span key={`text-end`}>{contextCopy.slice(lastIndex)}</span>
+    );
+  }
+  
+  return hasMatch ? parts : context;
 }
 
 function formatTime(seconds) {
