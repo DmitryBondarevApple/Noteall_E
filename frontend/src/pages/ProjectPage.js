@@ -862,6 +862,36 @@ function EditSpeakerForm({ speaker, onSave, onCancel }) {
   );
 }
 
+function applySpekersToTranscript(content, speakers) {
+  if (!content) return '';
+  
+  let result = content;
+  
+  // Apply speaker names
+  speakers.forEach((s) => {
+    if (s.speaker_name !== s.speaker_label) {
+      result = result.replace(
+        new RegExp(`${s.speaker_label}:`, 'g'),
+        `**${s.speaker_name}:**`
+      );
+    } else {
+      // Make speaker labels bold
+      result = result.replace(
+        new RegExp(`(${s.speaker_label}:)`, 'g'),
+        `**$1**`
+      );
+    }
+  });
+  
+  // Convert [word?] to highlighted format for markdown
+  result = result.replace(
+    /\[+([^\[\]]+?)\?+\]+/g,
+    '==$1=='
+  );
+  
+  return result;
+}
+
 function renderTranscript(content, speakers) {
   if (!content) return null;
   
