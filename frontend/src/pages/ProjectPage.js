@@ -82,6 +82,7 @@ export default function ProjectPage() {
   const [uploading, setUploading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [processing, setProcessing] = useState(false);
   
   const [dragActive, setDragActive] = useState(false);
   const [selectedPrompt, setSelectedPrompt] = useState('');
