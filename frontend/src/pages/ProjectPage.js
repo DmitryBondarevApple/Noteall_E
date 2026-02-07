@@ -459,8 +459,10 @@ export default function ProjectPage() {
                 <CardContent>
                   {currentTranscript ? (
                     <ScrollArea className="h-[500px] rounded-lg border p-6 bg-white">
-                      <div className="prose prose-slate max-w-none whitespace-pre-wrap font-mono text-sm leading-relaxed" data-testid="transcript-content">
-                        {renderTranscript(currentTranscript.content, speakers)}
+                      <div className="prose prose-slate max-w-none text-sm leading-relaxed" data-testid="transcript-content">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {applySpekersToTranscript(currentTranscript.content, speakers)}
+                        </ReactMarkdown>
                       </div>
                     </ScrollArea>
                   ) : (
