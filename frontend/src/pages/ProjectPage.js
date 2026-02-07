@@ -926,51 +926,16 @@ function EditSpeakerForm({ speaker, onSave, onCancel }) {
   );
 }
 
-function applySpekersToTranscript(content, speakers) {
-  if (!content) return '';
-  
+function applySpeakerNames(content, speakers) {
+  if (!content || !speakers?.length) return content || '';
   let result = content;
-  
-  // Apply speaker name substitutions (if user renamed them)
   speakers.forEach((s) => {
     if (s.speaker_name && s.speaker_name !== s.speaker_label) {
-      // Replace Speaker X: with actual name
-      const pattern = new RegExp(`(${s.speaker_label}):`, 'g');
-      result = result.replace(pattern, `**${s.speaker_name}:**`);
+      const escaped = s.speaker_label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      result = result.replace(new RegExp(escaped + ':', 'g'), s.speaker_name + ':');
     }
   });
-  
-  // Make remaining Speaker labels bold (those not renamed)
-  result = result.replace(/(Speaker \d+):/g, '**$1:**');
-  
-  // Convert [word?] or [[word?]?] patterns to <mark> for highlighting
-  result = result.replace(/\[+([^\[\]]+?)\?+\]+/g, '<mark>$1</mark>');
-  
   return result;
-}
-
-function renderTranscript(content, speakers) {
-  if (!content) return null;
-  
-  let rendered = content;
-  
-  // Apply speaker names
-  speakers.forEach((s, index) => {
-    if (s.speaker_name !== s.speaker_label) {
-      rendered = rendered.replace(
-        new RegExp(`${s.speaker_label}:`, 'g'),
-        `${s.speaker_name}:`
-      );
-    }
-  });
-  
-  // Highlight uncertain fragments - handle nested brackets
-  rendered = rendered.replace(
-    /\[+([^\[\]]+?)\?+\]+/g,
-    '<span class="uncertain-fragment">$1</span>'
-  );
-  
-  return <span dangerouslySetInnerHTML={{ __html: rendered }} />;
 }
 
 function renderContextWithHighlight(context, word) {
