@@ -419,14 +419,15 @@ export default function ProjectPage() {
                   )}
                 </TabsTrigger>
                 <TabsTrigger value="speakers" className="gap-2" data-testid="speakers-tab">
-                <Users className="w-4 h-4" />
-                Спикеры
-              </TabsTrigger>
-              <TabsTrigger value="analysis" className="gap-2" data-testid="analysis-tab">
-                <Sparkles className="w-4 h-4" />
-                Анализ
-              </TabsTrigger>
-            </TabsList>
+                  <Users className="w-4 h-4" />
+                  Спикеры
+                </TabsTrigger>
+                <TabsTrigger value="analysis" className="gap-2" data-testid="analysis-tab">
+                  <Sparkles className="w-4 h-4" />
+                  Анализ
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
             {/* Transcript Tab */}
             <TabsContent value="transcript">
