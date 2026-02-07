@@ -252,6 +252,20 @@ export default function ProjectPage() {
     }
   };
 
+  const handleProcessWithGPT = async () => {
+    setProcessing(true);
+    try {
+      await transcriptsApi.process(projectId);
+      toast.success('Обработка завершена');
+      loadData();
+      setActiveTab('processed');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Ошибка обработки');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   const handleAnalyze = async () => {
     if (!selectedPrompt) {
       toast.error('Выберите промпт для анализа');
