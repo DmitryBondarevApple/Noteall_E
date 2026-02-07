@@ -736,7 +736,7 @@ export default function ProjectPage() {
                                   </p>
                                 )}
                                 <div className="prose prose-sm max-w-none" data-testid={`chat-response-${chat.id}`}>
-                                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                  <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
                                     {chat.response_text}
                                   </ReactMarkdown>
                                 </div>
