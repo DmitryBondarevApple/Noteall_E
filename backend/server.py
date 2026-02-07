@@ -431,7 +431,7 @@ async def call_gpt52(system_message: str, user_message: str, reasoning_effort: s
         logger.error(f"GPT-5.2 error: {e}")
         raise e
 
-async def process_transcription(project_id: str, filename: str, language: str = "ru"):
+async def process_transcription(project_id: str, filename: str, language: str = "ru", reasoning_effort: str = "high"):
     """
     Pipeline:
     1. Deepgram -> raw transcript
