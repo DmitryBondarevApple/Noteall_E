@@ -445,25 +445,39 @@ export default function ProjectPage() {
                 </TabsTrigger>
               </TabsList>
               
-              {/* Process Button */}
-              <Button
-                onClick={handleProcessWithGPT}
-                disabled={processing || !getTranscript('raw')}
-                className="gap-2"
-                data-testid="process-btn"
-              >
-                {processing ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Обработка...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4" />
-                    Обработать
-                  </>
-                )}
-              </Button>
+              {/* Process Button with Reasoning Selector */}
+              <div className="flex items-center gap-3">
+                <Select value={selectedReasoningEffort} onValueChange={setSelectedReasoningEffort}>
+                  <SelectTrigger className="w-44 h-9 text-xs" data-testid="tab-reasoning-select">
+                    <SelectValue placeholder="Режим GPT" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {reasoningEffortOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        <span className="text-xs">{opt.label} — {opt.description}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  onClick={handleProcessWithGPT}
+                  disabled={processing || !getTranscript('raw')}
+                  className="gap-2"
+                  data-testid="process-btn"
+                >
+                  {processing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Обработка...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      Обработать
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
 
             {/* Transcript Tab - Raw */}
