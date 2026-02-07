@@ -56,7 +56,6 @@ Platform for transcribing and analyzing work meetings. Users upload audio/video,
 
 ## Known Issues
 - Automated transcript pipeline disabled (manual "Обработать" button is workaround)
-- Markdown rendering temporarily disabled
 - server.py and ProjectPage.js are monolithic (800+ lines each)
 
 ## Upcoming Tasks (P1)
