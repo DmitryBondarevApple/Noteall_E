@@ -319,21 +319,44 @@ export default function ProjectPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Language Selection */}
-              <div className="flex items-center gap-4">
-                <Label className="whitespace-nowrap">Язык записи:</Label>
-                <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-                  <SelectTrigger className="w-48" data-testid="language-select">
-                    <SelectValue placeholder="Выберите язык" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {languageOptions.map((lang) => (
-                      <SelectItem key={lang.value} value={lang.value}>
-                        {lang.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              {/* Settings Row */}
+              <div className="flex flex-wrap items-center gap-6">
+                {/* Language Selection */}
+                <div className="flex items-center gap-3">
+                  <Label className="whitespace-nowrap text-sm">Язык:</Label>
+                  <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                    <SelectTrigger className="w-40" data-testid="language-select">
+                      <SelectValue placeholder="Выберите язык" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {languageOptions.map((lang) => (
+                        <SelectItem key={lang.value} value={lang.value}>
+                          {lang.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Reasoning Effort Selection */}
+                <div className="flex items-center gap-3">
+                  <Label className="whitespace-nowrap text-sm">Режим GPT-5.2:</Label>
+                  <Select value={selectedReasoningEffort} onValueChange={setSelectedReasoningEffort}>
+                    <SelectTrigger className="w-48" data-testid="reasoning-select">
+                      <SelectValue placeholder="Выберите режим" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {reasoningEffortOptions.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          <div className="flex flex-col">
+                            <span className="font-medium">{opt.label}</span>
+                            <span className="text-xs text-muted-foreground">{opt.description}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               {/* Dropzone */}
