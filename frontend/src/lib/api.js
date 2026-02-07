@@ -24,7 +24,8 @@ export const projectsApi = {
 // Transcripts
 export const transcriptsApi = {
   list: (projectId) => axios.get(`${API}/projects/${projectId}/transcripts`),
-  confirm: (projectId) => axios.post(`${API}/projects/${projectId}/transcripts/confirm`)
+  confirm: (projectId) => axios.post(`${API}/projects/${projectId}/transcripts/confirm`),
+  process: (projectId) => axios.post(`${API}/projects/${projectId}/process`)
 };
 
 // Fragments
