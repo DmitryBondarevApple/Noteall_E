@@ -10,10 +10,11 @@ export const projectsApi = {
   create: (data) => axios.post(`${API}/projects`, data),
   update: (id, data) => axios.put(`${API}/projects/${id}`, data),
   delete: (id) => axios.delete(`${API}/projects/${id}`),
-  upload: (id, file, language = 'ru') => {
+  upload: (id, file, language = 'ru', reasoningEffort = 'high') => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('language', language);
+    formData.append('reasoning_effort', reasoningEffort);
     return axios.post(`${API}/projects/${id}/upload`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
