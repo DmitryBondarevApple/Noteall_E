@@ -403,21 +403,22 @@ export default function ProjectPage() {
         {/* Main Content Tabs */}
         {project?.status !== 'new' && (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="bg-white border p-1">
-              <TabsTrigger value="transcript" className="gap-2" data-testid="transcript-tab">
-                <FileText className="w-4 h-4" />
-                Транскрипт
-              </TabsTrigger>
-              <TabsTrigger value="review" className="gap-2" data-testid="review-tab">
-                <AlertCircle className="w-4 h-4" />
-                Проверка
-                {pendingFragments.length > 0 && (
-                  <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center">
-                    {pendingFragments.length}
-                  </Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="speakers" className="gap-2" data-testid="speakers-tab">
+            <div className="sticky top-[73px] z-40 bg-slate-50 py-2 -mx-6 px-6">
+              <TabsList className="bg-white border p-1 shadow-sm">
+                <TabsTrigger value="transcript" className="gap-2" data-testid="transcript-tab">
+                  <FileText className="w-4 h-4" />
+                  Транскрипт
+                </TabsTrigger>
+                <TabsTrigger value="review" className="gap-2" data-testid="review-tab">
+                  <AlertCircle className="w-4 h-4" />
+                  Проверка
+                  {pendingFragments.length > 0 && (
+                    <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center">
+                      {pendingFragments.length}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="speakers" className="gap-2" data-testid="speakers-tab">
                 <Users className="w-4 h-4" />
                 Спикеры
               </TabsTrigger>
