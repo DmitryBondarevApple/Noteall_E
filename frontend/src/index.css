@@ -148,6 +148,118 @@
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+/* Markdown prose styles */
+.prose {
+    color: hsl(var(--foreground));
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4 {
+    font-family: 'Manrope', sans-serif;
+    font-weight: 600;
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    color: hsl(var(--foreground));
+}
+
+.prose h1 { font-size: 1.5em; }
+.prose h2 { font-size: 1.25em; }
+.prose h3 { font-size: 1.125em; }
+
+.prose p {
+    margin-bottom: 1em;
+    line-height: 1.7;
+}
+
+.prose ul, .prose ol {
+    margin-left: 1.5em;
+    margin-bottom: 1em;
+}
+
+.prose li {
+    margin-bottom: 0.5em;
+}
+
+.prose ul li {
+    list-style-type: disc;
+}
+
+.prose ol li {
+    list-style-type: decimal;
+}
+
+.prose strong {
+    font-weight: 600;
+    color: hsl(var(--foreground));
+}
+
+.prose em {
+    font-style: italic;
+}
+
+.prose code {
+    background-color: hsl(var(--muted));
+    padding: 0.2em 0.4em;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9em;
+}
+
+.prose pre {
+    background-color: hsl(222 47% 11%);
+    color: hsl(210 40% 98%);
+    padding: 1em;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin-bottom: 1em;
+}
+
+.prose pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+}
+
+.prose blockquote {
+    border-left: 4px solid hsl(var(--brand-indigo));
+    padding-left: 1em;
+    margin-left: 0;
+    margin-bottom: 1em;
+    color: hsl(var(--muted-foreground));
+    font-style: italic;
+}
+
+.prose table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1em;
+}
+
+.prose th, .prose td {
+    border: 1px solid hsl(var(--border));
+    padding: 0.5em 1em;
+    text-align: left;
+}
+
+.prose th {
+    background-color: hsl(var(--muted));
+    font-weight: 600;
+}
+
+.prose hr {
+    border: none;
+    border-top: 1px solid hsl(var(--border));
+    margin: 1.5em 0;
+}
+
+.prose a {
+    color: hsl(var(--brand-indigo));
+    text-decoration: underline;
+}
+
+.prose a:hover {
+    opacity: 0.8;
+}
+
 @layer base {
     [data-debug-wrapper="true"] {
         display: contents !important;
