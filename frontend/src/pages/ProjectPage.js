@@ -800,11 +800,9 @@ export default function ProjectPage() {
                                     + {chat.additional_text}
                                   </p>
                                 )}
-                                <div className="prose prose-sm max-w-none" data-testid={`chat-response-${chat.id}`}>
-                                  <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
-                                    {chat.response_text}
-                                  </ReactMarkdown>
-                                </div>
+                                <pre className="whitespace-pre-wrap text-sm leading-relaxed font-sans" data-testid={`chat-response-${chat.id}`}>
+                                  {chat.response_text}
+                                </pre>
                               </CardContent>
                             </Card>
                           ))}
