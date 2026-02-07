@@ -308,7 +308,34 @@ export default function ProjectPage() {
     }
   };
 
-  const getTranscript = (type) => transcripts.find(t => t.version_type === type);
+  const handleStartEditProcessed = () => {
+    const processed = getTranscript('processed');
+    if (processed) {
+      setEditProcessedText(processed.content);
+      setIsEditingProcessed(true);
+    }
+  };
+
+  const handleSaveProcessed = async () => {
+    setSavingProcessed(true);
+    try {
+      await transcriptsApi.updateContent(projectId, 'processed', editProcessedText);
+      setTranscripts(transcripts.map(t =>
+        t.version_type === 'processed' ? { ...t, content: editProcessedText } : t
+      ));
+      setIsEditingProcessed(false);
+      toast.success('Текст сохранён');
+    } catch (error) {
+      toast.error('Ошибка сохранения');
+    } finally {
+      setSavingProcessed(false);
+    }
+  };
+
+  const handleCancelEditProcessed = () => {
+    setIsEditingProcessed(false);
+    setEditProcessedText('');
+  }; = (type) => transcripts.find(t => t.version_type === type);
   const currentTranscript = getTranscript('confirmed') || getTranscript('processed') || getTranscript('raw');
   const pendingFragments = fragments.filter(f => f.status === 'pending');
   const status = statusConfig[project?.status] || statusConfig.new;
