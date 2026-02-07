@@ -1006,12 +1006,8 @@ async def analyze_transcript(
     if not prompt:
         raise HTTPException(status_code=404, detail="Prompt not found")
     
-    # Call GPT-4o for analysis using user's OpenAI API
+    # Call GPT-5.2 for analysis using user's OpenAI API with reasoning effort
     try:
-        from openai import AsyncOpenAI
-        
-        client = AsyncOpenAI(api_key=OPENAI_API_KEY)
-        
         system_message = f"""Ты - эксперт по анализу рабочих встреч. 
 Анализируй транскрипт встречи согласно инструкциям пользователя.
 Отвечай на русском языке, структурированно и по существу.
@@ -1024,16 +1020,12 @@ async def analyze_transcript(
         if data.additional_text:
             user_text += f"\n\nДополнительные указания:\n{data.additional_text}"
         
-        response = await client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": system_message},
-                {"role": "user", "content": user_text}
-            ],
-            temperature=0.3,
+        reasoning_effort = data.reasoning_effort or "high"
+        response_text = await call_gpt52(
+            system_message=system_message,
+            user_message=user_text,
+            reasoning_effort=reasoning_effort
         )
-        
-        response_text = response.choices[0].message.content
         
     except Exception as e:
         logger.error(f"GPT analysis error: {e}")
