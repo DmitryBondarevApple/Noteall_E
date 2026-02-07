@@ -220,6 +220,22 @@ export default function ProjectPage() {
         f.id === fragment.id ? { ...f, corrected_text: correctedText, status: 'confirmed' } : f
       ));
       setEditingFragment(null);
+
+      // Apply correction to processed transcript
+      const processed = getTranscript('processed');
+      if (processed) {
+        const word = fragment.original_text;
+        const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const pattern = new RegExp(`\\[+${escaped}\\?+\\]+`, 'g');
+        const updatedContent = processed.content.replace(pattern, correctedText);
+        if (updatedContent !== processed.content) {
+          setTranscripts(transcripts.map(t =>
+            t.version_type === 'processed' ? { ...t, content: updatedContent } : t
+          ));
+          transcriptsApi.updateContent(projectId, 'processed', updatedContent).catch(() => {});
+        }
+      }
+
       toast.success('Фрагмент подтвержден');
     } catch (error) {
       toast.error('Ошибка сохранения');
