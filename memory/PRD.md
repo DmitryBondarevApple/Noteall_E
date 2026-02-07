@@ -1,87 +1,75 @@
-# Voice Workspace MVP - PRD
+# Voice Workspace MVP — PRD
 
-## Описание проекта
-Платформа для транскрибации и анализа рабочих встреч на базе Deepgram и OpenAI GPT-4o.
+## Problem Statement
+Platform for transcribing and analyzing work meetings. Users upload audio/video, Deepgram transcribes it, GPT processes the transcript with a master prompt, then users can run thematic analysis prompts.
 
-## Дата создания
-2024-02-03
+## Tech Stack
+- **Backend:** FastAPI, PyMongo (async), python-jose (JWT)
+- **Frontend:** React, Tailwind CSS, Shadcn UI, Axios
+- **Database:** MongoDB
+- **Integrations:** Deepgram (Nova-3), OpenAI GPT-4o/5.2 (user's API key)
 
-## User Personas
-- **Бизнес-пользователь**: менеджеры, аналитики, руководители, которые проводят много встреч
-- **Администратор**: управляет общими промптами и пользователями системы
-
-## Core Requirements (Static)
-1. Личные кабинеты пользователей с JWT авторизацией
-2. Создание проектов транскрибации (1 проект = 1 встреча)
-3. Загрузка аудио/видео записей
-4. Интеграция с Deepgram для транскрибации
-5. Мастер промпт для первичной обработки
-6. Интерфейс проверки спорных фрагментов
-7. Разметка спикеров (Speaker 1 → Имя)
-8. Хранилище промптов (мастер, тематические, личные, проектные)
-9. Анализ встречи с GPT-4o
-10. Роль admin: управление пользователями и общими промптами
-
-## User Choices
-- **LLM**: GPT-4o через Emergent LLM Key
-- **Auth**: JWT-based (email/password)
-- **Storage**: Локальное хранилище файлов
-- **Theme**: Светлая тема
-- **Transcription**: Deepgram (ЗАМОКАНО для MVP)
-
-## What's Been Implemented ✅
-- [x] JWT авторизация (регистрация, вход, выход)
-- [x] Dashboard с проектами (CRUD)
-- [x] Страница проекта с загрузкой файлов
-- [x] Mock транскрибация (тестовые данные)
-- [x] Просмотр транскрипта
-- [x] Проверка и исправление спорных фрагментов
-- [x] Разметка спикеров
-- [x] Библиотека промптов (мастер, тематические, личные)
-- [x] Анализ встречи с GPT-4o (работает!)
-- [x] История анализов
-- [x] Admin панель (пользователи, промпты)
-- [x] Seed data с базовыми промптами
+## Core Workflow
+1. User uploads audio/video file
+2. Deepgram transcribes -> raw transcript saved
+3. User clicks "Обработать" -> GPT-5.2 processes with master prompt -> processed text saved
+4. User reviews uncertain words, maps speaker names
+5. User runs thematic analysis prompts on the transcript
 
 ## Architecture
 ```
-Frontend: React + Tailwind + Shadcn/UI
-Backend: FastAPI + MongoDB
-LLM: OpenAI GPT-4o (via emergentintegrations)
-Transcription: Deepgram (MOCKED)
-Auth: JWT tokens
-Storage: Local filesystem
+/app
+├── backend/server.py       # Monolithic FastAPI (all routes, models, logic)
+├── frontend/src/
+│   ├── App.js              # Router
+│   ├── lib/api.js          # Axios API client
+│   ├── pages/ProjectPage.js # Main project UI (all tabs)
+│   └── contexts/AuthContext.js
 ```
 
-## API Endpoints
-- POST /api/auth/register, /api/auth/login, GET /api/auth/me
-- CRUD /api/projects, POST /api/projects/{id}/upload
-- GET /api/projects/{id}/transcripts, POST .../confirm
-- GET/PUT /api/projects/{id}/fragments/{id}
-- GET/PUT /api/projects/{id}/speakers/{id}
-- CRUD /api/prompts
-- POST /api/projects/{id}/analyze, GET .../chat-history
-- GET /api/admin/users, /api/admin/prompts
+## DB Schema
+- **users:** {id, email, hashed_password, name, role, created_at}
+- **projects:** {id, name, description, user_id, status, language, reasoning_effort, recording_filename, recording_duration}
+- **transcripts:** {id, project_id, version_type (raw|processed|confirmed), content}
+- **uncertain_fragments:** {id, project_id, original_text, corrected_text, context, status}
+- **speaker_maps:** {id, project_id, speaker_label, speaker_name}
+- **prompts:** {id, name, content, prompt_type, user_id, project_id, is_public}
+- **chat_requests:** {id, project_id, prompt_id, prompt_content, additional_text, reasoning_effort, response_text}
 
-## MOCKED APIs ⚠️
-- **Deepgram Transcription**: Возвращает тестовый транскрипт с mock данными
+## What's Implemented
+- JWT auth (register/login)
+- Project CRUD
+- File upload with Deepgram transcription
+- Manual GPT-5.2 processing with master prompt
+- Speaker diarization and name mapping
+- Uncertain word review UI
+- Thematic analysis with selectable prompts
+- Reasoning effort selector in sticky tab bar
+- Admin panel (users, prompts)
+- Seed data endpoint
 
-## P0 - Critical (Remaining)
-- [ ] Интеграция реального Deepgram API (нужен API ключ)
+## Completed Bug Fixes (Dec 2025)
+- [x] Speaker names now update in transcript display (applySpeakerNames)
+- [x] Reasoning depth applied during analysis (uses call_gpt52 with reasoning_effort)
+- [x] Reasoning depth selector moved to sticky tab bar
 
-## P1 - High Priority (Remaining)
-- [ ] Подтверждение транскрипта (кнопка работает, но логика может быть улучшена)
-- [ ] Проигрывание фрагментов аудио при проверке
-- [ ] Экспорт финального транскрипта (PDF, DOCX)
+## Known Issues
+- Automated transcript pipeline disabled (manual "Обработать" button is workaround)
+- Markdown rendering temporarily disabled
+- server.py and ProjectPage.js are monolithic (800+ lines each)
 
-## P2 - Nice to Have
-- [ ] Google Drive интеграция для хранения файлов
-- [ ] Совместный доступ к проектам
-- [ ] Командные пространства
-- [ ] Полнотекстовый поиск
-- [ ] Мобильная версия
+## Upcoming Tasks (P1)
+- Re-enable Markdown rendering for transcript/analysis text
+- Stabilize automated transcript processing pipeline
 
-## Next Tasks
-1. Получить Deepgram API ключ и заменить mock на реальную интеграцию
-2. Добавить экспорт транскрипта
-3. Улучшить UI редактора транскрипта
+## Future/Backlog (P2-P3)
+- Collaborative project access
+- Team workspaces
+- Global full-text search
+- Mobile applications
+- Refactor server.py into modules
+- Decompose ProjectPage.js into smaller components
+
+## Credentials
+- Admin: admin@voiceworkspace.com / admin123
+- API keys: Deepgram + OpenAI in /app/backend/.env
