@@ -160,6 +160,7 @@ class PromptResponse(BaseModel):
 class ChatRequestCreate(BaseModel):
     prompt_id: str
     additional_text: Optional[str] = ""
+    reasoning_effort: Optional[str] = "high"
 
 class ChatRequestResponse(BaseModel):
     id: str
