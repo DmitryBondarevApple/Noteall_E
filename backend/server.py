@@ -573,44 +573,27 @@ async def process_transcription(project_id: str, filename: str, language: str = 
         # ========== STEP 3: MASTER PROMPT PROCESSING (GPT-5.2) ==========
         logger.info(f"[{project_id}] Step 3: Processing with user's Master Prompt via GPT-5.2")
         
-        # Get user's master prompt from database (by name "Мастер промпт")
+        # Get user's master prompt from database - ONLY user's prompt, no modifications
         user_master_prompt = await db.prompts.find_one(
-            {"name": "Мастер промпт", "prompt_type": "master"}, 
+            {"prompt_type": "master"}, 
             {"_id": 0}
         )
         
         if not user_master_prompt:
-            # Fallback to any master prompt
-            user_master_prompt = await db.prompts.find_one({"prompt_type": "master"}, {"_id": 0})
+            logger.error(f"[{project_id}] No master prompt found in database!")
+            raise Exception("Master prompt not configured. Please create a master prompt in Prompts settings.")
         
-        if user_master_prompt:
-            master_prompt_content = user_master_prompt["content"]
-            logger.info(f"[{project_id}] Using master prompt: {user_master_prompt.get('name', 'Unknown')}")
-        else:
-            master_prompt_content = """Обработай транскрипт встречи:
-1. Выдели слова или фразы, в которых есть сомнения, в формате [слово?]
-2. Сохрани разметку спикеров
-3. Не меняй смысл текста"""
-            logger.info(f"[{project_id}] Using default master prompt (no user prompt found)")
+        master_prompt_content = user_master_prompt["content"]
+        logger.info(f"[{project_id}] Using master prompt: '{user_master_prompt.get('name', 'Unknown')}' (length: {len(master_prompt_content)} chars)")
         
-        # Call GPT-5.2 with user's master prompt
-        # Add explicit instruction to output uncertain section
-        enhanced_prompt = master_prompt_content + """
-
-ВАЖНО: В конце текста ОБЯЗАТЕЛЬНО добавь секцию:
-
-Сомнительные места:
-1. слово1 - контекст или пояснение
-2. слово2 - контекст или пояснение
-...
-
-Перечисли ВСЕ слова, в которых ты сомневаешься или которые могут быть ошибками распознавания."""
-
+        # Call GPT-5.2 with EXACTLY user's master prompt - NO modifications
         processed_transcript = await call_gpt52(
-            system_message=enhanced_prompt,
+            system_message=master_prompt_content,
             user_message=cleaned_transcript,
             reasoning_effort=reasoning_effort
         )
+        
+        logger.info(f"[{project_id}] GPT-5.2 processing complete, result length: {len(processed_transcript)} chars")
         
         # ========== STEP 3.5: PARSE AND SEPARATE UNCERTAIN SECTION ==========
         # Look for section with uncertain words at the end
