@@ -335,7 +335,9 @@ export default function ProjectPage() {
   const handleCancelEditProcessed = () => {
     setIsEditingProcessed(false);
     setEditProcessedText('');
-  }; = (type) => transcripts.find(t => t.version_type === type);
+  };
+
+  const getTranscript = (type) => transcripts.find(t => t.version_type === type);
   const currentTranscript = getTranscript('confirmed') || getTranscript('processed') || getTranscript('raw');
   const pendingFragments = fragments.filter(f => f.status === 'pending');
   const status = statusConfig[project?.status] || statusConfig.new;
