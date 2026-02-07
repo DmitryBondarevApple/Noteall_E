@@ -562,19 +562,68 @@ export default function ProjectPage() {
             {/* Processed Tab */}
             <TabsContent value="processed">
               <Card>
-                <CardHeader>
-                  <CardTitle>Обработанный текст</CardTitle>
-                  <CardDescription>
-                    Результат обработки мастер-промптом через GPT-5.2
-                  </CardDescription>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>Обработанный текст</CardTitle>
+                    <CardDescription>
+                      Результат обработки мастер-промптом через GPT-5.2
+                    </CardDescription>
+                  </div>
+                  {getTranscript('processed') && !isEditingProcessed && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                      onClick={handleStartEditProcessed}
+                      data-testid="edit-processed-btn"
+                    >
+                      <Pencil className="w-4 h-4" />
+                      Редактировать
+                    </Button>
+                  )}
+                  {isEditingProcessed && (
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCancelEditProcessed}
+                        data-testid="cancel-edit-processed-btn"
+                      >
+                        Отмена
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="gap-2"
+                        onClick={handleSaveProcessed}
+                        disabled={savingProcessed}
+                        data-testid="save-processed-btn"
+                      >
+                        {savingProcessed ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Save className="w-4 h-4" />
+                        )}
+                        Сохранить
+                      </Button>
+                    </div>
+                  )}
                 </CardHeader>
                 <CardContent>
                   {getTranscript('processed') ? (
-                    <ScrollArea className="h-[500px] rounded-lg border p-6 bg-white">
-                      <div className="prose prose-sm max-w-none" data-testid="processed-transcript-content">
-                        <Markdown>{applySpeakerNames(getTranscript('processed').content, speakers)}</Markdown>
-                      </div>
-                    </ScrollArea>
+                    isEditingProcessed ? (
+                      <Textarea
+                        value={editProcessedText}
+                        onChange={(e) => setEditProcessedText(e.target.value)}
+                        className="min-h-[500px] font-sans text-sm leading-relaxed"
+                        data-testid="edit-processed-textarea"
+                      />
+                    ) : (
+                      <ScrollArea className="h-[500px] rounded-lg border p-6 bg-white">
+                        <div className="prose prose-sm max-w-none" data-testid="processed-transcript-content">
+                          <Markdown>{applySpeakerNames(getTranscript('processed').content, speakers)}</Markdown>
+                        </div>
+                      </ScrollArea>
+                    )
                   ) : (
                     <div className="text-center py-16 text-muted-foreground">
                       <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
