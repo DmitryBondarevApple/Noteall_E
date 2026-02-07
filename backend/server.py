@@ -758,6 +758,34 @@ async def get_transcripts(project_id: str, user = Depends(get_current_user)):
     transcripts = await db.transcripts.find({"project_id": project_id}, {"_id": 0}).to_list(100)
     return [TranscriptVersionResponse(**t) for t in transcripts]
 
+class TranscriptUpdateContent(BaseModel):
+    content: str
+
+@api_router.put("/projects/{project_id}/transcripts/{version_type}", response_model=TranscriptVersionResponse)
+async def update_transcript_content(
+    project_id: str,
+    version_type: str,
+    data: TranscriptUpdateContent,
+    user = Depends(get_current_user)
+):
+    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    if version_type not in ("raw", "processed", "confirmed"):
+        raise HTTPException(status_code=400, detail="Invalid version type")
+    
+    result = await db.transcripts.find_one_and_update(
+        {"project_id": project_id, "version_type": version_type},
+        {"$set": {"content": data.content}},
+        return_document=True
+    )
+    if not result:
+        raise HTTPException(status_code=404, detail="Transcript not found")
+    
+    result.pop("_id", None)
+    return TranscriptVersionResponse(**result)
+
 @api_router.post("/projects/{project_id}/transcripts/confirm")
 async def confirm_transcript(project_id: str, user = Depends(get_current_user)):
     project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
