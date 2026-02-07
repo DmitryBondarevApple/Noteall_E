@@ -260,6 +260,15 @@
     opacity: 0.8;
 }
 
+/* Highlight mark for uncertain words */
+.prose mark, mark {
+    background-color: hsl(var(--signal-orange) / 0.25);
+    color: hsl(25 95% 30%);
+    padding: 0.1em 0.3em;
+    border-radius: 3px;
+    border-bottom: 2px dashed hsl(var(--signal-orange));
+}
+
 @layer base {
     [data-debug-wrapper="true"] {
         display: contents !important;
