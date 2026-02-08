@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { speakerDirectoryApi } from '../lib/api';
@@ -6,7 +6,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardContent } from '../components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -24,7 +24,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../components/ui/alert-dialog';
-import { ScrollArea } from '../components/ui/scroll-area';
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from '../components/ui/toggle-group';
 import { 
   Users, 
   Plus, 
@@ -35,12 +38,12 @@ import {
   User,
   Building,
   Mail,
-  Briefcase,
   Loader2,
   Phone,
-  MessageCircle,
   Camera,
-  Upload
+  Upload,
+  LayoutGrid,
+  Building2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -66,6 +69,7 @@ export default function SpeakerDirectoryPage() {
   const [editingSpeaker, setEditingSpeaker] = useState(null);
   const [deletingSpeaker, setDeletingSpeaker] = useState(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [viewMode, setViewMode] = useState('list'); // 'list' or 'company'
 
   const loadSpeakers = useCallback(async (query = '') => {
     try {
@@ -90,6 +94,30 @@ export default function SpeakerDirectoryPage() {
     return () => clearTimeout(timer);
   }, [searchQuery, loadSpeakers]);
 
+  // Group speakers by company
+  const groupedSpeakers = useMemo(() => {
+    const groups = {};
+    speakers.forEach(speaker => {
+      const company = speaker.company || 'Без компании';
+      if (!groups[company]) {
+        groups[company] = [];
+      }
+      groups[company].push(speaker);
+    });
+    
+    // Sort companies alphabetically, but "Без компании" goes last
+    const sortedKeys = Object.keys(groups).sort((a, b) => {
+      if (a === 'Без компании') return 1;
+      if (b === 'Без компании') return -1;
+      return a.localeCompare(b);
+    });
+    
+    return sortedKeys.map(company => ({
+      company,
+      speakers: groups[company].sort((a, b) => a.name.localeCompare(b.name))
+    }));
+  }, [speakers]);
+
   const handleAddSpeaker = async (data) => {
     try {
       const res = await speakerDirectoryApi.create(data);
@@ -103,11 +131,9 @@ export default function SpeakerDirectoryPage() {
 
   const handleUpdateSpeaker = async (data, photoFile) => {
     try {
-      // First update the data
       const res = await speakerDirectoryApi.update(editingSpeaker.id, data);
       let updatedSpeaker = res.data;
       
-      // Then upload photo if provided
       if (photoFile) {
         const photoRes = await speakerDirectoryApi.uploadPhoto(editingSpeaker.id, photoFile);
         updatedSpeaker = { ...updatedSpeaker, photo_url: photoRes.data.photo_url };
@@ -158,6 +184,9 @@ export default function SpeakerDirectoryPage() {
               </h1>
               <p className="text-sm text-muted-foreground">
                 {speakers.length} {speakers.length === 1 ? 'контакт' : speakers.length < 5 ? 'контакта' : 'контактов'}
+                {viewMode === 'company' && groupedSpeakers.length > 0 && (
+                  <span> • {groupedSpeakers.length} {groupedSpeakers.length === 1 ? 'компания' : groupedSpeakers.length < 5 ? 'компании' : 'компаний'}</span>
+                )}
               </p>
             </div>
           </div>
@@ -169,19 +198,29 @@ export default function SpeakerDirectoryPage() {
       </header>
 
       <main className="max-w-5xl mx-auto px-6 py-8">
-        {/* Search */}
-        <div className="relative mb-6">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Поиск по имени..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-            data-testid="speaker-search-input"
-          />
+        {/* Search and View Toggle */}
+        <div className="flex items-center gap-4 mb-6">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Поиск по имени..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+              data-testid="speaker-search-input"
+            />
+          </div>
+          <ToggleGroup type="single" value={viewMode} onValueChange={(v) => v && setViewMode(v)}>
+            <ToggleGroupItem value="list" aria-label="Списком" data-testid="view-list-btn">
+              <LayoutGrid className="w-4 h-4" />
+            </ToggleGroupItem>
+            <ToggleGroupItem value="company" aria-label="По компаниям" data-testid="view-company-btn">
+              <Building2 className="w-4 h-4" />
+            </ToggleGroupItem>
+          </ToggleGroup>
         </div>
 
-        {/* Speakers Grid */}
+        {/* Speakers */}
         {speakers.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
@@ -203,115 +242,42 @@ export default function SpeakerDirectoryPage() {
               )}
             </CardContent>
           </Card>
-        ) : (
+        ) : viewMode === 'list' ? (
+          // List View
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {speakers.map((speaker) => (
-              <Card key={speaker.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      {/* Photo or default avatar */}
-                      {speaker.photo_url ? (
-                        <img 
-                          src={speaker.photo_url} 
-                          alt={speaker.name}
-                          className="w-12 h-12 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center">
-                          <User className="w-6 h-6 text-indigo-600" />
-                        </div>
-                      )}
-                      <div className="min-w-0">
-                        <h3 className="font-medium truncate" data-testid={`speaker-name-${speaker.id}`}>
-                          {speaker.name}
-                        </h3>
-                        {speaker.role && (
-                          <p className="text-sm text-muted-foreground truncate">{speaker.role}</p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => setEditingSpeaker(speaker)}
-                        data-testid={`edit-speaker-${speaker.id}`}
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
-                        onClick={() => setDeletingSpeaker(speaker)}
-                        data-testid={`delete-speaker-${speaker.id}`}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  {/* Contact info */}
-                  {(speaker.company || speaker.email || speaker.phone || speaker.telegram || speaker.whatsapp) && (
-                    <div className="mt-3 pt-3 border-t space-y-1.5">
-                      {speaker.company && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Building className="w-3.5 h-3.5 shrink-0" />
-                          <span className="truncate">{speaker.company}</span>
-                        </div>
-                      )}
-                      {speaker.email && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Mail className="w-3.5 h-3.5 shrink-0" />
-                          <span className="truncate">{speaker.email}</span>
-                        </div>
-                      )}
-                      {speaker.phone && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Phone className="w-3.5 h-3.5 shrink-0" />
-                          <span className="truncate">{speaker.phone}</span>
-                        </div>
-                      )}
-                      {/* Messengers row */}
-                      {(speaker.telegram || speaker.whatsapp) && (
-                        <div className="flex items-center gap-3 pt-1">
-                          {speaker.telegram && (
-                            <a 
-                              href={`https://t.me/${speaker.telegram.replace('@', '')}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-1.5 text-sm text-blue-500 hover:text-blue-600"
-                            >
-                              <TelegramIcon className="w-4 h-4" />
-                              <span>{speaker.telegram}</span>
-                            </a>
-                          )}
-                          {speaker.whatsapp && (
-                            <a 
-                              href={`https://wa.me/${speaker.whatsapp.replace(/[^\d]/g, '')}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-1.5 text-sm text-green-500 hover:text-green-600"
-                            >
-                              <WhatsAppIcon className="w-4 h-4" />
-                              <span>{speaker.whatsapp}</span>
-                            </a>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  
-                  {/* Comment */}
-                  {speaker.comment && (
-                    <div className="mt-3 pt-3 border-t">
-                      <p className="text-sm text-muted-foreground line-clamp-2">{speaker.comment}</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              <SpeakerCard
+                key={speaker.id}
+                speaker={speaker}
+                onEdit={() => setEditingSpeaker(speaker)}
+                onDelete={() => setDeletingSpeaker(speaker)}
+              />
+            ))}
+          </div>
+        ) : (
+          // Grouped by Company View
+          <div className="space-y-8">
+            {groupedSpeakers.map(({ company, speakers: companySpeakers }) => (
+              <div key={company}>
+                <div className="flex items-center gap-2 mb-4">
+                  <Building2 className="w-5 h-5 text-slate-400" />
+                  <h2 className="text-lg font-semibold">{company}</h2>
+                  <span className="text-sm text-muted-foreground">
+                    ({companySpeakers.length})
+                  </span>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {companySpeakers.map((speaker) => (
+                    <SpeakerCard
+                      key={speaker.id}
+                      speaker={speaker}
+                      onEdit={() => setEditingSpeaker(speaker)}
+                      onDelete={() => setDeletingSpeaker(speaker)}
+                      hideCompany
+                    />
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         )}
@@ -379,6 +345,117 @@ export default function SpeakerDirectoryPage() {
   );
 }
 
+// Speaker Card Component
+function SpeakerCard({ speaker, onEdit, onDelete, hideCompany = false }) {
+  return (
+    <Card className="hover:shadow-md transition-shadow">
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            {speaker.photo_url ? (
+              <img 
+                src={speaker.photo_url} 
+                alt={speaker.name}
+                className="w-12 h-12 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center">
+                <User className="w-6 h-6 text-indigo-600" />
+              </div>
+            )}
+            <div className="min-w-0">
+              <h3 className="font-medium truncate" data-testid={`speaker-name-${speaker.id}`}>
+                {speaker.name}
+              </h3>
+              {speaker.role && (
+                <p className="text-sm text-muted-foreground truncate">{speaker.role}</p>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={onEdit}
+              data-testid={`edit-speaker-${speaker.id}`}
+            >
+              <Pencil className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+              onClick={onDelete}
+              data-testid={`delete-speaker-${speaker.id}`}
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+        
+        {/* Contact info */}
+        {((!hideCompany && speaker.company) || speaker.email || speaker.phone || speaker.telegram || speaker.whatsapp) && (
+          <div className="mt-3 pt-3 border-t space-y-1.5">
+            {!hideCompany && speaker.company && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Building className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">{speaker.company}</span>
+              </div>
+            )}
+            {speaker.email && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Mail className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">{speaker.email}</span>
+              </div>
+            )}
+            {speaker.phone && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Phone className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">{speaker.phone}</span>
+              </div>
+            )}
+            {(speaker.telegram || speaker.whatsapp) && (
+              <div className="flex items-center gap-3 pt-1">
+                {speaker.telegram && (
+                  <a 
+                    href={`https://t.me/${speaker.telegram.replace('@', '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-sm text-blue-500 hover:text-blue-600"
+                  >
+                    <TelegramIcon className="w-4 h-4" />
+                    <span>{speaker.telegram}</span>
+                  </a>
+                )}
+                {speaker.whatsapp && (
+                  <a 
+                    href={`https://wa.me/${speaker.whatsapp.replace(/[^\d]/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-sm text-green-500 hover:text-green-600"
+                  >
+                    <WhatsAppIcon className="w-4 h-4" />
+                    <span>{speaker.whatsapp}</span>
+                  </a>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+        
+        {/* Comment */}
+        {speaker.comment && (
+          <div className="mt-3 pt-3 border-t">
+            <p className="text-sm text-muted-foreground line-clamp-2">{speaker.comment}</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// Speaker Form Component
 function SpeakerForm({ speaker, onSave, onCancel, allowPhoto = false }) {
   const [name, setName] = useState(speaker?.name || '');
   const [email, setEmail] = useState(speaker?.email || '');
@@ -401,7 +478,6 @@ function SpeakerForm({ speaker, onSave, onCancel, allowPhoto = false }) {
         return;
       }
       setPhotoFile(file);
-      // Create preview
       const reader = new FileReader();
       reader.onload = (e) => setPhotoPreview(e.target.result);
       reader.readAsDataURL(file);
@@ -433,7 +509,7 @@ function SpeakerForm({ speaker, onSave, onCancel, allowPhoto = false }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-      {/* Photo upload (only for editing) */}
+      {/* Photo upload */}
       {allowPhoto && (
         <div className="flex items-center gap-4">
           <div 
