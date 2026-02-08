@@ -98,6 +98,7 @@ export default function ProjectPage() {
   const [editingChatId, setEditingChatId] = useState(null);
   const [editChatText, setEditChatText] = useState('');
   const [savingChat, setSavingChat] = useState(false);
+  const processedScrollRef = useRef(null);
 
   const languageOptions = [
     { value: 'ru', label: 'Русский' },
