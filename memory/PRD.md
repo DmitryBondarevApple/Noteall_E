@@ -56,6 +56,10 @@ Platform for transcribing and analyzing work meetings. Users upload audio/video,
 - [x] Fragment corrections from Review tab now update Processed text (replace [word?] markers, persist to backend)
 - [x] Review tab shows full sentences instead of truncated 80-char context
 - [x] Processed text tab has edit mode (Редактировать/Сохранить/Отмена)
+- [x] Markdown escaping: [word?] markers rendered as inline code, not eaten as link syntax
+- [x] Scroll position preserved when toggling edit mode on Processed text tab
+- [x] Analysis tab: edit mode added (pencil icon per result, textarea + save/cancel)
+- [x] Analysis results in chronological order (oldest first, newest at bottom)
 
 ## Known Issues
 - Automated transcript pipeline disabled (manual "Обработать" button is workaround)
