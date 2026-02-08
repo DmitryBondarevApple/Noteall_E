@@ -67,6 +67,7 @@ Platform for transcribing and analyzing work meetings. Users upload audio/video,
 - [x] Polling fix: project status updated in React state to trigger polling useEffect
 - [x] Parser removes "Сомнительные места" section from stored transcript
 - [x] Parser stores full line/description as context instead of 80-char truncation
+- [x] Auto-corrected fragments: blue cards with "AI уже исправил X на Y", one-click confirm
 
 ## Known Issues
 - Automated transcript pipeline disabled (manual "Обработать" button is workaround)
