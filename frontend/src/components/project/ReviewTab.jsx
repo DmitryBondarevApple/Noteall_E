@@ -55,6 +55,12 @@ export function ReviewTab({
         }
       }
 
+      // Check if all fragments are now confirmed - update project status
+      const remainingPending = updatedFragments.filter(f => f.status === 'pending' || f.status === 'auto_corrected');
+      if (remainingPending.length === 0) {
+        onProjectStatusUpdate?.('ready');
+      }
+
       toast.success('Фрагмент подтвержден');
     } catch (error) {
       toast.error('Ошибка сохранения');
