@@ -211,6 +211,10 @@ export default function ProjectPage() {
                   <Sparkles className="w-4 h-4" />
                   Анализ
                 </TabsTrigger>
+                <TabsTrigger value="full-analysis" className="gap-2" data-testid="full-analysis-tab">
+                  <Wand2 className="w-4 h-4" />
+                  Мастер
+                </TabsTrigger>
               </TabsList>
               
               {/* Process Button with Reasoning Selector */}
