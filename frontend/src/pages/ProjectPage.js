@@ -738,7 +738,10 @@ export default function ProjectPage() {
                       <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-lg text-sm">
                         <span>Всего: <strong>{fragments.length}</strong></span>
                         <span className="text-green-600">Проверено: <strong>{fragments.filter(f => f.status === 'confirmed').length}</strong></span>
-                        <span className="text-orange-600">Ожидает: <strong>{pendingFragments.length}</strong></span>
+                        {fragments.filter(f => f.status === 'auto_corrected').length > 0 && (
+                          <span className="text-blue-600">Исправлено AI: <strong>{fragments.filter(f => f.status === 'auto_corrected').length}</strong></span>
+                        )}
+                        <span className="text-orange-600">Ожидает: <strong>{fragments.filter(f => f.status === 'pending').length}</strong></span>
                       </div>
                       
                       {/* Fragment cards */}
