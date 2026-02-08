@@ -88,5 +88,11 @@ export const adminApi = {
   listAllPrompts: () => axios.get(`${API}/admin/prompts`)
 };
 
+// Export
+export const exportApi = {
+  toWord: (content, filename) => axios.post(`${API}/export/word`, { content, filename }, { responseType: 'blob' }),
+  toPdf: (content, filename) => axios.post(`${API}/export/pdf`, { content, filename }, { responseType: 'blob' })
+};
+
 // Seed
 export const seedData = () => axios.post(`${API}/seed`);
