@@ -211,7 +211,8 @@ export default function ProjectPage() {
     try {
       await projectsApi.upload(projectId, file, selectedLanguage, selectedReasoningEffort);
       toast.success('Файл загружен, начинается транскрибация');
-      loadData();
+      // Update project status to trigger polling
+      setProject(prev => ({ ...prev, status: 'transcribing' }));
     } catch (error) {
       toast.error('Ошибка загрузки файла');
     } finally {
