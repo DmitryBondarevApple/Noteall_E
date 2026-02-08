@@ -140,14 +140,16 @@ export function UploadSection({ projectId, onUploadStart }) {
               <input
                 type="file"
                 className="hidden"
-                accept="audio/*,video/*"
+                accept="audio/*,video/*,.m4a,.mp3,.wav,.ogg,.aac,.flac,.wma,.mp4,.mov,.webm,.caf"
                 onChange={handleFileSelect}
                 disabled={uploading}
                 data-testid="file-input"
               />
             </label>
           </p>
-          <p className="text-sm text-muted-foreground">Максимальный размер: 500MB</p>
+          <p className="text-sm text-muted-foreground">
+            MP3, M4A, WAV, AAC, MP4, MOV и другие. Максимум: 500MB
+          </p>
           {uploading && (
             <div className="mt-4 flex items-center justify-center gap-2 text-indigo-600">
               <Loader2 className="w-4 h-4 animate-spin" />
