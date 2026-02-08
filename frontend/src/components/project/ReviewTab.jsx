@@ -236,26 +236,6 @@ export function ReviewTab({
       toast.error('Ошибка сохранения');
     }
   };
-      });
-      
-      const updatedFragments = fragments.map(f => 
-        f.id === fragment.id ? { ...f, corrected_text: '(контекст отредактирован)', status: 'confirmed' } : f
-      );
-      onFragmentsUpdate(updatedFragments);
-      
-      // Check project status
-      const remainingPending = updatedFragments.filter(f => f.status === 'pending' || f.status === 'auto_corrected');
-      if (remainingPending.length === 0) {
-        onProjectStatusUpdate?.('ready');
-      }
-      
-      setEditingContext(null);
-      toast.success('Контекст сохранён');
-    } catch (error) {
-      console.error('Save context error:', error);
-      toast.error('Ошибка сохранения контекста');
-    }
-  };
 
   return (
     <>
