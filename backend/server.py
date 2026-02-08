@@ -1042,25 +1042,49 @@ async def analyze_transcript(
     if not prompt:
         raise HTTPException(status_code=404, detail="Prompt not found")
     
-    # Call GPT-5.2 for analysis using user's OpenAI API with reasoning effort
+    # Build multi-turn conversation with accumulated context
     try:
-        system_message = f"""Ты - эксперт по анализу рабочих встреч. 
+        system_message = """Ты - эксперт по анализу рабочих встреч. 
 Анализируй транскрипт встречи согласно инструкциям пользователя.
-Отвечай на русском языке, структурированно и по существу.
+Отвечай на русском языке, структурированно и по существу."""
 
-Инструкция для анализа:
-{prompt['content']}
-"""
+        # Build conversation messages
+        conversation = []
         
-        user_text = f"Транскрипт встречи:\n\n{transcript['content']}"
+        # 1. First message: the full transcript
+        conversation.append({
+            "role": "user",
+            "content": f"Транскрипт встречи:\n\n{transcript['content']}"
+        })
+        
+        # 2. Add all previous analyses as user/assistant pairs (chronological)
+        previous_analyses = await db.chat_requests.find(
+            {"project_id": project_id},
+            {"_id": 0}
+        ).sort("created_at", 1).to_list(100)
+        
+        for prev in previous_analyses:
+            # Previous prompt as user message
+            prev_prompt = await db.prompts.find_one({"id": prev["prompt_id"]}, {"_id": 0})
+            prompt_label = prev_prompt["name"] if prev_prompt else "Анализ"
+            prev_user_msg = f"[{prompt_label}]: {prev['prompt_content']}"
+            if prev.get("additional_text"):
+                prev_user_msg += f"\n\nДополнительные указания: {prev['additional_text']}"
+            conversation.append({"role": "user", "content": prev_user_msg})
+            # Previous response as assistant message
+            conversation.append({"role": "assistant", "content": prev["response_text"]})
+        
+        # 3. New analysis prompt
+        new_user_msg = f"[{prompt['name']}]: {prompt['content']}"
         if data.additional_text:
-            user_text += f"\n\nДополнительные указания:\n{data.additional_text}"
+            new_user_msg += f"\n\nДополнительные указания: {data.additional_text}"
+        conversation.append({"role": "user", "content": new_user_msg})
         
         reasoning_effort = data.reasoning_effort or "high"
         response_text = await call_gpt52(
             system_message=system_message,
-            user_message=user_text,
-            reasoning_effort=reasoning_effort
+            reasoning_effort=reasoning_effort,
+            messages=conversation
         )
         
     except Exception as e:
