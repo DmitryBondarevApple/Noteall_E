@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { Check, Sparkles, Undo2 } from 'lucide-react';
+import { Check, Sparkles, Undo2, FileEdit } from 'lucide-react';
 import { applySpeakerNames, extractFullSentence, renderContextWithHighlight } from './utils';
 
 export function FragmentCard({ 
@@ -12,7 +12,8 @@ export function FragmentCard({
   speakers,
   onConfirm, 
   onEdit,
-  onRevert
+  onRevert,
+  onEditContext
 }) {
   const fullSentence = extractFullSentence(processedContent, fragment.original_text);
   
