@@ -319,11 +319,14 @@ async def process_transcription(project_id: str, filename: str, language: str = 
         logger.info(f"[{project_id}] Transcription complete, ready for manual processing")
         
     except Exception as e:
+        import traceback
         logger.error(f"[{project_id}] Transcription error: {e}")
+        logger.error(f"[{project_id}] Traceback: {traceback.format_exc()}")
         await db.projects.update_one(
             {"id": project_id},
             {"$set": {
                 "status": "error",
+                "error_message": str(e),
                 "updated_at": datetime.now(timezone.utc).isoformat()
             }}
         )
