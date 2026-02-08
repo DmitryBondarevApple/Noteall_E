@@ -59,6 +59,7 @@ Platform for transcribing and analyzing work meetings. Users upload audio/video,
 │   ├── ReviewTab.jsx            # With revert capability
 │   ├── SpeakersTab.jsx          # With combobox search
 │   ├── AnalysisTab.jsx          # With autosave drafts
+│   ├── FullAnalysisTab.jsx      # Full Analysis Wizard (Мастер)
 │   ├── SpeakerCombobox.jsx      # Autocomplete from directory
 │   └── utils.js
 ```
