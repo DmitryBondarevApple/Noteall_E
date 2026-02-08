@@ -148,7 +148,7 @@ export function SpeakersTab({ speakers, projectId, aiHints, onSpeakersUpdate }) 
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-9 w-9 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 shrink-0"
+                        className="h-9 w-9 p-0 rounded-full sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200 shrink-0"
                         onClick={() => setEditingSpeaker(speaker)}
                         data-testid={`edit-speaker-${speaker.id}`}
                       >
