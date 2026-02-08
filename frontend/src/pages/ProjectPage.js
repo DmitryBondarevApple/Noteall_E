@@ -193,6 +193,10 @@ export default function ProjectPage() {
                       <FileText className="w-4 h-4" />
                       <span className="hidden sm:inline">Транскрипт</span>
                     </TabsTrigger>
+                    <TabsTrigger value="speakers" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3" data-testid="speakers-tab">
+                      <Users className="w-4 h-4" />
+                      <span className="hidden sm:inline">Спикеры</span>
+                    </TabsTrigger>
                     <TabsTrigger value="processed" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3" data-testid="processed-tab">
                       <CheckCircle2 className="w-4 h-4" />
                       <span className="hidden sm:inline">Обработанный</span>
@@ -205,10 +209,6 @@ export default function ProjectPage() {
                           {pendingFragments.length}
                         </Badge>
                       )}
-                    </TabsTrigger>
-                    <TabsTrigger value="speakers" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3" data-testid="speakers-tab">
-                      <Users className="w-4 h-4" />
-                      <span className="hidden sm:inline">Спикеры</span>
                     </TabsTrigger>
                     <TabsTrigger value="analysis" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3" data-testid="analysis-tab">
                       <Sparkles className="w-4 h-4" />
