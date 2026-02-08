@@ -11,7 +11,8 @@ from app.routes import (
     prompts_router,
     chat_router,
     admin_router,
-    seed_router
+    seed_router,
+    export_router
 )
 from app.core.database import client
 
