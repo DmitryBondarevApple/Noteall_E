@@ -1,6 +1,5 @@
 import uuid
 import shutil
-import asyncio
 import logging
 from pathlib import Path
 from datetime import datetime, timezone
@@ -18,76 +17,6 @@ router = APIRouter(prefix="/projects", tags=["projects"])
 
 # Ensure upload directory exists
 Path(UPLOAD_DIR).mkdir(parents=True, exist_ok=True)
-
-
-async def analyze_speakers_with_ai(project_id: str, transcript: str, speaker_nums: list):
-    """Background task to analyze speakers using AI"""
-    try:
-        logger.info(f"[{project_id}] Starting AI speaker analysis")
-        
-        # Build speaker labels
-        speaker_labels = [f"Speaker {num + 1}" for num in speaker_nums]
-        
-        # System message
-        system_message = """Ты - эксперт по анализу транскриптов встреч. 
-Твоя задача - определить информацию о спикерах по косвенным признакам в тексте."""
-
-        # User message with transcript
-        user_message = f"""Проанализируй транскрипт встречи и определи информацию о каждом спикере.
-
-Спикеры в транскрипте: {', '.join(speaker_labels)}
-
-Для каждого спикера определи:
-1. **Пол** - по окончаниям глаголов прошедшего времени (говорил/говорила, сказал/сказала, думал/думала и т.п.)
-2. **Возможное имя** - если другие участники обращаются к спикеру по имени ("Иван, ты...", "Слушай, Маша...")
-3. **Роль** - если спикер упоминает свою должность или роль
-
-Верни ответ ТОЛЬКО в формате JSON без дополнительного текста:
-{{
-  "Speaker 1": {{"gender": "м" или "ж" или null, "possible_name": "Имя" или null, "role": "роль" или null}},
-  "Speaker 2": {{"gender": "м" или "ж" или null, "possible_name": "Имя" или null, "role": "роль" или null}}
-}}
-
-Транскрипт (первые 8000 символов):
-{transcript[:8000]}"""
-
-        # Call GPT with system and user messages
-        response = await call_gpt52(system_message, user_message, reasoning_effort="low")
-        
-        if not response:
-            logger.warning(f"[{project_id}] Empty AI response for speaker analysis")
-            return
-        
-        # Parse JSON response
-        import json
-        import re
-        
-        # Try to extract JSON from response
-        json_match = re.search(r'\{[\s\S]*\}', response)
-        if not json_match:
-            logger.warning(f"[{project_id}] No JSON found in AI response: {response[:200]}")
-            return
-        
-        try:
-            hints = json.loads(json_match.group())
-        except json.JSONDecodeError as e:
-            logger.warning(f"[{project_id}] Failed to parse AI response as JSON: {e}")
-            return
-        
-        # Save hints to project
-        await db.projects.update_one(
-            {"id": project_id},
-            {"$set": {
-                "speaker_hints": hints,
-                "updated_at": datetime.now(timezone.utc).isoformat()
-            }}
-        )
-        
-        logger.info(f"[{project_id}] AI speaker analysis complete: {hints}")
-        
-    except Exception as e:
-        logger.error(f"[{project_id}] AI speaker analysis error: {e}")
-        # Don't raise - this is a background task, failure shouldn't affect main flow
 
 
 @router.post("", response_model=ProjectResponse)
@@ -381,9 +310,6 @@ async def process_transcription(project_id: str, filename: str, language: str = 
                 "speaker_label": f"Speaker {speaker_num + 1}",
                 "speaker_name": f"Speaker {speaker_num + 1}"
             })
-        
-        # Run AI speaker recognition in background (don't block)
-        asyncio.create_task(analyze_speakers_with_ai(project_id, raw_transcript, list(unique_speakers)))
         
         # Update project status to ready
         await db.projects.update_one(
