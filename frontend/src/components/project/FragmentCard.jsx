@@ -97,6 +97,16 @@ export function FragmentCard({
                 >
                   Изменить
                 </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-slate-600"
+                  onClick={() => onEditContext?.()}
+                  data-testid={`edit-context-${fragment.id}`}
+                  title="Редактировать окружающий текст"
+                >
+                  <FileEdit className="w-3.5 h-3.5" />
+                </Button>
               </div>
             )}
             
