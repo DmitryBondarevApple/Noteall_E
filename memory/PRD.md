@@ -60,6 +60,8 @@ Platform for transcribing and analyzing work meetings. Users upload audio/video,
 - [x] Scroll position preserved when toggling edit mode on Processed text tab
 - [x] Analysis tab: edit mode added (pencil icon per result, textarea + save/cancel)
 - [x] Analysis results in chronological order (oldest first, newest at bottom)
+- [x] Parser: header matching without colon, «word» — description format support
+- [x] Scroll position in Processed tab preserved via ScrollArea ref (inner viewport)
 
 ## Known Issues
 - Automated transcript pipeline disabled (manual "Обработать" button is workaround)
