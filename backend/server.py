@@ -669,7 +669,7 @@ async def _run_gpt_processing(project_id: str, raw_content: str, master_prompt: 
         )
 
 async def parse_uncertain_fragments(project_id: str, text: str):
-    """Parse uncertain fragments from processed text"""
+    """Parse uncertain fragments from processed text and remove the section from stored transcript"""
     # Delete old fragments
     await db.uncertain_fragments.delete_many({"project_id": project_id})
     
@@ -692,6 +692,20 @@ async def parse_uncertain_fragments(project_id: str, text: str):
             uncertain_section = text[match.end():].strip()
             break
     
+    # Remove the "Сомнительные места" section from stored transcript
+    if uncertain_section or main_text != text:
+        await db.transcripts.update_one(
+            {"project_id": project_id, "version_type": "processed"},
+            {"$set": {"content": main_text}}
+        )
+    
+    # Helper: find full line containing a word in main text
+    def find_full_line(word):
+        escaped = re.escape(word)
+        pattern = re.compile(rf'^.*{escaped}.*$', re.MULTILINE | re.IGNORECASE)
+        m = pattern.search(main_text)
+        return m.group(0).strip() if m else None
+    
     # Parse [word?] patterns in main text
     bracket_pattern = re.compile(r'\[+([^\[\]]+?)\?+\]+')
     seen_words = set()
@@ -701,18 +715,20 @@ async def parse_uncertain_fragments(project_id: str, text: str):
         if word and word.lower() not in seen_words:
             seen_words.add(word.lower())
             
-            # Get context
-            pos = match.start()
-            context_start = max(0, pos - 80)
-            context_end = min(len(main_text), match.end() + 80)
-            context = main_text[context_start:context_end]
+            # Get full line as context
+            line = find_full_line(word)
+            if not line:
+                pos = match.start()
+                context_start = max(0, pos - 80)
+                context_end = min(len(main_text), match.end() + 80)
+                line = main_text[context_start:context_end]
             
             await db.uncertain_fragments.insert_one({
                 "id": str(uuid.uuid4()),
                 "project_id": project_id,
                 "original_text": word,
                 "corrected_text": None,
-                "context": context.strip(),
+                "context": line.strip(),
                 "start_time": None,
                 "end_time": None,
                 "suggestions": [word],
@@ -722,10 +738,8 @@ async def parse_uncertain_fragments(project_id: str, text: str):
     
     # Parse list items from uncertain section
     if uncertain_section:
-        # Split into lines and process each non-empty line
         lines = [line.strip() for line in uncertain_section.split('\n') if line.strip()]
         for line in lines:
-            # Strip leading numbering or bullets: "1. ", "1) ", "- ", "• "
             item_text = re.sub(r'^(?:\d+[\.\)]\s*|[-•]\s*)', '', line).strip()
             if not item_text:
                 continue
@@ -735,23 +749,21 @@ async def parse_uncertain_fragments(project_id: str, text: str):
             if word_match:
                 word = word_match.group(1).strip()
             else:
-                # Fallback: take text before first dash or colon
                 word = re.split(r'\s*[—–\-:]\s*', item_text)[0].strip()
                 word = re.sub(r'^[\[\(«"\']+|[\]\)»"\']+$', '', word)
             
             if word and len(word) > 1 and word.lower() not in seen_words:
                 seen_words.add(word.lower())
                 
-                # Find context in main text
-                word_in_text = re.search(rf'.{{0,80}}{re.escape(word)}.{{0,80}}', main_text, re.IGNORECASE)
-                context = word_in_text.group(0) if word_in_text else item_text
+                # Find full line in main text, or use the full list description
+                context_line = find_full_line(word) or item_text
                 
                 await db.uncertain_fragments.insert_one({
                     "id": str(uuid.uuid4()),
                     "project_id": project_id,
                     "original_text": word,
                     "corrected_text": None,
-                    "context": context.strip(),
+                    "context": context_line.strip(),
                     "start_time": None,
                     "end_time": None,
                     "suggestions": [word],
