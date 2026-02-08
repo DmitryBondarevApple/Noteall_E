@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import {
   Dialog,
@@ -10,21 +10,27 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../ui/dialog';
-import { Users } from 'lucide-react';
+import { Users, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { speakersApi } from '../../lib/api';
+import { SpeakerCombobox } from './SpeakerCombobox';
 
 export function SpeakersTab({ speakers, projectId, onSpeakersUpdate }) {
   const [editingSpeaker, setEditingSpeaker] = useState(null);
 
   const handleUpdateSpeaker = async (speaker, newName) => {
+    if (!newName.trim()) {
+      toast.error('Введите имя спикера');
+      return;
+    }
+    
     try {
       await speakersApi.update(projectId, speaker.id, {
         speaker_label: speaker.speaker_label,
-        speaker_name: newName
+        speaker_name: newName.trim()
       });
       const updatedSpeakers = speakers.map(s =>
-        s.id === speaker.id ? { ...s, speaker_name: newName } : s
+        s.id === speaker.id ? { ...s, speaker_name: newName.trim() } : s
       );
       onSpeakersUpdate(updatedSpeakers);
       setEditingSpeaker(null);
@@ -37,11 +43,20 @@ export function SpeakersTab({ speakers, projectId, onSpeakersUpdate }) {
   return (
     <>
       <Card>
-        <CardHeader>
-          <CardTitle>Разметка спикеров</CardTitle>
-          <CardDescription>
-            Назначьте имена участникам встречи
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Разметка спикеров</CardTitle>
+            <CardDescription>
+              Назначьте имена участникам встречи
+            </CardDescription>
+          </div>
+          <Link to="/speakers">
+            <Button variant="outline" size="sm" className="gap-2" data-testid="open-directory-btn">
+              <Users className="w-4 h-4" />
+              Справочник
+              <ExternalLink className="w-3 h-3" />
+            </Button>
+          </Link>
         </CardHeader>
         <CardContent>
           {speakers.length === 0 ? (
@@ -87,7 +102,7 @@ export function SpeakersTab({ speakers, projectId, onSpeakersUpdate }) {
           <DialogHeader>
             <DialogTitle>Изменить имя спикера</DialogTitle>
             <DialogDescription>
-              Введите имя участника встречи
+              Выберите из справочника или введите новое имя
             </DialogDescription>
           </DialogHeader>
           {editingSpeaker && (
@@ -106,25 +121,36 @@ export function SpeakersTab({ speakers, projectId, onSpeakersUpdate }) {
 function EditSpeakerForm({ speaker, onSave, onCancel }) {
   const [name, setName] = useState(speaker.speaker_name);
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSave(name);
+  };
+
   return (
-    <div className="space-y-4 mt-4">
+    <form onSubmit={handleSubmit} className="space-y-4 mt-4">
       <div className="space-y-2">
-        <Label>Метка</Label>
+        <Label>Метка в транскрипте</Label>
         <code className="block bg-slate-100 p-2 rounded">{speaker.speaker_label}</code>
       </div>
       <div className="space-y-2">
         <Label>Имя участника</Label>
-        <Input
+        <SpeakerCombobox
           value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Например: Антон"
-          data-testid="edit-speaker-input"
+          onChange={setName}
+          placeholder="Начните вводить имя..."
         />
+        <p className="text-xs text-muted-foreground">
+          Начните вводить для поиска в справочнике или введите новое имя
+        </p>
       </div>
-      <div className="flex justify-end gap-2">
-        <Button variant="outline" onClick={onCancel}>Отмена</Button>
-        <Button onClick={() => onSave(name)} data-testid="save-speaker-btn">Сохранить</Button>
+      <div className="flex justify-end gap-2 pt-2">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Отмена
+        </Button>
+        <Button type="submit" data-testid="save-speaker-btn">
+          Сохранить
+        </Button>
       </div>
-    </div>
+    </form>
   );
 }
