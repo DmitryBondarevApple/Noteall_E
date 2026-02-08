@@ -848,7 +848,7 @@ export default function ProjectPage() {
                                 <div className="bg-white rounded-lg p-4 border">
                                   <p className="text-sm leading-relaxed">
                                     {renderContextWithHighlight(
-                                      fullSentence || fragment.context, 
+                                      applySpeakerNames(fullSentence || fragment.context, speakers), 
                                       fragment.status === 'auto_corrected' && fragment.corrected_text 
                                         ? fragment.corrected_text 
                                         : fragment.original_text
