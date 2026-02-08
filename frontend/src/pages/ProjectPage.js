@@ -322,7 +322,6 @@ export default function ProjectPage() {
               <SpeakersTab
                 speakers={speakers}
                 projectId={projectId}
-                rawTranscript={getTranscript('raw')?.content}
                 aiHints={project?.speaker_hints}
                 onSpeakersUpdate={setSpeakers}
               />
