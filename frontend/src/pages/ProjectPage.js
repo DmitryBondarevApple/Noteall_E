@@ -279,12 +279,10 @@ export default function ProjectPage() {
     setProcessing(true);
     try {
       await transcriptsApi.process(projectId);
-      toast.success('Обработка завершена');
-      loadData();
-      setActiveTab('processed');
+      toast.success('Обработка запущена. Ожидайте завершения...');
+      // Don't wait — polling in useEffect will detect status change
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Ошибка обработки');
-    } finally {
+      toast.error(error.response?.data?.detail || 'Ошибка запуска обработки');
       setProcessing(false);
     }
   };
