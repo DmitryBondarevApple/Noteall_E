@@ -262,7 +262,7 @@ export function SpeakersTab({ speakers, projectId, rawTranscript, aiHints, onSpe
   );
 }
 
-function EditSpeakerForm({ speaker, onSave, onCancel }) {
+function EditSpeakerForm({ speaker, hint, onSave, onCancel }) {
   const [name, setName] = useState(speaker.speaker_name);
 
   const handleSubmit = (e) => {
@@ -276,6 +276,31 @@ function EditSpeakerForm({ speaker, onSave, onCancel }) {
         <Label>Метка в транскрипте</Label>
         <code className="block bg-slate-100 p-2 rounded">{speaker.speaker_label}</code>
       </div>
+      
+      {/* AI Hint in dialog */}
+      {hint && (hint.possible_name || hint.gender) && (
+        <div className="flex flex-wrap items-center gap-2 p-3 bg-indigo-50 rounded-lg">
+          <Sparkles className="w-4 h-4 text-indigo-600" />
+          <span className="text-sm text-indigo-700">
+            AI подсказка: 
+            {hint.gender && (hint.gender === 'м' ? ' 👨 мужчина' : hint.gender === 'ж' ? ' 👩 женщина' : '')}
+            {hint.possible_name && `, возможно "${hint.possible_name}"`}
+            {hint.role && ` (${hint.role})`}
+          </span>
+          {hint.possible_name && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs ml-auto"
+              onClick={() => setName(hint.possible_name)}
+            >
+              Использовать
+            </Button>
+          )}
+        </div>
+      )}
+      
       <div className="space-y-2">
         <Label>Имя участника</Label>
         <SpeakerCombobox
