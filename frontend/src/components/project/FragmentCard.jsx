@@ -101,7 +101,7 @@ export function FragmentCard({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 text-slate-600"
+                  className="h-7 sm:h-8 text-slate-600 px-2"
                   onClick={() => onEditContext?.()}
                   data-testid={`edit-context-${fragment.id}`}
                   title="Редактировать окружающий текст"
@@ -113,30 +113,31 @@ export function FragmentCard({
             
             {/* Pending fragment actions */}
             {fragment.status === 'pending' && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8"
+                  className="h-7 sm:h-8 text-xs sm:text-sm px-2 sm:px-3"
                   onClick={() => onConfirm(fragment.original_text)}
                   data-testid={`confirm-as-is-${fragment.id}`}
                 >
-                  <Check className="w-3 h-3 mr-1" />
-                  Оставить как есть
+                  <Check className="w-3 h-3 sm:mr-1" />
+                  <span className="hidden sm:inline">Оставить</span>
                 </Button>
                 <Button
                   variant="default"
                   size="sm"
-                  className="h-8"
+                  className="h-7 sm:h-8 text-xs sm:text-sm px-2 sm:px-3"
                   onClick={() => onEdit()}
                   data-testid={`edit-fragment-${fragment.id}`}
                 >
-                  Исправить
+                  <span className="hidden sm:inline">Исправить</span>
+                  <span className="sm:hidden">✏️</span>
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 text-slate-600"
+                  className="h-7 sm:h-8 text-slate-600 px-2"
                   onClick={() => onEditContext?.()}
                   data-testid={`edit-context-${fragment.id}`}
                   title="Редактировать окружающий текст"
