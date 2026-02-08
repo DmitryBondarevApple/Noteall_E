@@ -711,18 +711,23 @@ async def parse_uncertain_fragments(project_id: str, text: str):
                 "created_at": datetime.now(timezone.utc).isoformat()
             })
     
-    # Parse numbered list from uncertain section
+    # Parse list items from uncertain section
     if uncertain_section:
-        list_pattern = re.compile(r'(?:^\d+[\.\)]\s*|\n\d+[\.\)]\s*|\n[-•]\s*)([^\n]+)', re.MULTILINE)
-        for match in list_pattern.finditer(uncertain_section):
-            item_text = match.group(1).strip()
+        # Split into lines and process each non-empty line
+        lines = [line.strip() for line in uncertain_section.split('\n') if line.strip()]
+        for line in lines:
+            # Strip leading numbering or bullets: "1. ", "1) ", "- ", "• "
+            item_text = re.sub(r'^(?:\d+[\.\)]\s*|[-•]\s*)', '', line).strip()
+            if not item_text:
+                continue
             
-            # Extract word in quotes or brackets
+            # Extract word in guillemets «», quotes, or brackets
             word_match = re.search(r'[«"\'"\[]([^»"\'"\]]+)[»"\'"\]]', item_text)
             if word_match:
                 word = word_match.group(1).strip()
             else:
-                word = item_text.split(' - ')[0].split(':')[0].strip()
+                # Fallback: take text before first dash or colon
+                word = re.split(r'\s*[—–\-:]\s*', item_text)[0].strip()
                 word = re.sub(r'^[\[\(«"\']+|[\]\)»"\']+$', '', word)
             
             if word and len(word) > 1 and word.lower() not in seen_words:
