@@ -110,17 +110,26 @@ export function ReviewTab({
     const content = processedTranscript.content;
     const word = fragment.original_text;
     
-    // Find the word in content (with or without [?] markers)
+    // Escape special regex characters
     const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // Allow flexible whitespace matching (for phrases with spaces)
+    const flexibleWord = escapedWord.replace(/\s+/g, '\\s+');
+    
+    // Try multiple patterns to find the word
     const patterns = [
-      new RegExp(`\\[+${escapedWord}\\?+\\]+`, 'gi'),  // [word?] format
-      new RegExp(`\\b${escapedWord}\\b`, 'gi')          // plain word
+      // [word?] or [[word??]] format (with flexible brackets and question marks)
+      new RegExp(`\\[+${flexibleWord}\\?+\\]+`, 'gi'),
+      // Plain word/phrase (case insensitive)
+      new RegExp(flexibleWord, 'gi'),
+      // Try with word boundaries only if no spaces in original
+      ...(word.includes(' ') ? [] : [new RegExp(`\\b${escapedWord}\\b`, 'gi')])
     ];
     
     let matchIndex = -1;
     let matchLength = 0;
     
     for (const pattern of patterns) {
+      pattern.lastIndex = 0; // Reset regex state
       const match = pattern.exec(content);
       if (match) {
         matchIndex = match.index;
@@ -130,7 +139,16 @@ export function ReviewTab({
     }
     
     if (matchIndex === -1) {
-      toast.error('Слово не найдено в тексте');
+      // Fallback: try simple indexOf
+      const simpleIndex = content.toLowerCase().indexOf(word.toLowerCase());
+      if (simpleIndex !== -1) {
+        matchIndex = simpleIndex;
+        matchLength = word.length;
+      }
+    }
+    
+    if (matchIndex === -1) {
+      toast.error('Слово не найдено в тексте. Попробуйте отредактировать транскрипт напрямую.');
       return;
     }
     
