@@ -28,8 +28,12 @@ async def analyze_speakers_with_ai(project_id: str, transcript: str, speaker_num
         # Build speaker labels
         speaker_labels = [f"Speaker {num + 1}" for num in speaker_nums]
         
-        # Prepare prompt for speaker analysis
-        prompt = f"""Проанализируй транскрипт встречи и определи информацию о каждом спикере.
+        # System message
+        system_message = """Ты - эксперт по анализу транскриптов встреч. 
+Твоя задача - определить информацию о спикерах по косвенным признакам в тексте."""
+
+        # User message with transcript
+        user_message = f"""Проанализируй транскрипт встречи и определи информацию о каждом спикере.
 
 Спикеры в транскрипте: {', '.join(speaker_labels)}
 
@@ -45,11 +49,10 @@ async def analyze_speakers_with_ai(project_id: str, transcript: str, speaker_num
 }}
 
 Транскрипт (первые 8000 символов):
-{transcript[:8000]}
-"""
+{transcript[:8000]}"""
 
-        # Call GPT
-        response = await call_gpt52(prompt, reasoning_effort="low")
+        # Call GPT with system and user messages
+        response = await call_gpt52(system_message, user_message, reasoning_effort="low")
         
         if not response:
             logger.warning(f"[{project_id}] Empty AI response for speaker analysis")
@@ -62,7 +65,7 @@ async def analyze_speakers_with_ai(project_id: str, transcript: str, speaker_num
         # Try to extract JSON from response
         json_match = re.search(r'\{[\s\S]*\}', response)
         if not json_match:
-            logger.warning(f"[{project_id}] No JSON found in AI response")
+            logger.warning(f"[{project_id}] No JSON found in AI response: {response[:200]}")
             return
         
         try:
