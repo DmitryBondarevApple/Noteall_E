@@ -264,7 +264,12 @@ async def process_transcription(project_id: str, filename: str, language: str = 
                     if ch.alternatives:
                         for j, alt in enumerate(ch.alternatives):
                             logger.info(f"[{project_id}] Alt {j} transcript: '{alt.transcript[:100] if alt.transcript else 'None'}...'")
-                            logger.info(f"[{project_id}] Alt {j} has paragraphs: {alt.paragraphs is not None}")
+                            logger.info(f"[{project_id}] Alt {j} has paragraphs obj: {alt.paragraphs is not None}")
+                            if alt.paragraphs:
+                                logger.info(f"[{project_id}] Paragraphs attrs: {dir(alt.paragraphs)}")
+                                # Try to access paragraphs list
+                                paras = getattr(alt.paragraphs, 'paragraphs', None)
+                                logger.info(f"[{project_id}] Paragraphs list: {paras}")
         
         # Extract metadata
         duration = response.metadata.duration if response.metadata else 0
