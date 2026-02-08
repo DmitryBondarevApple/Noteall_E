@@ -34,7 +34,9 @@ export const transcriptsApi = {
 export const fragmentsApi = {
   list: (projectId) => axios.get(`${API}/projects/${projectId}/fragments`),
   update: (projectId, fragmentId, data) => 
-    axios.put(`${API}/projects/${projectId}/fragments/${fragmentId}`, data)
+    axios.put(`${API}/projects/${projectId}/fragments/${fragmentId}`, data),
+  revert: (projectId, fragmentId) =>
+    axios.post(`${API}/projects/${projectId}/fragments/${fragmentId}/revert`)
 };
 
 // Speakers
