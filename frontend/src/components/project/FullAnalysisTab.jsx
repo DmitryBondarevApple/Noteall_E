@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import Markdown from 'react-markdown';
-import { chatApi } from '../../lib/api';
+import { chatApi, exportApi } from '../../lib/api';
 
 const STEPS = [
   { id: 'setup', title: 'Настройка', icon: Sparkles },
