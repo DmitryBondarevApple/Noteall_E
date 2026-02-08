@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
+import { Textarea } from '../ui/textarea';
 import {
   Dialog,
   DialogContent,
@@ -10,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../ui/dialog';
-import { AlertCircle, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, FileEdit } from 'lucide-react';
 import { toast } from 'sonner';
 import { fragmentsApi, transcriptsApi } from '../../lib/api';
 import { FragmentCard } from './FragmentCard';
@@ -25,6 +26,7 @@ export function ReviewTab({
   onProjectStatusUpdate
 }) {
   const [editingFragment, setEditingFragment] = useState(null);
+  const [editingContext, setEditingContext] = useState(null);
   
   const pendingFragments = fragments.filter(f => f.status === 'pending' || f.status === 'auto_corrected');
   const confirmedFragments = fragments.filter(f => f.status === 'confirmed');
