@@ -1110,6 +1110,11 @@ async def create_speaker_directory_entry(
         "email": data.email,
         "company": data.company,
         "role": data.role,
+        "phone": data.phone,
+        "telegram": data.telegram,
+        "whatsapp": data.whatsapp,
+        "photo_url": data.photo_url,
+        "comment": data.comment,
         "created_at": now,
         "updated_at": now
     }
