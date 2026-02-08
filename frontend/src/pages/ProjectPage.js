@@ -1128,6 +1128,12 @@ function applySpeakerNames(content, speakers) {
   return result;
 }
 
+function prepareForMarkdown(content) {
+  if (!content) return '';
+  // Escape [word?] markers so Markdown doesn't treat [] as link syntax
+  return content.replace(/\[+([^\[\]]+?)\?+\]+/g, '`[$1?]`');
+}
+
 function extractFullSentence(content, word) {
   if (!content || !word) return null;
   const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
