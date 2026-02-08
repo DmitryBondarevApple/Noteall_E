@@ -172,7 +172,7 @@ export default function ProjectPage() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
         {/* Upload Section - Show only for new projects */}
         {project?.status === 'new' && (
           <UploadSection 
@@ -183,39 +183,43 @@ export default function ProjectPage() {
 
         {/* Main Content Tabs */}
         {project?.status !== 'new' && (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <div className="sticky top-[73px] z-40 bg-slate-50 py-2 -mx-6 px-6 flex items-center justify-between">
-              <TabsList className="bg-white border p-1 shadow-sm">
-                <TabsTrigger value="transcript" className="gap-2" data-testid="transcript-tab">
-                  <FileText className="w-4 h-4" />
-                  Транскрипт
-                </TabsTrigger>
-                <TabsTrigger value="processed" className="gap-2" data-testid="processed-tab">
-                  <CheckCircle2 className="w-4 h-4" />
-                  Обработанный текст
-                </TabsTrigger>
-                <TabsTrigger value="review" className="gap-2" data-testid="review-tab">
-                  <AlertCircle className="w-4 h-4" />
-                  Проверка
-                  {pendingFragments.length > 0 && (
-                    <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center">
-                      {pendingFragments.length}
-                    </Badge>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="speakers" className="gap-2" data-testid="speakers-tab">
-                  <Users className="w-4 h-4" />
-                  Спикеры
-                </TabsTrigger>
-                <TabsTrigger value="analysis" className="gap-2" data-testid="analysis-tab">
-                  <Sparkles className="w-4 h-4" />
-                  Анализ
-                </TabsTrigger>
-                <TabsTrigger value="full-analysis" className="gap-2" data-testid="full-analysis-tab">
-                  <Wand2 className="w-4 h-4" />
-                  Мастер
-                </TabsTrigger>
-              </TabsList>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+            <div className="sticky top-[73px] z-40 bg-slate-50 py-2 -mx-4 sm:-mx-6 px-4 sm:px-6">
+              {/* Mobile: scrollable tabs */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+                  <TabsList className="bg-white border p-1 shadow-sm inline-flex min-w-max">
+                    <TabsTrigger value="transcript" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3" data-testid="transcript-tab">
+                      <FileText className="w-4 h-4" />
+                      <span className="hidden sm:inline">Транскрипт</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="processed" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3" data-testid="processed-tab">
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span className="hidden sm:inline">Обработанный</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="review" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3" data-testid="review-tab">
+                      <AlertCircle className="w-4 h-4" />
+                      <span className="hidden sm:inline">Проверка</span>
+                      {pendingFragments.length > 0 && (
+                        <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                          {pendingFragments.length}
+                        </Badge>
+                      )}
+                    </TabsTrigger>
+                    <TabsTrigger value="speakers" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3" data-testid="speakers-tab">
+                      <Users className="w-4 h-4" />
+                      <span className="hidden sm:inline">Спикеры</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="analysis" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3" data-testid="analysis-tab">
+                      <Sparkles className="w-4 h-4" />
+                      <span className="hidden sm:inline">Анализ</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="full-analysis" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3" data-testid="full-analysis-tab">
+                      <Wand2 className="w-4 h-4" />
+                      <span className="hidden sm:inline">Мастер</span>
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
               
               {/* Process Button with Reasoning Selector */}
               <div className="flex items-center gap-3">
