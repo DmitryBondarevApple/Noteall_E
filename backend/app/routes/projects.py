@@ -254,6 +254,18 @@ async def process_transcription(project_id: str, filename: str, language: str = 
         
         logger.info(f"[{project_id}] Deepgram transcription received")
         
+        # Debug: Log raw response structure
+        logger.info(f"[{project_id}] Response has results: {response.results is not None}")
+        if response.results:
+            logger.info(f"[{project_id}] Channels count: {len(response.results.channels) if response.results.channels else 0}")
+            if response.results.channels:
+                for i, ch in enumerate(response.results.channels):
+                    logger.info(f"[{project_id}] Channel {i} alternatives: {len(ch.alternatives) if ch.alternatives else 0}")
+                    if ch.alternatives:
+                        for j, alt in enumerate(ch.alternatives):
+                            logger.info(f"[{project_id}] Alt {j} transcript: '{alt.transcript[:100] if alt.transcript else 'None'}...'")
+                            logger.info(f"[{project_id}] Alt {j} has paragraphs: {alt.paragraphs is not None}")
+        
         # Extract metadata
         duration = response.metadata.duration if response.metadata else 0
         
