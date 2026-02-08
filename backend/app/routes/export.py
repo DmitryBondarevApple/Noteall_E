@@ -166,13 +166,23 @@ async def export_to_pdf(request: ExportRequest):
             bottomMargin=72
         )
         
+        # Register fonts with Cyrillic support
+        try:
+            pdfmetrics.registerFont(TTFont('DejaVuSans', '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'))
+            pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'))
+            default_font = 'DejaVuSans'
+            bold_font = 'DejaVuSans-Bold'
+        except Exception:
+            default_font = 'Helvetica'
+            bold_font = 'Helvetica-Bold'
+        
         # Create styles
         styles = getSampleStyleSheet()
         
-        # Custom styles for better typography
+        # Custom styles for better typography with Cyrillic support
         styles.add(ParagraphStyle(
             name='CustomTitle',
-            parent=styles['Heading1'],
+            fontName=bold_font,
             fontSize=18,
             spaceAfter=12,
             textColor=colors.HexColor('#1a1a1a')
