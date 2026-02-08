@@ -788,7 +788,7 @@ export default function ProjectPage() {
                                         variant="default"
                                         size="sm"
                                         className="h-8 bg-blue-600 hover:bg-blue-700 gap-1"
-                                        onClick={() => handleConfirmFragment(fragment, fragment.corrected_text)}
+                                        onClick={() => handleConfirmFragment(fragment, fragment.corrected_text || fragment.original_text)}
                                         data-testid={`confirm-auto-${fragment.id}`}
                                       >
                                         <Check className="w-3 h-3" />
