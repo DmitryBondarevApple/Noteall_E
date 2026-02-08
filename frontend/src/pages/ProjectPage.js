@@ -939,7 +939,7 @@ export default function ProjectPage() {
                         <p>Пока нет результатов анализа</p>
                       </div>
                     ) : (
-                      <ScrollArea className="h-[400px]">
+                      <ScrollArea className="h-[500px]">
                         <div className="space-y-4">
                           {chatHistory.map((chat) => (
                             <Card key={chat.id} className="bg-slate-50">
@@ -948,18 +948,51 @@ export default function ProjectPage() {
                                   <Badge variant="outline">
                                     {prompts.find(p => p.id === chat.prompt_id)?.name || 'Промпт'}
                                   </Badge>
-                                  <span className="text-xs text-muted-foreground">
-                                    {formatDistanceToNow(new Date(chat.created_at), { addSuffix: true, locale: ru })}
-                                  </span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs text-muted-foreground">
+                                      {formatDistanceToNow(new Date(chat.created_at), { addSuffix: true, locale: ru })}
+                                    </span>
+                                    {editingChatId !== chat.id && (
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7"
+                                        onClick={() => handleStartEditChat(chat)}
+                                        data-testid={`edit-chat-${chat.id}`}
+                                      >
+                                        <Pencil className="w-3.5 h-3.5" />
+                                      </Button>
+                                    )}
+                                  </div>
                                 </div>
                                 {chat.additional_text && (
                                   <p className="text-sm text-muted-foreground mb-2 italic">
                                     + {chat.additional_text}
                                   </p>
                                 )}
-                                <div className="prose prose-sm max-w-none" data-testid={`chat-response-${chat.id}`}>
-                                  <Markdown>{chat.response_text}</Markdown>
-                                </div>
+                                {editingChatId === chat.id ? (
+                                  <div className="space-y-3">
+                                    <Textarea
+                                      value={editChatText}
+                                      onChange={(e) => setEditChatText(e.target.value)}
+                                      className="min-h-[200px] font-sans text-sm leading-relaxed"
+                                      data-testid="edit-chat-textarea"
+                                    />
+                                    <div className="flex justify-end gap-2">
+                                      <Button variant="outline" size="sm" onClick={handleCancelEditChat}>
+                                        Отмена
+                                      </Button>
+                                      <Button size="sm" className="gap-2" onClick={handleSaveChat} disabled={savingChat} data-testid="save-chat-btn">
+                                        {savingChat ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                                        Сохранить
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="prose prose-sm max-w-none" data-testid={`chat-response-${chat.id}`}>
+                                    <Markdown>{chat.response_text}</Markdown>
+                                  </div>
+                                )}
                               </CardContent>
                             </Card>
                           ))}
