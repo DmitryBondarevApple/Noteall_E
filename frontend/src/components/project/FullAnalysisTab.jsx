@@ -322,6 +322,42 @@ ${detailedAnalysis}`;
     toast.success('Файл скачан');
   };
 
+  // Download as Word
+  const downloadAsWord = async () => {
+    try {
+      const filename = `meeting-summary-${meetingSubject.replace(/\s+/g, '-').toLowerCase()}`;
+      const response = await exportApi.toWord(finalDocument, filename);
+      const url = URL.createObjectURL(response.data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${filename}.docx`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Word документ скачан');
+    } catch (error) {
+      console.error('Word export error:', error);
+      toast.error('Ошибка экспорта в Word');
+    }
+  };
+
+  // Download as PDF
+  const downloadAsPdf = async () => {
+    try {
+      const filename = `meeting-summary-${meetingSubject.replace(/\s+/g, '-').toLowerCase()}`;
+      const response = await exportApi.toPdf(finalDocument, filename);
+      const url = URL.createObjectURL(response.data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${filename}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('PDF документ скачан');
+    } catch (error) {
+      console.error('PDF export error:', error);
+      toast.error('Ошибка экспорта в PDF');
+    }
+  };
+
   // Check if can proceed to next step
   const canProceed = () => {
     switch (currentStep) {
