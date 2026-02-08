@@ -101,6 +101,8 @@ Platform for transcribing and analyzing work meetings. Users upload audio/video,
 - `GET/POST/PUT/DELETE /api/speaker-directory`, `POST .../photo`
 - `GET/POST/PUT/DELETE /api/prompts`
 - `POST /api/projects/{id}/analyze`, `GET/PUT /api/projects/{id}/chat-history`
+- `POST /api/projects/{id}/analyze-raw` - Raw AI call without saving to history (for wizard)
+- `POST /api/projects/{id}/save-full-analysis` - Save wizard result to history
 - `GET/POST/DELETE /api/admin/users`
 - `POST /api/seed`, `POST /api/update-master-prompt`
 
