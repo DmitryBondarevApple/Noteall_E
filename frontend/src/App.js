@@ -86,6 +86,14 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/speakers"
+        element={
+          <ProtectedRoute>
+            <SpeakerDirectoryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/admin"
         element={
           <ProtectedRoute>
