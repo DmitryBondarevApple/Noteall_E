@@ -26,7 +26,6 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
-  Users,
   Sparkles,
   Wand2
 } from 'lucide-react';
@@ -38,7 +37,6 @@ import {
   TranscriptTab,
   ProcessedTab,
   ReviewTab,
-  SpeakersTab,
   AnalysisTab,
   FullAnalysisTab,
   statusConfig,
