@@ -144,7 +144,7 @@ export default function DashboardPage() {
             
             <Link to="/speakers">
               <Button variant="ghost" className="gap-2" data-testid="speakers-nav-btn">
-                <Settings className="w-4 h-4" />
+                <Users className="w-4 h-4" />
                 Спикеры
               </Button>
             </Link>
