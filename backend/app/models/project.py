@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Dict, Any
 
 
 class ProjectCreate(BaseModel):
@@ -22,5 +22,6 @@ class ProjectResponse(BaseModel):
     reasoning_effort: Optional[str] = None
     recording_filename: Optional[str] = None
     recording_duration: Optional[float] = None
+    speaker_hints: Optional[Dict[str, Any]] = None
     created_at: str
     updated_at: str
