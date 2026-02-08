@@ -180,10 +180,12 @@ async def export_to_pdf(request: ExportRequest):
         styles = getSampleStyleSheet()
         
         # Custom styles for better typography with Cyrillic support
+        # leading = line height (should be ~1.2x fontSize for good readability)
         styles.add(ParagraphStyle(
             name='CustomTitle',
             fontName=bold_font,
             fontSize=18,
+            leading=22,  # 1.2x fontSize for proper line spacing
             spaceAfter=12,
             textColor=colors.HexColor('#1a1a1a')
         ))
@@ -192,7 +194,8 @@ async def export_to_pdf(request: ExportRequest):
             name='CustomH2',
             fontName=bold_font,
             fontSize=14,
-            spaceBefore=12,
+            leading=17,  # 1.2x fontSize
+            spaceBefore=14,
             spaceAfter=6,
             textColor=colors.HexColor('#333333')
         ))
@@ -201,6 +204,7 @@ async def export_to_pdf(request: ExportRequest):
             name='CustomH3',
             fontName=bold_font,
             fontSize=12,
+            leading=15,  # 1.25x fontSize
             spaceBefore=10,
             spaceAfter=4,
             textColor=colors.HexColor('#444444')
@@ -210,14 +214,15 @@ async def export_to_pdf(request: ExportRequest):
             name='CustomBody',
             fontName=default_font,
             fontSize=10,
-            spaceAfter=6,
-            leading=14
+            leading=14,  # 1.4x fontSize for body text
+            spaceAfter=6
         ))
         
         styles.add(ParagraphStyle(
             name='CustomListItem',
             fontName=default_font,
             fontSize=10,
+            leading=14,
             leftIndent=20,
             spaceAfter=3,
             bulletIndent=10
