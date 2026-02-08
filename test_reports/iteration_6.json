@@ -1,0 +1,152 @@
+{
+  "summary": "Full Analysis Wizard feature tested successfully. All 11 backend tests passed. Frontend wizard flow works correctly through all 4 steps: Setup → Topics → Analysis → Result. Save to history functionality verified.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "features_tested": {
+    "full_analysis_tab": {
+      "description": "Full Analysis Wizard tab (Мастер) appears in project page tabs",
+      "status": "VERIFIED",
+      "verification": "Tab with Wand2 icon and 'Мастер' label visible in tabs list"
+    },
+    "step1_setup": {
+      "description": "Step 1: Setup page with 'Предмет обсуждения' input field",
+      "status": "VERIFIED",
+      "verification": "Input field with data-testid='meeting-subject-input' present, placeholder text visible"
+    },
+    "step1_extract_topics": {
+      "description": "Step 1: 'Извлечь темы из транскрипта' button extracts topics via /api/projects/{id}/analyze-raw",
+      "status": "VERIFIED",
+      "verification": "Button with data-testid='extract-topics-btn' works, extracted 16-19 topics from transcript"
+    },
+    "step2_topics_list": {
+      "description": "Step 2: Topics list with checkboxes, edit/delete functionality",
+      "status": "VERIFIED",
+      "verification": "Topics displayed with checkboxes (role='checkbox'), pencil edit icons, trash delete icons"
+    },
+    "step2_add_topic": {
+      "description": "Step 2: Add new topic functionality",
+      "status": "VERIFIED",
+      "verification": "'Добавить тему...' input field with plus button present"
+    },
+    "step2_batch_size": {
+      "description": "Step 2: Batch size input (default 3)",
+      "status": "VERIFIED",
+      "verification": "Input with data-testid='batch-size-input' shows default value 3, displays calculated request count"
+    },
+    "step3_progress": {
+      "description": "Step 3: Progress bar during batch analysis",
+      "status": "VERIFIED",
+      "verification": "Progress bar visible during analysis, shows 'Проанализировано X из Y порций'"
+    },
+    "step4_final_document": {
+      "description": "Step 4: Final document with short summary and detailed analysis",
+      "status": "VERIFIED",
+      "verification": "Document displays 'Резюме встречи: {subject}', 'Краткое саммари' section, 'Подробный анализ по темам' section"
+    },
+    "step4_copy_button": {
+      "description": "Step 4: Copy to clipboard button",
+      "status": "VERIFIED",
+      "verification": "'Копировать' button present"
+    },
+    "step4_download_button": {
+      "description": "Step 4: Download as .md file button",
+      "status": "VERIFIED",
+      "verification": "'Скачать .md' button present"
+    },
+    "step4_save_button": {
+      "description": "Step 4: Save to history button",
+      "status": "VERIFIED",
+      "verification": "'Сохранить в историю' button works, shows 'Результат сохранён' toast on success"
+    },
+    "backend_analyze_raw": {
+      "description": "Backend /api/projects/{project_id}/analyze-raw endpoint",
+      "status": "VERIFIED",
+      "verification": "Pytest: 4/4 tests passed - success, default reasoning_effort, invalid project (404), missing fields (422)"
+    },
+    "backend_save_full_analysis": {
+      "description": "Backend /api/projects/{project_id}/save-full-analysis endpoint",
+      "status": "VERIFIED",
+      "verification": "Pytest: 4/4 tests passed - success, appears in history, invalid project (404), missing fields (422)"
+    },
+    "backend_workflow": {
+      "description": "Backend full analysis workflow integration",
+      "status": "VERIFIED",
+      "verification": "Pytest: 3/3 tests passed - topic extraction, batch analysis, summary generation"
+    },
+    "saved_in_history": {
+      "description": "Saved analysis appears in Analysis tab chat history",
+      "status": "VERIFIED",
+      "verification": "Full analysis entry visible in 'История анализов' with correct content and timestamp"
+    }
+  },
+  "passed_tests": [
+    "Backend: POST /api/projects/{id}/analyze-raw returns 200 with response_text",
+    "Backend: analyze-raw works without reasoning_effort (uses default)",
+    "Backend: analyze-raw returns 404 for non-existent project",
+    "Backend: analyze-raw returns 422 for missing required fields",
+    "Backend: POST /api/projects/{id}/save-full-analysis returns 200",
+    "Backend: save-full-analysis entry appears in chat history",
+    "Backend: save-full-analysis returns 404 for non-existent project",
+    "Backend: save-full-analysis returns 422 for missing required fields",
+    "Backend: Topic extraction workflow works",
+    "Backend: Batch analysis workflow works",
+    "Backend: Summary generation workflow works",
+    "Frontend: Full Analysis tab (Мастер) visible in tabs",
+    "Frontend: Step 1 - Meeting subject input works",
+    "Frontend: Step 1 - Extract topics button works",
+    "Frontend: Step 2 - Topics list with checkboxes displayed",
+    "Frontend: Step 2 - Edit/delete topic icons present",
+    "Frontend: Step 2 - Add topic input present",
+    "Frontend: Step 2 - Batch size input with default 3",
+    "Frontend: Step 3 - Progress bar during analysis",
+    "Frontend: Step 3 - Build document button appears after analysis",
+    "Frontend: Step 4 - Final document with summary and detailed analysis",
+    "Frontend: Step 4 - Copy, Download, Save buttons present",
+    "Frontend: Step 4 - Save to history works with success toast",
+    "Frontend: Saved analysis appears in Analysis tab history"
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_full_analysis_wizard.py",
+    "/app/test_reports/pytest/pytest_iteration6.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "FullAnalysisTab.jsx implements clean 4-step wizard with proper state management",
+    "Backend analyze-raw endpoint correctly uses transcript context without saving to history",
+    "Backend save-full-analysis correctly saves with prompt_id='full-analysis' for identification",
+    "Batch size calculation (ceil(topics/batchSize)) works correctly",
+    "All data-testid attributes present for testing"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_full_analysis_wizard.py"
+  ],
+  "success_rate": {
+    "backend": "100% (11/11 tests passed)",
+    "frontend": "100% (all wizard steps verified)"
+  },
+  "test_credentials": {
+    "email": "admin@voiceworkspace.com",
+    "password": "admin123"
+  },
+  "seed_data_creation": "Used existing project 'Тест 22' with transcript data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Full Analysis Wizard feature fully tested and working. All 4 steps (Setup, Topics, Analysis, Result) verified. Backend endpoints analyze-raw and save-full-analysis working correctly. Saved analyses appear in chat history with prompt_id='full-analysis'.",
+  "notes": {
+    "wizard_steps": [
+      "Step 1 (Настройка): Enter meeting subject, extract topics",
+      "Step 2 (Темы): Review/edit topics, set batch size",
+      "Step 3 (Анализ): Batch analysis with progress bar",
+      "Step 4 (Результат): Final document with copy/download/save"
+    ],
+    "default_batch_size": 3,
+    "ai_integration": "Uses GPT via Emergent LLM key for topic extraction, analysis, and summary generation"
+  }
+}
