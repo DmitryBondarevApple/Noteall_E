@@ -141,6 +141,13 @@ export default function DashboardPage() {
               </Button>
             </Link>
             
+            <Link to="/speakers">
+              <Button variant="ghost" className="gap-2" data-testid="speakers-nav-btn">
+                <Settings className="w-4 h-4" />
+                Спикеры
+              </Button>
+            </Link>
+            
             {isAdmin() && (
               <Link to="/admin">
                 <Button variant="ghost" className="gap-2" data-testid="admin-nav-btn">
