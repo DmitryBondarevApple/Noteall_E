@@ -287,18 +287,16 @@ ${detailedAnalysis}`;
   const saveResult = async () => {
     setIsSaving(true);
     try {
-      await chatApi.analyze(projectId, {
-        prompt_id: 'full-analysis',
-        additional_text: `Полный анализ встречи: ${meetingSubject}`,
-        reasoning_effort: 'high',
-        response_override: finalDocument
+      await chatApi.saveFullAnalysis(projectId, {
+        subject: meetingSubject,
+        content: finalDocument
       });
       
       onSaveResult?.(finalDocument);
       toast.success('Результат сохранён');
     } catch (error) {
-      // If special endpoint doesn't exist, just notify
-      toast.success('Документ готов к копированию');
+      console.error('Save error:', error);
+      toast.error('Ошибка сохранения');
     } finally {
       setIsSaving(false);
     }
