@@ -24,7 +24,9 @@ import {
   Copy,
   Download,
   Save,
-  RotateCcw
+  RotateCcw,
+  FileType,
+  File
 } from 'lucide-react';
 import { toast } from 'sonner';
 import Markdown from 'react-markdown';
