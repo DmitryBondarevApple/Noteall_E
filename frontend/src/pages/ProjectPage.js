@@ -282,6 +282,7 @@ export default function ProjectPage() {
                 projectId={projectId}
                 onFragmentsUpdate={setFragments}
                 onTranscriptUpdate={handleTranscriptUpdate}
+                onProjectStatusUpdate={(newStatus) => setProject(prev => ({ ...prev, status: newStatus }))}
               />
             </TabsContent>
 
