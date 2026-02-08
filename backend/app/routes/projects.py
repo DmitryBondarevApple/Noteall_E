@@ -227,17 +227,18 @@ async def process_transcription(project_id: str, filename: str, language: str = 
         logger.info(f"[{project_id}] Starting Deepgram transcription for {filename}")
         
         # Deepgram transcription - run in executor to not block event loop
-        from deepgram import DeepgramClient, PrerecordedOptions
+        from deepgram import DeepgramClient
         import concurrent.futures
         
         def run_deepgram():
-            deepgram = DeepgramClient(DEEPGRAM_API_KEY)
+            client = DeepgramClient(api_key=DEEPGRAM_API_KEY)
             
             with open(file_path, "rb") as audio_file:
                 buffer_data = audio_file.read()
             
-            payload = {"buffer": buffer_data}
-            options = PrerecordedOptions(
+            # Use new SDK v5 API
+            response = client.listen.v1.media.transcribe_file(
+                request=buffer_data,
                 model="nova-3",
                 language=language,
                 smart_format=True,
@@ -245,17 +246,16 @@ async def process_transcription(project_id: str, filename: str, language: str = 
                 paragraphs=True,
                 punctuate=True,
             )
-            
-            response = deepgram.listen.rest.v("1").transcribe_file(payload, options)
-            return response.to_dict()
+            return response
         
         loop = asyncio.get_event_loop()
         with concurrent.futures.ThreadPoolExecutor() as pool:
-            result = await loop.run_in_executor(pool, run_deepgram)
+            response = await loop.run_in_executor(pool, run_deepgram)
         
         logger.info(f"[{project_id}] Deepgram transcription received")
         
-        duration = result.get("metadata", {}).get("duration", 0)
+        # Extract metadata
+        duration = response.metadata.duration if response.metadata else 0
         
         # Extract transcript with speaker labels
         transcript_lines = []
