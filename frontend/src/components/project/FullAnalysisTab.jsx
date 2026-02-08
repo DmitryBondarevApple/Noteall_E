@@ -676,14 +676,22 @@ ${detailedAnalysis}`;
                 </ScrollArea>
               )}
               
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Button onClick={copyToClipboard} variant="outline" className="gap-2">
                   <Copy className="w-4 h-4" />
                   Копировать
                 </Button>
                 <Button onClick={downloadAsFile} variant="outline" className="gap-2">
                   <Download className="w-4 h-4" />
-                  Скачать .md
+                  .md
+                </Button>
+                <Button onClick={downloadAsWord} variant="outline" className="gap-2">
+                  <FileType className="w-4 h-4" />
+                  Word
+                </Button>
+                <Button onClick={downloadAsPdf} variant="outline" className="gap-2">
+                  <File className="w-4 h-4" />
+                  PDF
                 </Button>
                 <Button onClick={saveResult} disabled={isSaving} className="gap-2 ml-auto">
                   {isSaving ? (
