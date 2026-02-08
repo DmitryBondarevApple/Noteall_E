@@ -52,7 +52,14 @@ export const speakerDirectoryApi = {
   get: (id) => axios.get(`${API}/speaker-directory/${id}`),
   create: (data) => axios.post(`${API}/speaker-directory`, data),
   update: (id, data) => axios.put(`${API}/speaker-directory/${id}`, data),
-  delete: (id) => axios.delete(`${API}/speaker-directory/${id}`)
+  delete: (id) => axios.delete(`${API}/speaker-directory/${id}`),
+  uploadPhoto: (id, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return axios.post(`${API}/speaker-directory/${id}/photo`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  }
 };
 
 // Prompts
