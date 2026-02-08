@@ -129,5 +129,8 @@ async def revert_fragment(
                 {"$set": {"content": new_content}}
             )
     
+    # Update project status (now has pending fragments)
+    await update_project_status_if_needed(project_id)
+    
     updated = await db.uncertain_fragments.find_one({"id": fragment_id}, {"_id": 0})
     return UncertainFragmentResponse(**updated)
