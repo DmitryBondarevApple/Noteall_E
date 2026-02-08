@@ -39,11 +39,20 @@ export const fragmentsApi = {
     axios.post(`${API}/projects/${projectId}/fragments/${fragmentId}/revert`)
 };
 
-// Speakers
+// Speakers (project-specific)
 export const speakersApi = {
   list: (projectId) => axios.get(`${API}/projects/${projectId}/speakers`),
   update: (projectId, speakerId, data) => 
     axios.put(`${API}/projects/${projectId}/speakers/${speakerId}`, data)
+};
+
+// Speaker Directory (global contacts)
+export const speakerDirectoryApi = {
+  list: (query) => axios.get(`${API}/speaker-directory`, { params: query ? { q: query } : {} }),
+  get: (id) => axios.get(`${API}/speaker-directory/${id}`),
+  create: (data) => axios.post(`${API}/speaker-directory`, data),
+  update: (id, data) => axios.put(`${API}/speaker-directory/${id}`, data),
+  delete: (id) => axios.delete(`${API}/speaker-directory/${id}`)
 };
 
 // Prompts
