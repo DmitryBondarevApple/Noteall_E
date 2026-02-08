@@ -312,6 +312,9 @@ async def process_transcription(project_id: str, filename: str, language: str = 
                 "speaker_name": f"Speaker {speaker_num + 1}"
             })
         
+        # Run AI speaker recognition in background (don't block)
+        asyncio.create_task(analyze_speakers_with_ai(project_id, raw_transcript, list(unique_speakers)))
+        
         # Update project status to ready
         await db.projects.update_one(
             {"id": project_id},
