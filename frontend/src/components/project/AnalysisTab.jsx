@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
@@ -12,12 +12,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select';
-import { Sparkles, MessageSquare, History, Loader2, Pencil, Save, Send } from 'lucide-react';
+import { Sparkles, MessageSquare, History, Loader2, Pencil, Save, Send, Cloud, CloudOff } from 'lucide-react';
 import { toast } from 'sonner';
 import Markdown from 'react-markdown';
 import { formatDistanceToNow } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { chatApi } from '../../lib/api';
+
+const DRAFT_KEY_PREFIX = 'voice_workspace_draft_';
+const AUTOSAVE_DELAY = 2000;
 
 export function AnalysisTab({ 
   prompts, 
@@ -33,6 +36,65 @@ export function AnalysisTab({
   const [editingChatId, setEditingChatId] = useState(null);
   const [editChatText, setEditChatText] = useState('');
   const [savingChat, setSavingChat] = useState(false);
+  const [draftSaved, setDraftSaved] = useState(false);
+  const autosaveTimerRef = useRef(null);
+
+  const chatDraftKey = `${DRAFT_KEY_PREFIX}chat_${projectId}`;
+
+  // Load draft for chat editing
+  useEffect(() => {
+    if (editingChatId) {
+      const savedDraft = localStorage.getItem(`${chatDraftKey}_${editingChatId}`);
+      if (savedDraft) {
+        try {
+          const draft = JSON.parse(savedDraft);
+          const originalChat = chatHistory.find(c => c.id === editingChatId);
+          if (draft.content && originalChat && draft.content !== originalChat.response_text) {
+            setEditChatText(draft.content);
+            toast.info('Черновик восстановлен');
+          }
+        } catch (e) {
+          localStorage.removeItem(`${chatDraftKey}_${editingChatId}`);
+        }
+      }
+    }
+  }, [editingChatId, chatDraftKey, chatHistory]);
+
+  // Autosave draft for chat editing
+  const saveChatDraft = useCallback((text, chatId) => {
+    const originalChat = chatHistory.find(c => c.id === chatId);
+    if (text && originalChat && text !== originalChat.response_text) {
+      localStorage.setItem(`${chatDraftKey}_${chatId}`, JSON.stringify({
+        content: text,
+        savedAt: new Date().toISOString()
+      }));
+      setDraftSaved(true);
+      setTimeout(() => setDraftSaved(false), 1500);
+    }
+  }, [chatDraftKey, chatHistory]);
+
+  // Handle chat text change with autosave
+  const handleChatTextChange = (e) => {
+    const newText = e.target.value;
+    setEditChatText(newText);
+    
+    if (autosaveTimerRef.current) {
+      clearTimeout(autosaveTimerRef.current);
+    }
+    
+    autosaveTimerRef.current = setTimeout(() => {
+      saveChatDraft(newText, editingChatId);
+    }, AUTOSAVE_DELAY);
+  };
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleAnalyze = async () => {
     if (!selectedPrompt) {
@@ -70,6 +132,8 @@ export function AnalysisTab({
         c.id === editingChatId ? { ...c, response_text: editChatText } : c
       );
       onChatHistoryUpdate(updatedHistory);
+      // Clear draft on successful save
+      localStorage.removeItem(`${chatDraftKey}_${editingChatId}`);
       setEditingChatId(null);
       setEditChatText('');
       toast.success('Текст сохранён');
@@ -81,6 +145,12 @@ export function AnalysisTab({
   };
 
   const handleCancelEditChat = () => {
+    // Save draft before canceling if changed
+    const originalChat = chatHistory.find(c => c.id === editingChatId);
+    if (editChatText && originalChat && editChatText !== originalChat.response_text) {
+      saveChatDraft(editChatText, editingChatId);
+      toast.info('Черновик сохранён');
+    }
     setEditingChatId(null);
     setEditChatText('');
   };
@@ -178,6 +248,13 @@ export function AnalysisTab({
                           {prompts.find(p => p.id === chat.prompt_id)?.name || 'Промпт'}
                         </Badge>
                         <div className="flex items-center gap-2">
+                          {/* Autosave indicator */}
+                          {editingChatId === chat.id && draftSaved && (
+                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                              <Cloud className="w-3 h-3 mr-1" />
+                              Сохранено
+                            </Badge>
+                          )}
                           <span className="text-xs text-muted-foreground">
                             {formatDistanceToNow(new Date(chat.created_at), { addSuffix: true, locale: ru })}
                           </span>
@@ -203,7 +280,7 @@ export function AnalysisTab({
                         <div className="space-y-3">
                           <Textarea
                             value={editChatText}
-                            onChange={(e) => setEditChatText(e.target.value)}
+                            onChange={handleChatTextChange}
                             className="min-h-[200px] font-sans text-sm leading-relaxed"
                             data-testid="edit-chat-textarea"
                           />
