@@ -52,3 +52,10 @@ async def delete_user(user_id: str, admin=Depends(get_admin_user)):
         raise HTTPException(status_code=404, detail="User not found")
     
     return {"message": "User deleted"}
+
+
+@router.get("/prompts")
+async def list_all_prompts(admin=Depends(get_admin_user)):
+    """List all prompts (admin only)"""
+    prompts = await db.prompts.find({}, {"_id": 0}).to_list(1000)
+    return prompts
