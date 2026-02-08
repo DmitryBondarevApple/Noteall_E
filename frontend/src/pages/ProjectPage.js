@@ -315,15 +315,22 @@ export default function ProjectPage() {
   const handleStartEditProcessed = () => {
     const processed = getTranscript('processed');
     if (processed) {
-      const scrollY = window.scrollY;
+      // Capture inner scroll position from ScrollArea viewport
+      const viewport = processedScrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+      const innerScroll = viewport?.scrollTop || 0;
       setEditProcessedText(processed.content);
       setIsEditingProcessed(true);
-      requestAnimationFrame(() => window.scrollTo(0, scrollY));
+      // Restore scroll position in the textarea after render
+      requestAnimationFrame(() => {
+        const textarea = document.querySelector('[data-testid="edit-processed-textarea"]');
+        if (textarea) textarea.scrollTop = innerScroll;
+      });
     }
   };
 
   const handleSaveProcessed = async () => {
-    const scrollY = window.scrollY;
+    const textarea = document.querySelector('[data-testid="edit-processed-textarea"]');
+    const innerScroll = textarea?.scrollTop || 0;
     setSavingProcessed(true);
     try {
       await transcriptsApi.updateContent(projectId, 'processed', editProcessedText);
@@ -332,7 +339,10 @@ export default function ProjectPage() {
       ));
       setIsEditingProcessed(false);
       toast.success('Текст сохранён');
-      requestAnimationFrame(() => window.scrollTo(0, scrollY));
+      requestAnimationFrame(() => {
+        const viewport = processedScrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+        if (viewport) viewport.scrollTop = innerScroll;
+      });
     } catch (error) {
       toast.error('Ошибка сохранения');
     } finally {
@@ -341,10 +351,14 @@ export default function ProjectPage() {
   };
 
   const handleCancelEditProcessed = () => {
-    const scrollY = window.scrollY;
+    const textarea = document.querySelector('[data-testid="edit-processed-textarea"]');
+    const innerScroll = textarea?.scrollTop || 0;
     setIsEditingProcessed(false);
     setEditProcessedText('');
-    requestAnimationFrame(() => window.scrollTo(0, scrollY));
+    requestAnimationFrame(() => {
+      const viewport = processedScrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+      if (viewport) viewport.scrollTop = innerScroll;
+    });
   };
 
   const handleStartEditChat = (chat) => {
