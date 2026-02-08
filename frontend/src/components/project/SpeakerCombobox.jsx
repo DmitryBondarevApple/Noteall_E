@@ -54,9 +54,7 @@ export function SpeakerCombobox({ value, onChange, onAddToDirectory, placeholder
   const handleInputChange = (e) => {
     const newValue = e.target.value;
     setInputValue(newValue);
-    if (!newValue.trim()) {
-      onChange('');
-    }
+    // Don't call onChange on every keystroke - only when user finishes
   };
 
   const handleInputBlur = () => {
@@ -67,7 +65,7 @@ export function SpeakerCombobox({ value, onChange, onAddToDirectory, placeholder
       if (inputValue.trim() && inputValue !== value) {
         onChange(inputValue.trim());
       }
-    }, 200);
+    }, 300); // Increased delay to ensure click registers
   };
 
   const handleKeyDown = (e) => {
