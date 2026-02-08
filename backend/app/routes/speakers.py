@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from app.core.database import db
 from app.core.security import get_current_user
 from app.models.speaker import (
-    SpeakerMapCreate, SpeakerMapResponse,
+    SpeakerMapCreate, SpeakerMapUpdate, SpeakerMapResponse,
     SpeakerDirectoryCreate, SpeakerDirectoryUpdate, SpeakerDirectoryResponse
 )
 
@@ -29,16 +29,24 @@ async def get_speakers(project_id: str, user=Depends(get_current_user)):
 async def update_speaker(
     project_id: str,
     speaker_id: str,
-    data: SpeakerMapCreate,
+    data: SpeakerMapUpdate,
     user=Depends(get_current_user)
 ):
     project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     
+    update_fields = {"speaker_name": data.speaker_name}
+    if data.first_name is not None:
+        update_fields["first_name"] = data.first_name
+    if data.last_name is not None:
+        update_fields["last_name"] = data.last_name
+    if data.company is not None:
+        update_fields["company"] = data.company
+    
     await db.speaker_maps.update_one(
         {"id": speaker_id, "project_id": project_id},
-        {"$set": {"speaker_name": data.speaker_name}}
+        {"$set": update_fields}
     )
     
     updated = await db.speaker_maps.find_one({"id": speaker_id}, {"_id": 0})
