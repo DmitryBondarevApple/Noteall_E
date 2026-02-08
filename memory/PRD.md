@@ -85,6 +85,11 @@ Platform for transcribing and analyzing work meetings. Users upload audio/video,
 - Autosave drafts (localStorage)
 - Context-aware multi-turn analysis
 - Admin panel
+- **Full Analysis Wizard ("Мастер")** - multi-step automated meeting analysis:
+  - Step 1: Enter meeting subject, extract topics from transcript
+  - Step 2: Review/edit topics list, configure batch size (default: 3)
+  - Step 3: Batch analysis with progress bar
+  - Step 4: Final document with summary + detailed analysis (copy/download/save)
 
 ## Key API Endpoints
 - `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me`
