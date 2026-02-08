@@ -675,9 +675,9 @@ export default function ProjectPage() {
                       />
                     ) : (
                       <ScrollArea ref={processedScrollRef} className="h-[500px] rounded-lg border p-6 bg-white">
-                        <div className="prose prose-sm max-w-none" data-testid="processed-transcript-content">
-                          <Markdown>{prepareForMarkdown(applySpeakerNames(getTranscript('processed').content, speakers))}</Markdown>
-                        </div>
+                        <pre className="whitespace-pre-wrap text-sm leading-relaxed font-sans" data-testid="processed-transcript-content">
+                          {applySpeakerNames(getTranscript('processed').content, speakers)}
+                        </pre>
                       </ScrollArea>
                     )
                   ) : (
