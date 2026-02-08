@@ -394,7 +394,7 @@ export default function ProjectPage() {
 
   const getTranscript = (type) => transcripts.find(t => t.version_type === type);
   const currentTranscript = getTranscript('confirmed') || getTranscript('processed') || getTranscript('raw');
-  const pendingFragments = fragments.filter(f => f.status === 'pending');
+  const pendingFragments = fragments.filter(f => f.status === 'pending' || f.status === 'auto_corrected');
   const status = statusConfig[project?.status] || statusConfig.new;
 
   if (loading) {
