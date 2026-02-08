@@ -589,9 +589,10 @@ async def process_transcription(project_id: str, filename: str, language: str = 
 @api_router.post("/projects/{project_id}/process")
 async def process_transcript_with_gpt(
     project_id: str,
+    background_tasks: BackgroundTasks,
     user = Depends(get_current_user)
 ):
-    """Manually trigger GPT processing of transcript with master prompt"""
+    """Trigger async GPT processing of transcript with master prompt"""
     project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -609,22 +610,31 @@ async def process_transcript_with_gpt(
     if not master_prompt:
         raise HTTPException(status_code=400, detail="Master prompt not configured")
     
-    logger.info(f"[{project_id}] Starting manual GPT processing with master prompt: '{master_prompt.get('name')}'")
-    
-    # Update status
+    # Update status to processing
     await db.projects.update_one(
         {"id": project_id},
         {"$set": {"status": "processing", "updated_at": datetime.now(timezone.utc).isoformat()}}
     )
     
+    # Run GPT processing in background
+    background_tasks.add_task(
+        _run_gpt_processing,
+        project_id,
+        raw_transcript["content"],
+        master_prompt,
+        project.get("reasoning_effort", "high")
+    )
+    
+    return {"message": "Processing started", "status": "processing"}
+
+
+async def _run_gpt_processing(project_id: str, raw_content: str, master_prompt: dict, reasoning_effort: str):
+    """Background task for GPT processing"""
+    logger.info(f"[{project_id}] Starting manual GPT processing with master prompt: '{master_prompt.get('name')}'")
     try:
-        # Get reasoning effort from project settings
-        reasoning_effort = project.get("reasoning_effort", "high")
-        
-        # Call GPT-5.2 with user's master prompt
         processed_text = await call_gpt52(
             system_message=master_prompt["content"],
-            user_message=raw_transcript["content"],
+            user_message=raw_content,
             reasoning_effort=reasoning_effort
         )
         
@@ -651,15 +661,12 @@ async def process_transcript_with_gpt(
             {"$set": {"status": "ready", "updated_at": datetime.now(timezone.utc).isoformat()}}
         )
         
-        return {"message": "Processing complete", "length": len(processed_text)}
-        
     except Exception as e:
         logger.error(f"[{project_id}] GPT processing error: {e}")
         await db.projects.update_one(
             {"id": project_id},
             {"$set": {"status": "ready", "updated_at": datetime.now(timezone.utc).isoformat()}}
         )
-        raise HTTPException(status_code=500, detail=str(e))
 
 async def parse_uncertain_fragments(project_id: str, text: str):
     """Parse uncertain fragments from processed text"""
