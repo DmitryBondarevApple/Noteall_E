@@ -403,27 +403,29 @@ async def call_gpt4o(system_message: str, user_message: str) -> str:
         logger.error(f"GPT-4o error: {e}")
         raise e
 
-async def call_gpt52(system_message: str, user_message: str, reasoning_effort: str = "high") -> str:
+async def call_gpt52(system_message: str, user_message: str = None, reasoning_effort: str = "high", messages: list = None) -> str:
     """
-    Call GPT-5.2 via OpenAI API for master prompt processing
-    reasoning_effort: 'auto', 'minimal', 'low', 'medium', 'high', 'xhigh' (deep thinking)
+    Call GPT-5.2 via OpenAI API.
+    Either pass user_message for simple 2-message call, or messages for full multi-turn conversation.
     """
     try:
         from openai import AsyncOpenAI
         
         client = AsyncOpenAI(api_key=OPENAI_API_KEY)
         
-        # Build request params
-        params = {
-            "model": "gpt-5.2",
-            "messages": [
+        if messages is None:
+            messages = [
                 {"role": "system", "content": system_message},
                 {"role": "user", "content": user_message}
-            ],
+            ]
+        else:
+            messages = [{"role": "system", "content": system_message}] + messages
+        
+        params = {
+            "model": "gpt-5.2",
+            "messages": messages,
         }
         
-        # Map reasoning effort to model parameters
-        # For GPT-5.2, use temperature and max_completion_tokens based on effort
         effort_config = {
             "auto": {"temperature": 0.5},
             "minimal": {"temperature": 0.7, "max_completion_tokens": 2000},
