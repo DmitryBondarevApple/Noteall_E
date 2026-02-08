@@ -156,19 +156,19 @@ export default function ProjectPage() {
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
       <header className="bg-white border-b sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
             <Link to="/dashboard">
-              <Button variant="ghost" size="icon" data-testid="back-to-dashboard">
+              <Button variant="ghost" size="icon" className="shrink-0" data-testid="back-to-dashboard">
                 <ArrowLeft className="w-5 h-5" />
               </Button>
             </Link>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight" data-testid="project-title">{project?.name}</h1>
-              <p className="text-sm text-muted-foreground">{project?.description || 'Без описания'}</p>
+            <div className="min-w-0">
+              <h1 className="text-base sm:text-xl font-bold tracking-tight truncate" data-testid="project-title">{project?.name}</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground truncate hidden sm:block">{project?.description || 'Без описания'}</p>
             </div>
           </div>
-          <Badge className={status.color}>{status.label}</Badge>
+          <Badge className={`${status.color} shrink-0 text-xs`}>{status.label}</Badge>
         </div>
       </header>
 
