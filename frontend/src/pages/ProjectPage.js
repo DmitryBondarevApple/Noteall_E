@@ -831,11 +831,15 @@ export default function ProjectPage() {
                                 </div>
                                 
                                 {/* Auto-corrected notice */}
-                                {fragment.status === 'auto_corrected' && fragment.corrected_text && (
+                                {fragment.status === 'auto_corrected' && (
                                   <div className="flex items-center gap-2 px-3 py-2 bg-blue-100/60 rounded-lg text-sm text-blue-800">
                                     <Sparkles className="w-4 h-4 shrink-0" />
                                     <span>
-                                      AI уже исправил <code className="bg-blue-200/60 px-1.5 py-0.5 rounded text-blue-900">{fragment.original_text}</code> на <code className="bg-green-200/60 px-1.5 py-0.5 rounded text-green-900 font-medium">{fragment.corrected_text}</code> в тексте
+                                      {fragment.corrected_text ? (
+                                        <>AI уже исправил <code className="bg-blue-200/60 px-1.5 py-0.5 rounded text-blue-900">{fragment.original_text}</code> на <code className="bg-green-200/60 px-1.5 py-0.5 rounded text-green-900 font-medium">{fragment.corrected_text}</code> в тексте</>
+                                      ) : (
+                                        <>AI уже исправил <code className="bg-blue-200/60 px-1.5 py-0.5 rounded text-blue-900">{fragment.original_text}</code> в тексте — проверьте контекст ниже</>
+                                      )}
                                     </span>
                                   </div>
                                 )}
