@@ -261,22 +261,23 @@ async def process_transcription(project_id: str, filename: str, language: str = 
         transcript_lines = []
         unique_speakers = set()
         
-        for alt in result.get("results", {}).get("channels", [{}])[0].get("alternatives", []):
-            paragraphs = alt.get("paragraphs", {}).get("paragraphs", [])
-            if paragraphs:
-                for para in paragraphs:
-                    speaker = para.get("speaker", 0)
-                    unique_speakers.add(speaker)
-                    sentences = para.get("sentences", [])
-                    for sentence in sentences:
-                        text = sentence.get("text", "")
-                        if text:
-                            transcript_lines.append(f"Speaker {speaker + 1}: {text}")
-            else:
-                transcript_text = alt.get("transcript", "")
-                if transcript_text:
-                    transcript_lines.append(transcript_text)
-                    unique_speakers.add(0)
+        # Navigate new SDK response structure
+        if response.results and response.results.channels:
+            for channel in response.results.channels:
+                if channel.alternatives:
+                    for alt in channel.alternatives:
+                        if alt.paragraphs and alt.paragraphs.paragraphs:
+                            for para in alt.paragraphs.paragraphs:
+                                speaker = para.speaker if para.speaker is not None else 0
+                                unique_speakers.add(speaker)
+                                if para.sentences:
+                                    for sentence in para.sentences:
+                                        text = sentence.text if sentence.text else ""
+                                        if text:
+                                            transcript_lines.append(f"Speaker {speaker + 1}: {text}")
+                        elif alt.transcript:
+                            transcript_lines.append(alt.transcript)
+                            unique_speakers.add(0)
         
         raw_transcript = "\n\n".join(transcript_lines)
         
