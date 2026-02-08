@@ -64,6 +64,9 @@ Platform for transcribing and analyzing work meetings. Users upload audio/video,
 - [x] Scroll position in Processed tab preserved via ScrollArea ref (inner viewport)
 - [x] Analysis: multi-turn conversation context (transcript + all previous analyses sent to GPT)
 - [x] Async GPT processing: background task + polling (no more proxy timeout)
+- [x] Polling fix: project status updated in React state to trigger polling useEffect
+- [x] Parser removes "Сомнительные места" section from stored transcript
+- [x] Parser stores full line/description as context instead of 80-char truncation
 
 ## Known Issues
 - Automated transcript pipeline disabled (manual "Обработать" button is workaround)
