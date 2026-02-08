@@ -56,7 +56,9 @@ export const promptsApi = {
 // Chat/Analysis
 export const chatApi = {
   analyze: (projectId, data) => axios.post(`${API}/projects/${projectId}/analyze`, data),
-  history: (projectId) => axios.get(`${API}/projects/${projectId}/chat-history`)
+  history: (projectId) => axios.get(`${API}/projects/${projectId}/chat-history`),
+  updateResponse: (projectId, chatId, responseText) =>
+    axios.put(`${API}/projects/${projectId}/chat-history/${chatId}`, { response_text: responseText })
 };
 
 // Admin
