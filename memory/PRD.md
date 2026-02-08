@@ -6,31 +6,38 @@ Build a sophisticated web application for transcribing and analyzing audio files
 ## Core Requirements
 - **Full Analysis Wizard:** Multi-step process for comprehensive transcript analysis (topic extraction, summaries, combined document)
 - **Export Functionality:** Export analysis results to Markdown, Word (.docx), and PDF formats
-- **Speaker Identification:** AI-powered hints (gender, name, role) based on transcript content
+- **Speaker Identification:** Clickable speaker badges in transcript with inline editing
 - **Contextual Editing:** Edit text surrounding problematic words to fix split-word issues
 - **Mobile Responsiveness:** Usable on mobile devices
-- **Bug Fixes:** Address various reported issues
 
 ## Tech Stack
 - **Frontend:** React, Tailwind CSS, Shadcn/UI, Axios
 - **Backend:** FastAPI, Motor (async MongoDB), Pydantic
-- **AI/LLM:** Deepgram (Transcription), OpenAI GPT-4o (Analysis, Speaker Hints) via Emergent LLM Key
+- **AI/LLM:** Deepgram (Transcription), OpenAI GPT-4o (Analysis) via Emergent LLM Key
 - **Export:** python-docx (Word), reportlab (PDF)
 
 ## What's Been Implemented
 - Full Analysis Wizard ("Мастер полного анализа встречи")
 - Export to Word (.docx) and PDF with Cyrillic support
-- AI-powered speaker identification hints (gender, name, role)
 - Context editing in Review tab to fix split words
 - Support for .m4a and other audio formats (iOS fix)
 - Mobile responsiveness overhaul
-- Speakers tab reordered to 2nd position
 - Deepgram v5 SDK compatibility patch
 - SpeakerCombobox multi-click fix
 - Project status update logic fix
 - Admin panel /api/admin/prompts endpoint
-- **[2025-12-08] Fixed: speaker_hints field missing from ProjectResponse Pydantic model** — AI hints were saved to DB but not returned by API
-- **[2025-12-08] UX/UI overhaul of SpeakersTab** — removed "Применить" buttons, new card design with left accent borders, inline AI hint badges, hover-reveal edit button, pill-shaped controls, better typography
+- **[2025-12-08] Fixed: speaker_hints field missing from ProjectResponse**
+- **[2025-12-08] Major refactor: Speaker editing moved to Transcript tab**
+  - Removed "Speakers" tab entirely
+  - Speaker labels are now clickable colored badges in the transcript
+  - Click opens edit dialog with combobox
+  - Support for "Имя Фамилия (Компания)" format with auto-parsing into first_name, last_name, company
+  - Removed AI speaker analysis feature (cost optimization)
+  - All badges update instantly after rename
+
+## Speaker Data Model
+- `speaker_maps` collection: `{id, project_id, speaker_label, speaker_name, first_name?, last_name?, company?}`
+- Input format: "Антон Петров (Яндекс)" → first_name: "Антон", last_name: "Петров", company: "Яндекс"
 
 ## Known Issues
 - **P2: Cosmetic bug** — Words appear split in Review tab UI (e.g., "п о м н ю"). CSS/rendering issue in FragmentCard.jsx.
