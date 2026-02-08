@@ -1,0 +1,163 @@
+import React from 'react';
+import { Card, CardContent } from '../ui/card';
+import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
+import { Check, Sparkles } from 'lucide-react';
+import { applySpeakerNames, extractFullSentence, renderContextWithHighlight } from './utils';
+
+export function FragmentCard({ 
+  fragment, 
+  index, 
+  processedContent,
+  speakers,
+  onConfirm, 
+  onEdit 
+}) {
+  const fullSentence = extractFullSentence(processedContent, fragment.original_text);
+  
+  const getStatusStyles = () => {
+    if (fragment.status === 'confirmed') {
+      return 'bg-green-50/50 border-green-200';
+    }
+    if (fragment.status === 'auto_corrected') {
+      return 'bg-blue-50/50 border-blue-200 hover:border-blue-300';
+    }
+    return 'bg-orange-50/50 border-orange-200 hover:border-orange-300';
+  };
+
+  const getStatusBadge = () => {
+    if (fragment.status === 'confirmed') {
+      return <Badge variant="default" className="bg-green-600">Проверено</Badge>;
+    }
+    if (fragment.status === 'auto_corrected') {
+      return <Badge variant="secondary" className="bg-blue-500 text-white">Исправлено AI</Badge>;
+    }
+    return <Badge variant="destructive">Требует проверки</Badge>;
+  };
+
+  // Prepare context with speaker names applied
+  const contextWithSpeakers = applySpeakerNames(fullSentence || fragment.context, speakers);
+  
+  // Determine which word to highlight
+  const highlightWord = fragment.status === 'auto_corrected' && fragment.corrected_text 
+    ? fragment.corrected_text 
+    : fragment.original_text;
+
+  // Get highlight parts or fallback to plain text
+  const highlightParts = renderContextWithHighlight(contextWithSpeakers, highlightWord);
+
+  return (
+    <Card className={`transition-all ${getStatusStyles()}`}>
+      <CardContent className="p-4">
+        <div className="space-y-3">
+          {/* Header row */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground font-mono">#{index + 1}</span>
+              {getStatusBadge()}
+            </div>
+            
+            {fragment.status === 'auto_corrected' && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="h-8 bg-blue-600 hover:bg-blue-700 gap-1"
+                  onClick={() => onConfirm(fragment.corrected_text || fragment.original_text)}
+                  data-testid={`confirm-auto-${fragment.id}`}
+                >
+                  <Check className="w-3 h-3" />
+                  Подтвердить
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8"
+                  onClick={() => onEdit()}
+                  data-testid={`edit-fragment-${fragment.id}`}
+                >
+                  Изменить
+                </Button>
+              </div>
+            )}
+            
+            {fragment.status === 'pending' && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8"
+                  onClick={() => onConfirm(fragment.original_text)}
+                  data-testid={`confirm-as-is-${fragment.id}`}
+                >
+                  <Check className="w-3 h-3 mr-1" />
+                  Оставить как есть
+                </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="h-8"
+                  onClick={() => onEdit()}
+                  data-testid={`edit-fragment-${fragment.id}`}
+                >
+                  Исправить
+                </Button>
+              </div>
+            )}
+          </div>
+          
+          {/* Auto-corrected notice */}
+          {fragment.status === 'auto_corrected' && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-blue-100/60 rounded-lg text-sm text-blue-800">
+              <Sparkles className="w-4 h-4 shrink-0" />
+              <span>
+                {fragment.corrected_text ? (
+                  <>AI уже исправил <code className="bg-blue-200/60 px-1.5 py-0.5 rounded text-blue-900">{fragment.original_text}</code> на <code className="bg-green-200/60 px-1.5 py-0.5 rounded text-green-900 font-medium">{fragment.corrected_text}</code> в тексте</>
+                ) : (
+                  <>AI уже исправил <code className="bg-blue-200/60 px-1.5 py-0.5 rounded text-blue-900">{fragment.original_text}</code> в тексте — проверьте контекст ниже</>
+                )}
+              </span>
+            </div>
+          )}
+          
+          {/* Full sentence with highlighted word */}
+          <div className="bg-white rounded-lg p-4 border">
+            <p className="text-sm leading-relaxed">
+              {highlightParts ? (
+                highlightParts.map(part => 
+                  part.type === 'highlight' ? (
+                    <mark key={part.key} className="bg-orange-200 text-orange-900 px-1 rounded font-medium">
+                      {part.value}
+                    </mark>
+                  ) : (
+                    <span key={part.key}>{part.value}</span>
+                  )
+                )
+              ) : (
+                contextWithSpeakers
+              )}
+            </p>
+          </div>
+          
+          {/* Current word and correction */}
+          {fragment.status !== 'auto_corrected' && (
+            <div className="flex items-center gap-3 text-sm">
+              <span className="text-muted-foreground">Сомнительное слово:</span>
+              <code className="bg-orange-100 text-orange-800 px-2 py-1 rounded font-medium">
+                {fragment.original_text}
+              </code>
+              {fragment.corrected_text && fragment.corrected_text !== fragment.original_text && (
+                <>
+                  <span className="text-muted-foreground">→</span>
+                  <code className="bg-green-100 text-green-800 px-2 py-1 rounded font-medium">
+                    {fragment.corrected_text}
+                  </code>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
