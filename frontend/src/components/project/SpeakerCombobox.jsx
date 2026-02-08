@@ -190,7 +190,10 @@ export function SpeakerCombobox({ value, onChange, onAddToDirectory, placeholder
                 variant="ghost"
                 size="sm"
                 className="w-full justify-start gap-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
-                onClick={handleAddToDirectory}
+                onMouseDown={(e) => {
+                  e.preventDefault(); // Prevent blur
+                  handleAddToDirectory();
+                }}
                 data-testid="add-to-directory-btn"
               >
                 <Plus className="w-4 h-4" />
