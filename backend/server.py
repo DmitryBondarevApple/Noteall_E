@@ -756,13 +756,13 @@ async def parse_uncertain_fragments(project_id: str, text: str):
                 seen_words.add(word.lower())
                 
                 # Try to extract GPT's suggested correction from the description
-                # Common patterns: → «replacement», восстановлено как «X», вероятно «X», возможно «X»
                 suggestion = None
                 suggestion_patterns = [
                     r'→\s*[«"\'"]([^»"\'"\n]+)[»"\'"]',
                     r'восстановлен\w*\s+(?:по смыслу\s+)?как\s+[«"\'"]([^»"\'"\n]+)[»"\'"]',
-                    r'(?:вероятно|возможно|скорее всего)\s+[«"\'"]([^»"\'"\n]+)[»"\'"]',
+                    r'(?:вероятно|возможно|скорее всего)[,]?\s+[«"\'"]([^»"\'"\n]+)[»"\'"]',
                     r'(?:исправлен\w*|заменен\w*)\s+на\s+[«"\'"]([^»"\'"\n]+)[»"\'"]',
+                    r'похоже на\s+[«"\'"]([^»"\'"\n]+)[»"\'"]',
                 ]
                 for sp in suggestion_patterns:
                     sm = re.search(sp, item_text, re.IGNORECASE)
@@ -770,18 +770,26 @@ async def parse_uncertain_fragments(project_id: str, text: str):
                         suggestion = sm.group(1).strip()
                         break
                 
-                # Check if original word is absent from main_text (GPT already corrected it)
+                # Check if original word is absent from main text (GPT already replaced it)
                 word_in_main = re.search(re.escape(word), main_text, re.IGNORECASE)
-                is_auto_corrected = suggestion and not word_in_main
+                is_auto_corrected = not word_in_main
                 
-                # Find full line in main text, or use the full list description
-                context_line = find_full_line(suggestion if is_auto_corrected and suggestion else word) or item_text
+                # For auto-corrected: try to find what GPT replaced it with
+                # Search for the suggestion in main text to confirm
+                effective_correction = None
+                if is_auto_corrected and suggestion:
+                    if re.search(re.escape(suggestion), main_text, re.IGNORECASE):
+                        effective_correction = suggestion
+                
+                # Find full line context: for auto-corrected use the correction word, else the original
+                search_word = effective_correction if effective_correction else (suggestion if suggestion else word)
+                context_line = find_full_line(search_word) or find_full_line(word) or item_text
                 
                 await db.uncertain_fragments.insert_one({
                     "id": str(uuid.uuid4()),
                     "project_id": project_id,
                     "original_text": word,
-                    "corrected_text": suggestion if is_auto_corrected else None,
+                    "corrected_text": effective_correction if is_auto_corrected else None,
                     "context": context_line.strip(),
                     "start_time": None,
                     "end_time": None,
