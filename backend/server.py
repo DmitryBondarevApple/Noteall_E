@@ -141,12 +141,22 @@ class SpeakerDirectoryCreate(BaseModel):
     email: Optional[str] = None
     company: Optional[str] = None
     role: Optional[str] = None
+    phone: Optional[str] = None
+    telegram: Optional[str] = None
+    whatsapp: Optional[str] = None
+    photo_url: Optional[str] = None
+    comment: Optional[str] = None
 
 class SpeakerDirectoryUpdate(BaseModel):
     name: Optional[str] = None
     email: Optional[str] = None
     company: Optional[str] = None
     role: Optional[str] = None
+    phone: Optional[str] = None
+    telegram: Optional[str] = None
+    whatsapp: Optional[str] = None
+    photo_url: Optional[str] = None
+    comment: Optional[str] = None
 
 class SpeakerDirectoryResponse(BaseModel):
     id: str
@@ -155,6 +165,11 @@ class SpeakerDirectoryResponse(BaseModel):
     email: Optional[str]
     company: Optional[str]
     role: Optional[str]
+    phone: Optional[str]
+    telegram: Optional[str]
+    whatsapp: Optional[str]
+    photo_url: Optional[str]
+    comment: Optional[str]
     created_at: str
     updated_at: str
 
