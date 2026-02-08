@@ -5,4 +5,5 @@ export { ReviewTab } from './ReviewTab';
 export { SpeakersTab } from './SpeakersTab';
 export { AnalysisTab } from './AnalysisTab';
 export { FragmentCard } from './FragmentCard';
+export { SpeakerCombobox } from './SpeakerCombobox';
 export * from './utils';
