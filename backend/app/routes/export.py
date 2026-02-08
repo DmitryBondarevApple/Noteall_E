@@ -1,6 +1,7 @@
 """Export routes for generating Word and PDF documents from markdown content"""
 import io
 import re
+from urllib.parse import quote
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
