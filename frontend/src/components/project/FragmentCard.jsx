@@ -50,10 +50,10 @@ export function FragmentCard({
 
   return (
     <Card className={`transition-all ${getStatusStyles()}`}>
-      <CardContent className="p-4">
+      <CardContent className="p-3 sm:p-4">
         <div className="space-y-3">
           {/* Header row */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground font-mono">#{index + 1}</span>
               {getStatusBadge()}
@@ -61,41 +61,42 @@ export function FragmentCard({
             
             {/* Confirmed fragment actions */}
             {fragment.status === 'confirmed' && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 gap-1 text-amber-700 border-amber-300 hover:bg-amber-50"
+                  className="h-7 sm:h-8 gap-1 text-amber-700 border-amber-300 hover:bg-amber-50 text-xs sm:text-sm px-2 sm:px-3"
                   onClick={() => onRevert?.()}
                   data-testid={`revert-fragment-${fragment.id}`}
                 >
                   <Undo2 className="w-3 h-3" />
-                  Отменить
+                  <span className="hidden sm:inline">Отменить</span>
                 </Button>
               </div>
             )}
             
             {/* Auto-corrected fragment actions */}
             {fragment.status === 'auto_corrected' && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
                 <Button
                   variant="default"
                   size="sm"
-                  className="h-8 bg-blue-600 hover:bg-blue-700 gap-1"
+                  className="h-7 sm:h-8 bg-blue-600 hover:bg-blue-700 gap-1 text-xs sm:text-sm px-2 sm:px-3"
                   onClick={() => onConfirm(fragment.corrected_text || fragment.original_text)}
                   data-testid={`confirm-auto-${fragment.id}`}
                 >
                   <Check className="w-3 h-3" />
-                  Подтвердить
+                  <span className="hidden xs:inline">OK</span>
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8"
+                  className="h-7 sm:h-8 text-xs sm:text-sm px-2 sm:px-3"
                   onClick={() => onEdit()}
                   data-testid={`edit-fragment-${fragment.id}`}
                 >
-                  Изменить
+                  <span className="hidden sm:inline">Изменить</span>
+                  <span className="sm:hidden">✏️</span>
                 </Button>
                 <Button
                   variant="ghost"
