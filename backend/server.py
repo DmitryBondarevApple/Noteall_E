@@ -755,19 +755,38 @@ async def parse_uncertain_fragments(project_id: str, text: str):
             if word and len(word) > 1 and word.lower() not in seen_words:
                 seen_words.add(word.lower())
                 
+                # Try to extract GPT's suggested correction from the description
+                # Common patterns: → «replacement», восстановлено как «X», вероятно «X», возможно «X»
+                suggestion = None
+                suggestion_patterns = [
+                    r'→\s*[«"\'"]([^»"\'"\n]+)[»"\'"]',
+                    r'восстановлен\w*\s+(?:по смыслу\s+)?как\s+[«"\'"]([^»"\'"\n]+)[»"\'"]',
+                    r'(?:вероятно|возможно|скорее всего)\s+[«"\'"]([^»"\'"\n]+)[»"\'"]',
+                    r'(?:исправлен\w*|заменен\w*)\s+на\s+[«"\'"]([^»"\'"\n]+)[»"\'"]',
+                ]
+                for sp in suggestion_patterns:
+                    sm = re.search(sp, item_text, re.IGNORECASE)
+                    if sm:
+                        suggestion = sm.group(1).strip()
+                        break
+                
+                # Check if original word is absent from main_text (GPT already corrected it)
+                word_in_main = re.search(re.escape(word), main_text, re.IGNORECASE)
+                is_auto_corrected = suggestion and not word_in_main
+                
                 # Find full line in main text, or use the full list description
-                context_line = find_full_line(word) or item_text
+                context_line = find_full_line(suggestion if is_auto_corrected and suggestion else word) or item_text
                 
                 await db.uncertain_fragments.insert_one({
                     "id": str(uuid.uuid4()),
                     "project_id": project_id,
                     "original_text": word,
-                    "corrected_text": None,
+                    "corrected_text": suggestion if is_auto_corrected else None,
                     "context": context_line.strip(),
                     "start_time": None,
                     "end_time": None,
-                    "suggestions": [word],
-                    "status": "pending",
+                    "suggestions": [s for s in [word, suggestion] if s],
+                    "status": "auto_corrected" if is_auto_corrected else "pending",
                     "source": "list",
                     "created_at": datetime.now(timezone.utc).isoformat()
                 })
