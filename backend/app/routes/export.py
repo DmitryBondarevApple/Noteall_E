@@ -235,12 +235,14 @@ async def export_to_pdf(request: ExportRequest):
         doc.build(story)
         buffer.seek(0)
         
-        filename = f"{request.filename}.pdf"
+        # Properly encode filename for Content-Disposition header
+        safe_filename = request.filename.replace(' ', '_')
+        encoded_filename = quote(f"{safe_filename}.pdf")
         
         return StreamingResponse(
             buffer,
             media_type="application/pdf",
-            headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"}
+            headers={"Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"}
         )
         
     except Exception as e:
