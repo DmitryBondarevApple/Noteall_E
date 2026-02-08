@@ -669,7 +669,7 @@ export default function ProjectPage() {
                         data-testid="edit-processed-textarea"
                       />
                     ) : (
-                      <ScrollArea className="h-[500px] rounded-lg border p-6 bg-white">
+                      <ScrollArea ref={processedScrollRef} className="h-[500px] rounded-lg border p-6 bg-white">
                         <div className="prose prose-sm max-w-none" data-testid="processed-transcript-content">
                           <Markdown>{prepareForMarkdown(applySpeakerNames(getTranscript('processed').content, speakers))}</Markdown>
                         </div>
