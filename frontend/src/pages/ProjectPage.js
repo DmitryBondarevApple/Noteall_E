@@ -285,7 +285,8 @@ export default function ProjectPage() {
     try {
       await transcriptsApi.process(projectId);
       toast.success('Обработка запущена. Ожидайте завершения...');
-      // Don't wait — polling in useEffect will detect status change
+      // Update project status in state to trigger polling useEffect
+      setProject(prev => ({ ...prev, status: 'processing' }));
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Ошибка запуска обработки');
       setProcessing(false);
