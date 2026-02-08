@@ -84,7 +84,7 @@ export function SpeakersTab({ speakers, projectId, aiHints, onSpeakersUpdate }) 
               <p className="text-sm">Спикеры будут определены после транскрибации</p>
             </div>
           ) : (
-            <div className="space-y-3" data-testid="speakers-list">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3" data-testid="speakers-list">
               {speakers.map((speaker, index) => {
                 const hint = getAiHint(speaker.speaker_label);
                 const color = getColor(index);
@@ -144,15 +144,16 @@ export function SpeakersTab({ speakers, projectId, aiHints, onSpeakersUpdate }) 
                         )}
                       </div>
 
-                      {/* Edit button */}
+                      {/* Edit button — icon on mobile, text on desktop */}
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-9 w-9 p-0 rounded-full sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200 shrink-0"
+                        className="shrink-0 rounded-full sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200 h-9 w-9 p-0 sm:h-8 sm:w-auto sm:px-3"
                         onClick={() => setEditingSpeaker(speaker)}
                         data-testid={`edit-speaker-${speaker.id}`}
                       >
-                        <Pencil className="w-4 h-4 text-muted-foreground" />
+                        <Pencil className="w-4 h-4 text-muted-foreground sm:hidden" />
+                        <span className="hidden sm:inline text-xs text-muted-foreground">Изменить</span>
                       </Button>
                     </div>
                   </div>
