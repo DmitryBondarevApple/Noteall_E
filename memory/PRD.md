@@ -67,9 +67,15 @@ Platform for transcribing and analyzing work meetings. Users upload audio/video,
 - Automated transcript pipeline disabled (manual "Обработать" button is workaround)
 - server.py and ProjectPage.js are monolithic (800+ lines each)
 
-## Upcoming Tasks (P1)
-- Re-enable Markdown rendering for transcript/analysis text
-- Stabilize automated transcript processing pipeline
+## Key API Endpoints
+- `/api/auth/register`, `/api/auth/login`, `/api/auth/me`
+- `/api/projects` (CRUD)
+- `/api/projects/{id}/upload` - file upload + Deepgram transcription
+- `/api/projects/{id}/process` - manual GPT processing with master prompt
+- `/api/projects/{id}/analyze` - multi-turn analysis (transcript + all previous analyses as context)
+- `/api/projects/{id}/transcripts` (GET, PUT by version_type)
+- `/api/projects/{id}/chat-history` (GET sorted ASC, PUT to update response)
+- `/api/prompts` (CRUD)
 
 ## Future/Backlog (P2-P3)
 - Collaborative project access
