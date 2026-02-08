@@ -1,158 +1,158 @@
-<analysis>**original_problem_statement:** The user wants to build and refine a web application for transcribing and analyzing audio files.
+<analysis>**original_problem_statement:** The user's primary goal is to build a sophisticated web application for transcribing and analyzing audio files. The latest major feature request is to automate a complex, multi-step analysis workflow.
 
-The initial request involved fixing three critical bugs: a crash from an undefined function (), a failure to pass  to the backend, and a missing UI selector for reasoning effort.
+**PRODUCT REQUIREMENTS:**
+The user has defined a detailed workflow for a new feature called **Мастер полного анализа встречи (Full Analysis Wizard)**:
+1.  **Start:** The user provides the key subject of discussion for a transcript.
+2.  **Extract Topics:** An AI prompt generates a list of discussed topics from the transcript. The user must be able to review and edit this list.
+3.  **Detailed Analysis:** The AI generates a detailed summary for each topic. This process runs in batches (e.g., 3 topics at a time), with the batch size being configurable by the user.
+4.  **Combine:** All the detailed topic summaries are scripted together into a single large document.
+5.  **Final Summary:** The AI generates a final, short summary (including agreements and action items) based on the combined document from the previous step.
+6.  **Final Document:** The output is presented in a new tab, with the short summary at the top, followed by the detailed topic-by-topic analysis. The entire result is saved as a single analysis entry.
 
-Throughout the session, the user requested several new features and bug fixes, including:
-- **PRODUCT REQUIREMENTS:**
-    - Adding Markdown rendering for processed text and analysis results.
-    - Ensuring corrections made in the Review tab are reflected in the main transcript.
-    - Displaying full sentences for context in the Review tab.
-    - Adding in-place editing capabilities for both the processed transcript and the analysis results.
-    - Fixing parser bugs that failed to extract Uncertain places from the AI's output.
-    - Improving UI/UX by preserving scroll position during edits.
-    - Making the AI analysis context-aware by maintaining a conversation history.
-    - Resolving application hangs and errors caused by long-running AI tasks (proxy timeouts).
-    - Improving the review process for words the AI has already corrected in the text.
-    - Ensuring assigned speaker names are used consistently, including in the Review tab.
-    - Fixing a regression where Markdown formatting was incorrectly applied, corrupting the main transcript view.
+Additionally, the user previously requested and received features for a global speaker directory, autosaving drafts, and the ability to undo confirmed corrections.
 
 **User's preferred language**: The user communicates in **Russian**. The next agent MUST respond in Russian.
 
 **what currently exists?**
-The project is a web application with a React frontend and a FastAPI backend that uses MongoDB. It transcribes audio via Deepgram and uses a GPT model for text processing and analysis. Key features include asynchronous processing to handle long AI tasks, polling for status updates, and UI tabs for viewing the processed transcript, reviewing uncertain words, and running analysis prompts. Editing is enabled on the main transcript and analysis results. There's a UX enhancement to distinguish between words needing manual review and those the AI has already auto-corrected.
+The application consists of a React frontend and a modular FastAPI backend using MongoDB. It supports audio transcription (Deepgram), AI-powered text processing (GPT-4o), and analysis.
+
+Key features implemented:
+-   **Core:** Asynchronous processing of long AI tasks with frontend polling.
+-   **Frontend Refactoring:** The main  has been successfully refactored into smaller, logical components located in .
+-   **Backend Refactoring:** The monolithic  has been completely modularized into a standard FastAPI structure (, , , ).
+-   **Speaker Directory:** A global, editable directory for speakers with CRUD functionality and an autocomplete combobox for easy assignment in projects. Speaker profiles include fields for photo, contact details, and comments. The directory page allows grouping speakers by company.
+-   **UX Improvements:** Autosave for drafts in edit-mode and the ability to revert a confirmed correction in the Review tab.
+-   **Prompt Engineering:** The master prompt for text processing has been iteratively refined based on detailed user feedback to ensure it corrects text while also flagging uncertain words for review.
 
 **Last working item**:
-- **Last item agent was working:** The user reported that the Review tab displays generic speaker names (e.g., Speaker 1) in the context snippets, instead of the user-assigned names. The agent was fixing this by applying the existing  function to the context string for each review fragment.
-- **Status:** IN PROGRESS
-- **Agent Testing Done:** N
-- **Which testing method agent to use?** frontend testing agent or screenshot tool to visually verify that the correct speaker names now appear in the context sentences on the Review tab.
-- **User Testing Done:** N
+-   **Last item agent was working:** The agent began implementing the **Мастер полного анализа встречи (Full Analysis Wizard)** feature. The initial scaffolding is in place:
+    1.  A new frontend component was created: .
+    2.  A new backend endpoint was added:  in . This endpoint performs a raw AI call without saving the result to the chat history, intended for use in the intermediate steps of the wizard.
+-   **Status:** IN PROGRESS
+-   **Agent Testing Done:** N
+-   **Which testing method agent to use?** frontend testing agent. This is a complex multi-step UI wizard that will require thorough testing of the entire flow once the implementation is complete.
+-   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-- **Issue 1: Use assigned speaker names in the Review tab context (P0)**
-    - **Description:** The context shown for uncertain words in the Review tab uses generic identifiers like Speaker 1 instead of the actual names assigned by the user.
-    - **Attempted fixes:** The agent edited  to wrap the  in the  function before rendering. This should replace the generic identifiers and clean up markdown characters.
-    - **Next debug checklist:**
-        1.  Start the application.
-        2.  Navigate to a project that has uncertain fragments and assigned speaker names.
-        3.  Go to the Проверка (Review) tab.
-        4.  Visually inspect the context text for one of the fragments to confirm it now shows the correct speaker name (e.g., Ирина Егорова:) instead of Speaker 1:.
-    - **Why fix this issue and what will be achieved with the fix?** To ensure UI consistency and improve user experience by showing the correct, user-defined speaker names everywhere.
-    - **Status:** IN PROGRESS
-    - **Is recurring issue?** N
-    - **Should Test frontend/backend/both after fix?** Frontend
-    - **Blocked on other issue:** None
+There are no outstanding bugs. The focus is on completing the new feature.
 
 **In progress Task List**:
-- **Task 1: Complete and verify the fix for speaker names in the Review tab (P0)**
-    - **Where to resume:** The code modification in  is complete. The next step is to run the application and test the frontend to confirm the fix works as expected.
-    - **What will be achieved with this?** The Review tab will become more intuitive and consistent with the rest of the application's display.
-    - **Status:** IN PROGRESS
-    - **Should Test frontend/backend/both after fix?** Frontend
-    - **Blocked on something:** None
+-   **Task 1: Implement the Мастер полного анализа встречи (Full Analysis Wizard) (P0)**
+    -   **Where to resume:** The basic component  and the helper backend endpoint  are created. The next step is to build out the full wizard logic inside .
+        -   **UI/State:** Implement the multi-step UI (Step 1: Setup, Step 2: Topic Review, Step 3: Progress, Step 4: Final Document) and manage the state transitions.
+        -   **API Calls:** Use the  endpoint to get the topic list and the summary for each batch of topics.
+        -   **Logic:** Implement the logic to allow topic editing, configurable batch processing, and scripting the final document together.
+        -   **Save:** Use the existing  endpoint to save the final generated document.
+        -   **Integration:** Add the  to the tabbed interface in .
+    -   **What will be achieved with this?** It will deliver a key user-requested feature, automating a complex and time-consuming analysis workflow.
+    -   **Status:** IN PROGRESS
+    -   **Should Test frontend/backend/both after fix?** Both
+    -   **Blocked on something:** None
 
 **Upcoming and Future Tasks**
-- There are no outstanding future tasks requested by the user. The primary goal is to stabilize the current feature set by fixing the remaining bugs.
+-   **Tags for Speaker Directory (P1):** Add a tagging system to the speaker directory to allow for better filtering and organization.
+-   **Import/Export (P2):**
+    -   Implement a feature to import speakers from a CSV file.
+    -   Implement a feature to export transcripts.
 
 **Completed work in this session**
-- **Core Bug Fixes:**
-    - Resolved a startup crash by correctly defining and calling the speaker name processing function ().
-    - Enabled  to be passed from frontend to backend for analysis.
-- **Asynchronous Processing:**
-    - Refactored the long-running transcript processing to be asynchronous to prevent proxy timeouts, with the frontend polling for status updates.
-    - Fixed a subsequent bug where the frontend would get stuck waiting because the React state wasn't updated to trigger polling.
-- **Text Parsing and Review:**
-    - The backend parser () was significantly improved to correctly extract Uncertain places, handle different AI output formats, and remove the parsed section from the final transcript.
-    - The Review tab now shows full sentences for context, not just snippets.
-- **Editing and UI/UX:**
-    - Implemented in-place editing for the Processed Text and Analysis tabs.
-    - Fixed a bug that caused the page to scroll to the top when entering edit mode.
-    - Implemented an auto-corrected feature: the UI now visually distinguishes words the AI has already changed in the text, providing a streamlined one-click confirmation.
-- **AI Context and Markdown:**
-    - The analysis endpoint was enhanced to be context-aware by sending the full conversation history to the AI.
-    - Fixed a critical regression where  was corrupting the plain-text transcript view; its use is now correctly restricted to the Analysis tab only.
+-   **Bug Fix:** Confirmed the fix for speaker names not appearing correctly in the Review tab.
+-   **Major Backend Refactoring:** Successfully modularized the entire  file into a structured application under .
+-   **Major Frontend Refactoring:** Decomposed the large  into smaller, reusable components.
+-   **Feature: Speaker Directory:** Implemented a full-featured global speaker directory with a management UI, CRUD APIs, autocomplete search, and extended profile fields (photo, contacts).
+-   **Feature: Group Speakers by Company:** Added a view toggle on the speaker directory page to group speakers by their company.
+-   **Feature: Autosave Drafts:** Implemented -based autosaving for text being edited.
+-   **Feature: Undo Confirmation:** Added the ability to revert a confirmed word correction in the Review tab.
+-   **Prompt Engineering:** Iteratively updated the master prompt based on detailed user feedback to achieve the desired AI behavior.
 
 **Earlier issues found/mentioned but not fixed**
-- **Issue 1: GPT sometimes omits the Сомнительные места (Uncertain places) section.**
-    - **Debug checklist:** This is not a code bug but an LLM behavior. The prompt in  could be engineered to be more insistent, perhaps by instructing the model to explicitly state No uncertain places found if it has no doubts.
-    - **Why to solve this issue and what will be achieved with this?** This will create a more predictable and reliable user experience, as the Review tab's content will be consistent.
-    - **Should Test frontend/backend/both after fix:** Backend (re-processing a project).
-    - **Is recurring issue?** Y
+-   None. All previously mentioned issues have been addressed.
 
 **Known issue recurrence from previous fork**
-- Not applicable, as this is the first summary in this job.
+-   Not applicable.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Frontend:** React, Tailwind CSS, Shadcn/ui,  (used sparingly).
-- **Backend:** FastAPI, Python, Motor (async MongoDB driver).
-- **Database:** MongoDB.
-- **AI/LLM:** Deepgram (transcription), OpenAI GPT-4o (text processing/analysis).
-- **Architecture:** The backend uses an asynchronous, non-blocking architecture. Long AI tasks are handled via , and the frontend polls for status updates to avoid timeouts and provide a responsive UI.
+-   **Frontend:** React, Tailwind CSS, Shadcn/UI.
+-   **Backend:** FastAPI (modular architecture), Python, Motor (async MongoDB driver).
+-   **Database:** MongoDB.
+-   **AI/LLM:** Deepgram (transcription), OpenAI GPT-4o (text processing/analysis).
+-   **Architecture:** Asynchronous backend with background tasks and frontend polling. A complex multi-step wizard pattern is being implemented on the frontend.
 
 **key DB schema**
-- **projects collection:**
-    - : (string) The main text after AI processing.
-    - : (array) A list of objects, each representing a word/phrase for review. Each object includes , ,  ('pending', 'confirmed', 'auto_corrected'), and an optional .
-- **chat_history collection:**
-    - Stores the history of prompts and responses for each project's analysis tab to enable context-aware conversations.
+-   **projects:** Stores project metadata, transcripts, and analysis results.
+-   **chat_history:** Stores conversation history for the analysis tab.
+-   **speaker_directory:** (New) Stores global speaker profiles.
+    -   uid=0(root) gid=0(root) groups=0(root): (string, uuid)
+    -   : (string)
+    -   : (string, optional)
+    -   : (string, optional)
+    -   : (string, optional)
+    -   : (string, optional)
+    -   : (string, optional)
+    -   : (string, optional)
 
 **changes in tech stack**
-- No fundamental changes to the tech stack were made during this session.
+-   None.
 
 **All files of reference**
-- : The most heavily modified file, containing the logic for all UI tabs, state management, polling, editing, and rendering review fragments.
-- : Modified to support asynchronous processing, content updates, and integration with the text parser.
-- : Created and refined to parse uncertain fragments, identify auto-corrected words, and clean the final transcript.
-- : Updated to build and send a multi-turn conversation history to the AI.
+-   **New Feature Files:**
+    -   : (In Progress) The main component for the new Analysis Wizard.
+    -   : Modified to add the  endpoint.
+-   **Refactoring & Speaker Directory Files (Completed):**
+    -   All files under  (core, models, routes, services, main.py).
+    -   All new components under .
+    -   
+    -   
 
 **Areas that need refactoring**:
--  has grown excessively large and complex. It manages the state and logic for almost the entire user-facing application. It should be broken down into smaller, more focused components (e.g., separate components for each tab, a reusable fragment card component) to improve maintainability.
+-   None. The agent has proactively refactored both the frontend () and backend (), addressing the major sources of technical debt.
 
 **key api endpoints**
-- : (Async) Initiates AI processing of the transcript. Returns 202 immediately.
-- : Fetches project data and status, used for polling.
-- : Updates the processed transcript text.
-- : Confirms a correction from the Review tab.
-- : Runs a new analysis prompt (now context-aware).
-- : Updates a previous analysis response.
+-   **Speaker Directory:**
+    -   : List all or create a new speaker.
+    -   : Update or delete a speaker.
+    -   : Upload a photo for a speaker.
+-   **Analysis Wizard Helper:**
+    -   : Perform a raw AI query without saving it to the history.
+-   **Fragments:**
+    -   : Revert a confirmed fragment back to pending.
 
 **Critical Info for New Agent**
-- **Asynchronous Processing is Key:** Remember that transcript processing () is asynchronous. The frontend is responsible for polling the project status. Don't treat it as a synchronous call.
-- ** Logic:** The  status for a review fragment is determined by the backend parser. If an  from the Сомнительные места list is *not* found in the final processed transcript, it's marked as . The frontend must render these fragments differently.
-- **Markdown is for Analysis ONLY:** Do not apply  to the main Processed Text tab. It will misinterpret the plain-text transcript and cause data loss on the screen. This was a regression that has been fixed and should not be reintroduced.
+-   **Backend Refactoring:** The backend logic is no longer in . It has been completely moved to a modular structure inside the  directory. Refer to the new file structure for any backend changes.
+-   **Analysis Wizard:** The new Full Analysis Wizard feature requires using the special  endpoint for all intermediate steps (like fetching topics or summarizing batches) to avoid cluttering the main analysis chat history. The final combined result should be saved using the standard analysis endpoint.
 
 **documents and test reports created in this job**
-- 
+-    (updated multiple times).
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User (Chat 305):** Asked for a better way to handle words that the AI corrects but also lists for review.
-    - *Status: DONE. Implemented the  feature.*
-2.  **User (Chat 346):** Reported two bugs: page didn't refresh after transcription, and the  feature wasn't visible.
-    - *Status: DONE. Fixed the polling trigger and the  logic.*
-3.  **User (Chat 371):** Reported a major bug where Markdown formatting was breaking the main transcript view.
-    - *Status: DONE. Removed  from the Processed Text tab.*
-4.  **User (Chat 394):** Reported that the Review tab uses generic speaker names (Speaker 1) instead of the correct, assigned names.
-    - *Status: IN PROGRESS. This is the current active task. The code has been written but needs to be tested.*
+1.  **User (Chat 338):** Provided a detailed, 5-step workflow for a Full Analysis feature.
+    -   *Status: IN PROGRESS. This is the current main task.*
+2.  **Agent (Chat 339):** Proposed a plan to implement the workflow as a multi-step wizard.
+    -   *Status: PLAN PROPOSED.*
+3.  **User (Chat 340):** Approved the wizard plan with specific clarifications: use intermediate stops, allow user to set batch size for topics, allow topic editing, show results in a new tab, and save as one final result.
+    -   *Status: REQUIREMENTS FINALIZED. Implementation started.*
+4.  **Agent (Chat 341-346):** Started implementation by creating the frontend component  and the backend endpoint .
+    -   *Status: IN PROGRESS. This is where the last session left off.*
 
 **Project Health Check:**
-- **Broken:** The speaker name display in the Review tab is incorrect, which is the final bug the agent was working on.
-- **Mocked:** None.
+-   **Broken:** None
+-   **Mocked:** None
 
 **3rd Party Integrations**
-- **Deepgram:** Used for audio-to-text transcription. Requires a User API Key set in the environment.
-- **OpenAI GPT-4o:** (referred to as ) Used for all AI-based text processing and analysis. Uses the Emergent LLM Key.
+-   **Deepgram:** Used for audio-to-text transcription. Requires a User API Key.
+-   **OpenAI GPT-4o:** Used for all AI-based text processing and analysis. Uses the Emergent LLM Key.
 
 **Testing status**
-- **Testing agent used after significant changes:** YES
-- **Troubleshoot agent used after agent stuck in loop:** NO
-- **Test files created:** None.
-- **Known regressions:** A regression where Markdown broke the transcript view was introduced and fixed. A regression where review context reverted to short phrases was also fixed.
+-   **Testing agent used after significant changes:** NO
+-   **Troubleshoot agent used after agent stuck in loop:** NO
+-   **Test files created:** None.
+-   **Known regressions:** None.
 
 **Credentials to test flow:**
-- No specific user credentials are required. The application uses project data already present in the database.
+-   No specific user credentials are required.
 
 **What agent forgot to execute**
-- The agent has not yet tested the fix for the final user-reported bug (displaying correct speaker names in the Review tab). The implementation is complete, but verification is pending.</analysis>
+-   The agent was in the middle of implementing the Full Analysis Wizard feature. The work is not forgotten, just incomplete, and is the highest priority for the next session.</analysis>
