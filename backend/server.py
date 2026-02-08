@@ -1083,8 +1083,33 @@ async def get_chat_history(project_id: str, user = Depends(get_current_user)):
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     
-    history = await db.chat_requests.find({"project_id": project_id}, {"_id": 0}).sort("created_at", -1).to_list(100)
+    history = await db.chat_requests.find({"project_id": project_id}, {"_id": 0}).sort("created_at", 1).to_list(100)
     return [ChatRequestResponse(**h) for h in history]
+
+class ChatResponseUpdate(BaseModel):
+    response_text: str
+
+@api_router.put("/projects/{project_id}/chat-history/{chat_id}", response_model=ChatRequestResponse)
+async def update_chat_response(
+    project_id: str,
+    chat_id: str,
+    data: ChatResponseUpdate,
+    user = Depends(get_current_user)
+):
+    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    result = await db.chat_requests.find_one_and_update(
+        {"id": chat_id, "project_id": project_id},
+        {"$set": {"response_text": data.response_text}},
+        return_document=ReturnDocument.AFTER
+    )
+    if not result:
+        raise HTTPException(status_code=404, detail="Chat entry not found")
+    
+    result.pop("_id", None)
+    return ChatRequestResponse(**result)
 
 # ==================== ADMIN ROUTES ====================
 
