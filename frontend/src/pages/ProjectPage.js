@@ -1200,6 +1200,8 @@ function applySpeakerNames(content, speakers) {
       result = result.replace(new RegExp(escaped + ':', 'g'), s.speaker_name + ':');
     }
   });
+  // Clean up markdown bold markers around speaker names: **Name:** → Name:
+  result = result.replace(/\*\*([^*\n]+?):\*\*/g, '$1:');
   return result;
 }
 
