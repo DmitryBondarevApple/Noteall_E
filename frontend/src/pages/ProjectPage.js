@@ -305,6 +305,18 @@ export default function ProjectPage() {
                 onChatHistoryUpdate={setChatHistory}
               />
             </TabsContent>
+
+            {/* Full Analysis Wizard Tab */}
+            <TabsContent value="full-analysis">
+              <FullAnalysisTab
+                projectId={projectId}
+                processedTranscript={getTranscript('processed')}
+                onSaveResult={(result) => {
+                  loadData(); // Reload chat history after saving
+                  toast.success('Полный анализ сохранён в историю');
+                }}
+              />
+            </TabsContent>
           </Tabs>
         )}
 
