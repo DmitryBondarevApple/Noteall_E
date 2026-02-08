@@ -868,7 +868,6 @@ export default function ProjectPage() {
                                   )}
                                 </div>
                                 )}
-                                </div>
                               </div>
                             </CardContent>
                           </Card>
