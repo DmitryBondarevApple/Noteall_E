@@ -301,7 +301,7 @@ export default function ProjectPage() {
         additional_text: additionalText,
         reasoning_effort: selectedReasoningEffort
       });
-      setChatHistory([response.data, ...chatHistory]);
+      setChatHistory([...chatHistory, response.data]);
       setAdditionalText('');
       toast.success('Анализ завершен');
     } catch (error) {
