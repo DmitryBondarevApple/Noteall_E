@@ -110,8 +110,8 @@ class UncertainFragmentCreate(BaseModel):
     suggestions: List[str] = []
 
 class UncertainFragmentUpdate(BaseModel):
-    corrected_text: str
-    status: Literal["pending", "confirmed", "rejected"] = "confirmed"
+    corrected_text: Optional[str] = None
+    status: Literal["pending", "confirmed", "rejected", "auto_corrected"] = "confirmed"
 
 class UncertainFragmentResponse(BaseModel):
     id: str
