@@ -100,6 +100,122 @@ export function ReviewTab({
     }
   };
 
+  // Open context editor
+  const handleEditContext = (fragment) => {
+    if (!processedTranscript?.content) {
+      toast.error('Текст транскрипта не загружен');
+      return;
+    }
+    
+    const content = processedTranscript.content;
+    const word = fragment.original_text;
+    
+    // Find the word in content (with or without [?] markers)
+    const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const patterns = [
+      new RegExp(`\\[+${escapedWord}\\?+\\]+`, 'gi'),  // [word?] format
+      new RegExp(`\\b${escapedWord}\\b`, 'gi')          // plain word
+    ];
+    
+    let matchIndex = -1;
+    let matchLength = 0;
+    
+    for (const pattern of patterns) {
+      const match = pattern.exec(content);
+      if (match) {
+        matchIndex = match.index;
+        matchLength = match[0].length;
+        break;
+      }
+    }
+    
+    if (matchIndex === -1) {
+      toast.error('Слово не найдено в тексте');
+      return;
+    }
+    
+    // Extract context: ~100 chars before and after
+    const contextRadius = 100;
+    const startIdx = Math.max(0, matchIndex - contextRadius);
+    const endIdx = Math.min(content.length, matchIndex + matchLength + contextRadius);
+    
+    // Adjust to word boundaries
+    let adjustedStart = startIdx;
+    let adjustedEnd = endIdx;
+    
+    if (startIdx > 0) {
+      const spaceIdx = content.indexOf(' ', startIdx);
+      if (spaceIdx !== -1 && spaceIdx < matchIndex) {
+        adjustedStart = spaceIdx + 1;
+      }
+    }
+    
+    if (endIdx < content.length) {
+      const spaceIdx = content.lastIndexOf(' ', endIdx);
+      if (spaceIdx !== -1 && spaceIdx > matchIndex + matchLength) {
+        adjustedEnd = spaceIdx;
+      }
+    }
+    
+    const contextText = content.slice(adjustedStart, adjustedEnd);
+    
+    setEditingContext({
+      fragment,
+      originalContext: contextText,
+      editedContext: contextText,
+      startIndex: adjustedStart,
+      endIndex: adjustedEnd
+    });
+  };
+
+  // Save edited context
+  const handleSaveContext = async () => {
+    if (!editingContext) return;
+    
+    try {
+      const { originalContext, editedContext, startIndex, endIndex } = editingContext;
+      
+      if (originalContext === editedContext) {
+        setEditingContext(null);
+        return;
+      }
+      
+      // Build new content
+      const content = processedTranscript.content;
+      const newContent = content.slice(0, startIndex) + editedContext + content.slice(endIndex);
+      
+      // Save to backend
+      await transcriptsApi.updateContent(projectId, 'processed', newContent);
+      
+      // Update local state
+      onTranscriptUpdate(newContent);
+      
+      // Mark fragment as confirmed since user manually edited the context
+      const fragment = editingContext.fragment;
+      await fragmentsApi.update(projectId, fragment.id, {
+        corrected_text: '(контекст отредактирован)',
+        status: 'confirmed'
+      });
+      
+      const updatedFragments = fragments.map(f => 
+        f.id === fragment.id ? { ...f, corrected_text: '(контекст отредактирован)', status: 'confirmed' } : f
+      );
+      onFragmentsUpdate(updatedFragments);
+      
+      // Check project status
+      const remainingPending = updatedFragments.filter(f => f.status === 'pending' || f.status === 'auto_corrected');
+      if (remainingPending.length === 0) {
+        onProjectStatusUpdate?.('ready');
+      }
+      
+      setEditingContext(null);
+      toast.success('Контекст сохранён');
+    } catch (error) {
+      console.error('Save context error:', error);
+      toast.error('Ошибка сохранения контекста');
+    }
+  };
+
   return (
     <>
       <Card>
