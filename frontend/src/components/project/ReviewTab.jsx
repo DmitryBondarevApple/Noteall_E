@@ -21,7 +21,8 @@ export function ReviewTab({
   processedTranscript,
   projectId,
   onFragmentsUpdate,
-  onTranscriptUpdate
+  onTranscriptUpdate,
+  onProjectStatusUpdate
 }) {
   const [editingFragment, setEditingFragment] = useState(null);
   
