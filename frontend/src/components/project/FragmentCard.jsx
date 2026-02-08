@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { Check, Sparkles } from 'lucide-react';
+import { Check, Sparkles, Undo2 } from 'lucide-react';
 import { applySpeakerNames, extractFullSentence, renderContextWithHighlight } from './utils';
 
 export function FragmentCard({ 
@@ -11,7 +11,8 @@ export function FragmentCard({
   processedContent,
   speakers,
   onConfirm, 
-  onEdit 
+  onEdit,
+  onRevert
 }) {
   const fullSentence = extractFullSentence(processedContent, fragment.original_text);
   
@@ -57,6 +58,23 @@ export function FragmentCard({
               {getStatusBadge()}
             </div>
             
+            {/* Confirmed fragment actions */}
+            {fragment.status === 'confirmed' && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-1 text-amber-700 border-amber-300 hover:bg-amber-50"
+                  onClick={() => onRevert?.()}
+                  data-testid={`revert-fragment-${fragment.id}`}
+                >
+                  <Undo2 className="w-3 h-3" />
+                  Отменить
+                </Button>
+              </div>
+            )}
+            
+            {/* Auto-corrected fragment actions */}
             {fragment.status === 'auto_corrected' && (
               <div className="flex items-center gap-2">
                 <Button
@@ -81,6 +99,7 @@ export function FragmentCard({
               </div>
             )}
             
+            {/* Pending fragment actions */}
             {fragment.status === 'pending' && (
               <div className="flex items-center gap-2">
                 <Button
@@ -105,6 +124,16 @@ export function FragmentCard({
               </div>
             )}
           </div>
+          
+          {/* Confirmed notice */}
+          {fragment.status === 'confirmed' && fragment.corrected_text && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-green-100/60 rounded-lg text-sm text-green-800">
+              <Check className="w-4 h-4 shrink-0" />
+              <span>
+                Исправлено: <code className="bg-red-200/60 px-1.5 py-0.5 rounded text-red-900 line-through">{fragment.original_text}</code> → <code className="bg-green-200/60 px-1.5 py-0.5 rounded text-green-900 font-medium">{fragment.corrected_text}</code>
+              </span>
+            </div>
+          )}
           
           {/* Auto-corrected notice */}
           {fragment.status === 'auto_corrected' && (
@@ -139,21 +168,13 @@ export function FragmentCard({
             </p>
           </div>
           
-          {/* Current word and correction */}
-          {fragment.status !== 'auto_corrected' && (
+          {/* Current word and correction for pending */}
+          {fragment.status === 'pending' && (
             <div className="flex items-center gap-3 text-sm">
               <span className="text-muted-foreground">Сомнительное слово:</span>
               <code className="bg-orange-100 text-orange-800 px-2 py-1 rounded font-medium">
                 {fragment.original_text}
               </code>
-              {fragment.corrected_text && fragment.corrected_text !== fragment.original_text && (
-                <>
-                  <span className="text-muted-foreground">→</span>
-                  <code className="bg-green-100 text-green-800 px-2 py-1 rounded font-medium">
-                    {fragment.corrected_text}
-                  </code>
-                </>
-              )}
             </div>
           )}
         </div>
