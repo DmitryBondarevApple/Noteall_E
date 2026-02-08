@@ -157,7 +157,10 @@ export function SpeakerCombobox({ value, onChange, onAddToDirectory, placeholder
                     className={`w-full px-3 py-2 text-left flex items-center gap-3 hover:bg-slate-50 transition-colors ${
                       index === highlightedIndex ? 'bg-slate-100' : ''
                     }`}
-                    onClick={() => handleSelect(speaker)}
+                    onMouseDown={(e) => {
+                      e.preventDefault(); // Prevent blur before click
+                      handleSelect(speaker);
+                    }}
                     data-testid={`speaker-suggestion-${speaker.id}`}
                   >
                     <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
