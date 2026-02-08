@@ -19,11 +19,21 @@ Platform for transcribing and analyzing work meetings. Users upload audio/video,
 ## Architecture
 ```
 /app
-├── backend/server.py       # Monolithic FastAPI (all routes, models, logic)
+├── backend/server.py           # Monolithic FastAPI (all routes, models, logic)
 ├── frontend/src/
-│   ├── App.js              # Router
-│   ├── lib/api.js          # Axios API client
-│   ├── pages/ProjectPage.js # Main project UI (all tabs)
+│   ├── App.js                  # Router
+│   ├── lib/api.js              # Axios API client
+│   ├── pages/ProjectPage.js    # Main project UI (refactored, ~220 lines)
+│   ├── components/project/     # Modular project components
+│   │   ├── index.js            # Exports all components
+│   │   ├── utils.js            # Shared utilities and constants
+│   │   ├── UploadSection.jsx   # File upload dropzone
+│   │   ├── TranscriptTab.jsx   # Raw transcript display
+│   │   ├── ProcessedTab.jsx    # Processed text with editing
+│   │   ├── ReviewTab.jsx       # Fragment review UI
+│   │   ├── SpeakersTab.jsx     # Speaker name mapping
+│   │   ├── AnalysisTab.jsx     # AI analysis with history
+│   │   └── FragmentCard.jsx    # Single review fragment card
 │   └── contexts/AuthContext.js
 ```
 
@@ -48,52 +58,63 @@ Platform for transcribing and analyzing work meetings. Users upload audio/video,
 - Admin panel (users, prompts)
 - Seed data endpoint
 
-## Completed Bug Fixes (Dec 2025)
+## Completed Bug Fixes & Features (Dec 2025)
 - [x] Speaker names now update in transcript display (applySpeakerNames)
 - [x] Reasoning depth applied during analysis (uses call_gpt52 with reasoning_effort)
 - [x] Reasoning depth selector moved to sticky tab bar
 - [x] Markdown rendering enabled for "Обработанный текст" and "Анализ" tabs
-- [x] Fragment corrections from Review tab now update Processed text (replace [word?] markers, persist to backend)
+- [x] Fragment corrections from Review tab now update Processed text
 - [x] Review tab shows full sentences instead of truncated 80-char context
-- [x] Processed text tab has edit mode (Редактировать/Сохранить/Отмена)
-- [x] Markdown escaping: [word?] markers rendered as inline code, not eaten as link syntax
-- [x] Scroll position preserved when toggling edit mode on Processed text tab
-- [x] Analysis tab: edit mode added (pencil icon per result, textarea + save/cancel)
-- [x] Analysis results in chronological order (oldest first, newest at bottom)
-- [x] Parser: header matching without colon, «word» — description format support
-- [x] Scroll position in Processed tab preserved via ScrollArea ref (inner viewport)
-- [x] Analysis: multi-turn conversation context (transcript + all previous analyses sent to GPT)
-- [x] Async GPT processing: background task + polling (no more proxy timeout)
-- [x] Polling fix: project status updated in React state to trigger polling useEffect
+- [x] Processed text tab has edit mode
+- [x] Markdown escaping: [word?] markers rendered as inline code
+- [x] Scroll position preserved when toggling edit mode
+- [x] Analysis tab: edit mode added
+- [x] Analysis results in chronological order
+- [x] Parser: header matching, «word» — description format support
+- [x] Async GPT processing: background task + polling
 - [x] Parser removes "Сомнительные места" section from stored transcript
-- [x] Parser stores full line/description as context instead of 80-char truncation
-- [x] Auto-corrected fragments: blue cards with "AI уже исправил X на Y", one-click confirm
-- [x] Upload polling fix: project status set to 'transcribing' in React state after upload
-- [x] Auto-corrected detection: word absent from main text = auto_corrected (regardless of → pattern)
-- [x] Markdown removed from Processed text tab (plain text render), kept only on Analysis tab
-- [x] Speaker name **markers** cleaned from display (GPT's `**Name:**` → `Name:`)
+- [x] Auto-corrected fragments: blue cards with one-click confirm
+- [x] Speaker names displayed correctly in Review tab context
+- [x] Markdown removed from Processed text tab (plain text only)
 
-## Known Issues
-- Automated transcript pipeline disabled (manual "Обработать" button is workaround)
-- server.py and ProjectPage.js are monolithic (800+ lines each)
+## Completed in Feb 2026
+- [x] **Master Prompt Improvement**: Enhanced to always output "Сомнительные места" section, with explicit fallback "Нет сомнительных мест" if none found
+- [x] **Frontend Refactoring**: Decomposed ProjectPage.js (1280 → 220 lines) into modular components:
+  - `UploadSection.jsx` — file upload with settings
+  - `TranscriptTab.jsx` — raw transcript view
+  - `ProcessedTab.jsx` — processed text with editing
+  - `ReviewTab.jsx` — fragment review with edit dialog
+  - `SpeakersTab.jsx` — speaker name management
+  - `AnalysisTab.jsx` — analysis form and chat history
+  - `FragmentCard.jsx` — reusable fragment display
+  - `utils.js` — shared helpers (applySpeakerNames, extractFullSentence, renderContextWithHighlight)
+- [x] Added `/api/update-master-prompt` endpoint to update existing master prompt in DB
 
 ## Key API Endpoints
 - `/api/auth/register`, `/api/auth/login`, `/api/auth/me`
 - `/api/projects` (CRUD)
 - `/api/projects/{id}/upload` - file upload + Deepgram transcription
 - `/api/projects/{id}/process` - manual GPT processing with master prompt
-- `/api/projects/{id}/analyze` - multi-turn analysis (transcript + all previous analyses as context)
+- `/api/projects/{id}/analyze` - multi-turn analysis
 - `/api/projects/{id}/transcripts` (GET, PUT by version_type)
 - `/api/projects/{id}/chat-history` (GET sorted ASC, PUT to update response)
 - `/api/prompts` (CRUD)
+- `/api/update-master-prompt` - update master prompt to improved version
+- `/api/seed` - seed initial data
+
+## Known Issues
+- Automated transcript pipeline disabled (manual "Обработать" button is workaround)
+- server.py is still monolithic (~1350 lines) — consider splitting into modules
 
 ## Future/Backlog (P2-P3)
 - Collaborative project access
 - Team workspaces
 - Global full-text search
 - Mobile applications
-- Refactor server.py into modules
-- Decompose ProjectPage.js into smaller components
+- Refactor server.py into modules (routes/, models/, services/)
+- Add tests for new components
+- Batch processing for multiple files
+- Export transcripts to various formats (docx, txt, pdf)
 
 ## Credentials
 - Admin: admin@voiceworkspace.com / admin123
