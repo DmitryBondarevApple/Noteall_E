@@ -281,7 +281,9 @@ export default function ProjectPage() {
             <TabsContent value="transcript">
               <TranscriptTab 
                 transcript={getTranscript('raw')} 
-                speakers={speakers} 
+                speakers={speakers}
+                projectId={projectId}
+                onSpeakersUpdate={setSpeakers}
               />
             </TabsContent>
 
