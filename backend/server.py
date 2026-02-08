@@ -1062,6 +1062,92 @@ async def update_speaker(
     updated = await db.speaker_maps.find_one({"id": speaker_id}, {"_id": 0})
     return SpeakerMapResponse(**updated)
 
+# ==================== SPEAKER DIRECTORY (Global Contacts) ====================
+
+@api_router.get("/speaker-directory", response_model=List[SpeakerDirectoryResponse])
+async def list_speaker_directory(
+    q: Optional[str] = None,
+    user = Depends(get_current_user)
+):
+    """List all speakers in user's directory, optionally filtered by search query"""
+    query = {"user_id": user["id"]}
+    
+    if q:
+        # Search by name (case-insensitive, partial match)
+        query["name"] = {"$regex": q, "$options": "i"}
+    
+    speakers = await db.speaker_directory.find(query, {"_id": 0}).sort("name", 1).to_list(500)
+    return [SpeakerDirectoryResponse(**s) for s in speakers]
+
+@api_router.post("/speaker-directory", response_model=SpeakerDirectoryResponse)
+async def create_speaker_directory_entry(
+    data: SpeakerDirectoryCreate,
+    user = Depends(get_current_user)
+):
+    """Add a new speaker to the directory"""
+    speaker_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    
+    speaker_doc = {
+        "id": speaker_id,
+        "user_id": user["id"],
+        "name": data.name,
+        "email": data.email,
+        "company": data.company,
+        "role": data.role,
+        "created_at": now,
+        "updated_at": now
+    }
+    
+    await db.speaker_directory.insert_one(speaker_doc)
+    return SpeakerDirectoryResponse(**speaker_doc)
+
+@api_router.get("/speaker-directory/{speaker_id}", response_model=SpeakerDirectoryResponse)
+async def get_speaker_directory_entry(
+    speaker_id: str,
+    user = Depends(get_current_user)
+):
+    """Get a single speaker from the directory"""
+    speaker = await db.speaker_directory.find_one(
+        {"id": speaker_id, "user_id": user["id"]},
+        {"_id": 0}
+    )
+    if not speaker:
+        raise HTTPException(status_code=404, detail="Speaker not found")
+    return SpeakerDirectoryResponse(**speaker)
+
+@api_router.put("/speaker-directory/{speaker_id}", response_model=SpeakerDirectoryResponse)
+async def update_speaker_directory_entry(
+    speaker_id: str,
+    data: SpeakerDirectoryUpdate,
+    user = Depends(get_current_user)
+):
+    """Update a speaker in the directory"""
+    speaker = await db.speaker_directory.find_one({"id": speaker_id, "user_id": user["id"]})
+    if not speaker:
+        raise HTTPException(status_code=404, detail="Speaker not found")
+    
+    update_data = {k: v for k, v in data.model_dump().items() if v is not None}
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.speaker_directory.update_one({"id": speaker_id}, {"$set": update_data})
+    
+    updated = await db.speaker_directory.find_one({"id": speaker_id}, {"_id": 0})
+    return SpeakerDirectoryResponse(**updated)
+
+@api_router.delete("/speaker-directory/{speaker_id}")
+async def delete_speaker_directory_entry(
+    speaker_id: str,
+    user = Depends(get_current_user)
+):
+    """Delete a speaker from the directory"""
+    speaker = await db.speaker_directory.find_one({"id": speaker_id, "user_id": user["id"]})
+    if not speaker:
+        raise HTTPException(status_code=404, detail="Speaker not found")
+    
+    await db.speaker_directory.delete_one({"id": speaker_id})
+    return {"message": "Speaker deleted"}
+
 # ==================== PROMPTS ====================
 
 @api_router.post("/prompts", response_model=PromptResponse)
