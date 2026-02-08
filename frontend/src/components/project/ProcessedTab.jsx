@@ -1,12 +1,16 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';
 import { ScrollArea } from '../ui/scroll-area';
-import { FileText, Loader2, Pencil, Save, Sparkles } from 'lucide-react';
+import { Badge } from '../ui/badge';
+import { FileText, Loader2, Pencil, Save, Sparkles, CloudOff, Cloud } from 'lucide-react';
 import { toast } from 'sonner';
 import { transcriptsApi } from '../../lib/api';
 import { applySpeakerNames } from './utils';
+
+const DRAFT_KEY_PREFIX = 'voice_workspace_draft_';
+const AUTOSAVE_DELAY = 2000; // 2 seconds
 
 export function ProcessedTab({ 
   transcript, 
@@ -20,7 +24,65 @@ export function ProcessedTab({
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState('');
   const [saving, setSaving] = useState(false);
+  const [hasDraft, setHasDraft] = useState(false);
+  const [draftSaved, setDraftSaved] = useState(false);
   const scrollRef = useRef(null);
+  const autosaveTimerRef = useRef(null);
+
+  const draftKey = `${DRAFT_KEY_PREFIX}processed_${projectId}`;
+
+  // Check for existing draft on mount
+  useEffect(() => {
+    const savedDraft = localStorage.getItem(draftKey);
+    if (savedDraft && transcript) {
+      try {
+        const draft = JSON.parse(savedDraft);
+        // Only show draft if it's different from current content
+        if (draft.content && draft.content !== transcript.content) {
+          setHasDraft(true);
+        }
+      } catch (e) {
+        localStorage.removeItem(draftKey);
+      }
+    }
+  }, [draftKey, transcript]);
+
+  // Autosave draft
+  const saveDraft = useCallback((text) => {
+    if (text && transcript && text !== transcript.content) {
+      localStorage.setItem(draftKey, JSON.stringify({
+        content: text,
+        savedAt: new Date().toISOString()
+      }));
+      setDraftSaved(true);
+      setTimeout(() => setDraftSaved(false), 1500);
+    }
+  }, [draftKey, transcript]);
+
+  // Handle text change with autosave
+  const handleTextChange = (e) => {
+    const newText = e.target.value;
+    setEditText(newText);
+    
+    // Clear existing timer
+    if (autosaveTimerRef.current) {
+      clearTimeout(autosaveTimerRef.current);
+    }
+    
+    // Set new autosave timer
+    autosaveTimerRef.current = setTimeout(() => {
+      saveDraft(newText);
+    }, AUTOSAVE_DELAY);
+  };
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleStartEdit = () => {
     if (transcript) {
@@ -35,6 +97,27 @@ export function ProcessedTab({
     }
   };
 
+  const handleRestoreDraft = () => {
+    const savedDraft = localStorage.getItem(draftKey);
+    if (savedDraft) {
+      try {
+        const draft = JSON.parse(savedDraft);
+        setEditText(draft.content);
+        setIsEditing(true);
+        setHasDraft(false);
+        toast.success('Черновик восстановлен');
+      } catch (e) {
+        toast.error('Ошибка восстановления черновика');
+      }
+    }
+  };
+
+  const handleDiscardDraft = () => {
+    localStorage.removeItem(draftKey);
+    setHasDraft(false);
+    toast.success('Черновик удалён');
+  };
+
   const handleSave = async () => {
     const textarea = document.querySelector('[data-testid="edit-processed-textarea"]');
     const innerScroll = textarea?.scrollTop || 0;
@@ -43,6 +126,9 @@ export function ProcessedTab({
       await transcriptsApi.updateContent(projectId, 'processed', editText);
       onUpdate?.(editText);
       setIsEditing(false);
+      // Clear draft on successful save
+      localStorage.removeItem(draftKey);
+      setHasDraft(false);
       toast.success('Текст сохранён');
       requestAnimationFrame(() => {
         const viewport = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
@@ -58,6 +144,14 @@ export function ProcessedTab({
   const handleCancel = () => {
     const textarea = document.querySelector('[data-testid="edit-processed-textarea"]');
     const innerScroll = textarea?.scrollTop || 0;
+    
+    // Save draft before canceling if content changed
+    if (editText && transcript && editText !== transcript.content) {
+      saveDraft(editText);
+      setHasDraft(true);
+      toast.info('Черновик сохранён');
+    }
+    
     setIsEditing(false);
     setEditText('');
     requestAnimationFrame(() => {
@@ -75,51 +169,87 @@ export function ProcessedTab({
             Результат обработки мастер-промптом через GPT-5.2
           </CardDescription>
         </div>
-        {transcript && !isEditing && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2"
-            onClick={handleStartEdit}
-            data-testid="edit-processed-btn"
-          >
-            <Pencil className="w-4 h-4" />
-            Редактировать
-          </Button>
-        )}
-        {isEditing && (
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
+          {/* Draft notification */}
+          {hasDraft && !isEditing && (
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                <CloudOff className="w-3 h-3 mr-1" />
+                Есть черновик
+              </Badge>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRestoreDraft}
+                data-testid="restore-draft-btn"
+              >
+                Восстановить
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleDiscardDraft}
+                className="text-muted-foreground"
+              >
+                Удалить
+              </Button>
+            </div>
+          )}
+          
+          {/* Autosave indicator */}
+          {isEditing && draftSaved && (
+            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+              <Cloud className="w-3 h-3 mr-1" />
+              Черновик сохранён
+            </Badge>
+          )}
+          
+          {transcript && !isEditing && !hasDraft && (
             <Button
               variant="outline"
               size="sm"
-              onClick={handleCancel}
-              data-testid="cancel-edit-processed-btn"
-            >
-              Отмена
-            </Button>
-            <Button
-              size="sm"
               className="gap-2"
-              onClick={handleSave}
-              disabled={saving}
-              data-testid="save-processed-btn"
+              onClick={handleStartEdit}
+              data-testid="edit-processed-btn"
             >
-              {saving ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Save className="w-4 h-4" />
-              )}
-              Сохранить
+              <Pencil className="w-4 h-4" />
+              Редактировать
             </Button>
-          </div>
-        )}
+          )}
+          {isEditing && (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCancel}
+                data-testid="cancel-edit-processed-btn"
+              >
+                Отмена
+              </Button>
+              <Button
+                size="sm"
+                className="gap-2"
+                onClick={handleSave}
+                disabled={saving}
+                data-testid="save-processed-btn"
+              >
+                {saving ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                Сохранить
+              </Button>
+            </div>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         {transcript ? (
           isEditing ? (
             <Textarea
               value={editText}
-              onChange={(e) => setEditText(e.target.value)}
+              onChange={handleTextChange}
               className="min-h-[500px] font-sans text-sm leading-relaxed"
               data-testid="edit-processed-textarea"
             />
