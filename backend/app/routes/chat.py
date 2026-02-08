@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime, timezone
-from typing import List
+from typing import List, Optional
+from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, Depends
 from app.core.database import db
 from app.core.security import get_current_user
@@ -8,6 +9,93 @@ from app.models.chat import ChatRequestCreate, ChatRequestResponse, ChatResponse
 from app.services.gpt import call_gpt52
 
 router = APIRouter(tags=["chat"])
+
+
+class RawAnalysisRequest(BaseModel):
+    system_message: str
+    user_message: str
+    reasoning_effort: Optional[str] = "high"
+
+
+class RawAnalysisResponse(BaseModel):
+    response_text: str
+
+
+@router.post("/projects/{project_id}/analyze-raw", response_model=RawAnalysisResponse)
+async def analyze_raw(
+    project_id: str,
+    data: RawAnalysisRequest,
+    user=Depends(get_current_user)
+):
+    """
+    Raw analysis endpoint for wizard - doesn't save to history.
+    Uses transcript as context but allows custom system/user messages.
+    """
+    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Get processed transcript (or raw if processed not available)
+    transcript = await db.transcripts.find_one(
+        {"project_id": project_id, "version_type": "processed"},
+        {"_id": 0}
+    )
+    if not transcript:
+        transcript = await db.transcripts.find_one(
+            {"project_id": project_id, "version_type": "raw"},
+            {"_id": 0}
+        )
+    if not transcript:
+        raise HTTPException(status_code=400, detail="No transcript found")
+    
+    # Build messages with transcript context
+    messages = [
+        {"role": "user", "content": f"Вот транскрипт встречи:\n\n{transcript['content']}"},
+        {"role": "assistant", "content": "Спасибо, я прочитал транскрипт. Готов помочь с анализом."},
+        {"role": "user", "content": data.user_message}
+    ]
+    
+    response_text = await call_gpt52(
+        system_message=data.system_message,
+        messages=messages,
+        reasoning_effort=data.reasoning_effort or "high"
+    )
+    
+    return RawAnalysisResponse(response_text=response_text)
+
+
+class SaveFullAnalysisRequest(BaseModel):
+    subject: str
+    content: str
+
+
+@router.post("/projects/{project_id}/save-full-analysis", response_model=ChatRequestResponse)
+async def save_full_analysis(
+    project_id: str,
+    data: SaveFullAnalysisRequest,
+    user=Depends(get_current_user)
+):
+    """Save full analysis result to chat history"""
+    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    chat_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    
+    chat_doc = {
+        "id": chat_id,
+        "project_id": project_id,
+        "prompt_id": "full-analysis",
+        "prompt_content": f"Полный анализ встречи: {data.subject}",
+        "additional_text": None,
+        "reasoning_effort": "high",
+        "response_text": data.content,
+        "created_at": now
+    }
+    
+    await db.chat_requests.insert_one(chat_doc)
+    return ChatRequestResponse(**chat_doc)
 
 
 @router.post("/projects/{project_id}/analyze", response_model=ChatRequestResponse)
