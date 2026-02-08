@@ -191,28 +191,51 @@ export function ReviewTab({
     if (!editingContext) return;
     
     try {
-      const { originalContext, editedContext, startIndex, endIndex } = editingContext;
+      const { originalContext, editedContext, startIndex, endIndex, fragment } = editingContext;
       
-      if (originalContext === editedContext) {
-        setEditingContext(null);
-        return;
+      // Check if content was changed
+      const hasChanges = originalContext !== editedContext;
+      
+      if (hasChanges) {
+        // Build new content and save
+        const content = processedTranscript.content;
+        const newContent = content.slice(0, startIndex) + editedContext + content.slice(endIndex);
+        
+        // Save to backend
+        await transcriptsApi.updateContent(projectId, 'processed', newContent);
+        
+        // Update local state
+        onTranscriptUpdate(newContent);
       }
       
-      // Build new content
-      const content = processedTranscript.content;
-      const newContent = content.slice(0, startIndex) + editedContext + content.slice(endIndex);
-      
-      // Save to backend
-      await transcriptsApi.updateContent(projectId, 'processed', newContent);
-      
-      // Update local state
-      onTranscriptUpdate(newContent);
-      
-      // Mark fragment as confirmed since user manually edited the context
-      const fragment = editingContext.fragment;
+      // Always mark fragment as confirmed (user reviewed the context)
       await fragmentsApi.update(projectId, fragment.id, {
-        corrected_text: '(контекст отредактирован)',
+        corrected_text: hasChanges ? '(контекст отредактирован)' : '(проверено)',
         status: 'confirmed'
+      });
+      
+      const updatedFragments = fragments.map(f => 
+        f.id === fragment.id ? { 
+          ...f, 
+          corrected_text: hasChanges ? '(контекст отредактирован)' : '(проверено)', 
+          status: 'confirmed' 
+        } : f
+      );
+      onFragmentsUpdate(updatedFragments);
+      
+      // Check project status
+      const remainingPending = updatedFragments.filter(f => f.status === 'pending' || f.status === 'auto_corrected');
+      if (remainingPending.length === 0) {
+        onProjectStatusUpdate?.('ready');
+      }
+      
+      setEditingContext(null);
+      toast.success(hasChanges ? 'Контекст сохранён' : 'Фрагмент подтверждён');
+    } catch (error) {
+      console.error('Save context error:', error);
+      toast.error('Ошибка сохранения');
+    }
+  };
       });
       
       const updatedFragments = fragments.map(f => 
