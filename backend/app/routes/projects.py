@@ -275,6 +275,11 @@ async def process_transcription(project_id: str, filename: str, language: str = 
                                         text = sentence.text if sentence.text else ""
                                         if text:
                                             transcript_lines.append(f"Speaker {speaker + 1}: {text}")
+                        # Fallback: use paragraphs.transcript if available
+                        elif alt.paragraphs and alt.paragraphs.transcript:
+                            transcript_lines.append(alt.paragraphs.transcript)
+                            unique_speakers.add(0)
+                        # Fallback: use alternative transcript directly
                         elif alt.transcript:
                             transcript_lines.append(alt.transcript)
                             unique_speakers.add(0)
