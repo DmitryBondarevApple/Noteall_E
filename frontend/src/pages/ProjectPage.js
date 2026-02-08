@@ -159,7 +159,12 @@ export default function ProjectPage() {
           const res = await projectsApi.get(projectId);
           setProject(res.data);
           if (res.data.status !== 'transcribing' && res.data.status !== 'processing') {
+            setProcessing(false);
             loadData();
+            if (res.data.status === 'ready') {
+              toast.success('Обработка завершена');
+              setActiveTab('processed');
+            }
           }
         } catch (e) {}
       }, 3000);
