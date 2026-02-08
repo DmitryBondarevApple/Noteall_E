@@ -2,7 +2,6 @@ export { UploadSection } from './UploadSection';
 export { TranscriptTab } from './TranscriptTab';
 export { ProcessedTab } from './ProcessedTab';
 export { ReviewTab } from './ReviewTab';
-export { SpeakersTab } from './SpeakersTab';
 export { AnalysisTab } from './AnalysisTab';
 export { FullAnalysisTab } from './FullAnalysisTab';
 export { FragmentCard } from './FragmentCard';
