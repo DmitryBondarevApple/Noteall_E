@@ -313,16 +313,6 @@ export default function ProjectPage() {
               />
             </TabsContent>
 
-            {/* Speakers Tab */}
-            <TabsContent value="speakers">
-              <SpeakersTab
-                speakers={speakers}
-                projectId={projectId}
-                aiHints={project?.speaker_hints}
-                onSpeakersUpdate={setSpeakers}
-              />
-            </TabsContent>
-
             {/* Analysis Tab */}
             <TabsContent value="analysis">
               <AnalysisTab
