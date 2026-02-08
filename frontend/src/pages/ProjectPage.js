@@ -222,15 +222,52 @@ export default function ProjectPage() {
                 </div>
               
               {/* Process Button with Reasoning Selector */}
-              <div className="flex items-center gap-3">
+                {/* Process controls - hidden on very small screens, shown below tabs */}
+                <div className="hidden sm:flex items-center gap-3">
+                  <Select value={selectedReasoningEffort} onValueChange={setSelectedReasoningEffort}>
+                    <SelectTrigger className="w-36 lg:w-44 h-9 text-xs" data-testid="tab-reasoning-select">
+                      <SelectValue placeholder="Режим GPT" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {reasoningEffortOptions.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          <span className="text-xs">{opt.label} — {opt.description}</span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    onClick={handleProcessWithGPT}
+                    disabled={processing || !getTranscript('raw')}
+                    className="gap-2"
+                    size="sm"
+                    data-testid="process-btn"
+                  >
+                    {processing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span className="hidden lg:inline">Обработка...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4" />
+                        <span className="hidden lg:inline">Обработать</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Mobile process controls */}
+              <div className="sm:hidden flex items-center gap-2 mt-2">
                 <Select value={selectedReasoningEffort} onValueChange={setSelectedReasoningEffort}>
-                  <SelectTrigger className="w-44 h-9 text-xs" data-testid="tab-reasoning-select">
+                  <SelectTrigger className="flex-1 h-9 text-xs" data-testid="tab-reasoning-select-mobile">
                     <SelectValue placeholder="Режим GPT" />
                   </SelectTrigger>
                   <SelectContent>
                     {reasoningEffortOptions.map((opt) => (
                       <SelectItem key={opt.value} value={opt.value}>
-                        <span className="text-xs">{opt.label} — {opt.description}</span>
+                        <span className="text-xs">{opt.label}</span>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -238,20 +275,10 @@ export default function ProjectPage() {
                 <Button
                   onClick={handleProcessWithGPT}
                   disabled={processing || !getTranscript('raw')}
-                  className="gap-2"
-                  data-testid="process-btn"
+                  size="sm"
+                  data-testid="process-btn-mobile"
                 >
-                  {processing ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Обработка...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-4 h-4" />
-                      Обработать
-                    </>
-                  )}
+                  {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                 </Button>
               </div>
             </div>
