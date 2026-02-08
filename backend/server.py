@@ -135,6 +135,29 @@ class SpeakerMapResponse(BaseModel):
     speaker_label: str
     speaker_name: str
 
+# Speaker Directory (global user's contact list)
+class SpeakerDirectoryCreate(BaseModel):
+    name: str
+    email: Optional[str] = None
+    company: Optional[str] = None
+    role: Optional[str] = None
+
+class SpeakerDirectoryUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    company: Optional[str] = None
+    role: Optional[str] = None
+
+class SpeakerDirectoryResponse(BaseModel):
+    id: str
+    user_id: str
+    name: str
+    email: Optional[str]
+    company: Optional[str]
+    role: Optional[str]
+    created_at: str
+    updated_at: str
+
 class PromptCreate(BaseModel):
     name: str
     content: str
