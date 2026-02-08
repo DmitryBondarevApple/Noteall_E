@@ -13,7 +13,7 @@ Platform for transcribing and analyzing work meetings. Users upload audio/video,
 1. User uploads audio/video file
 2. Deepgram transcribes -> raw transcript saved
 3. User clicks "Обработать" -> GPT-5.2 processes with master prompt -> processed text saved
-4. User reviews uncertain words, maps speaker names
+4. User reviews uncertain words, maps speaker names (from directory)
 5. User runs thematic analysis prompts on the transcript
 
 ## Architecture
@@ -23,96 +23,87 @@ Platform for transcribing and analyzing work meetings. Users upload audio/video,
 ├── frontend/src/
 │   ├── App.js                  # Router
 │   ├── lib/api.js              # Axios API client
-│   ├── pages/ProjectPage.js    # Main project UI (refactored, ~220 lines)
-│   ├── components/project/     # Modular project components
-│   │   ├── index.js            # Exports all components
-│   │   ├── utils.js            # Shared utilities and constants
-│   │   ├── UploadSection.jsx   # File upload dropzone
-│   │   ├── TranscriptTab.jsx   # Raw transcript display
-│   │   ├── ProcessedTab.jsx    # Processed text with editing + autosave
-│   │   ├── ReviewTab.jsx       # Fragment review UI with revert
-│   │   ├── SpeakersTab.jsx     # Speaker name mapping
-│   │   ├── AnalysisTab.jsx     # AI analysis with history + autosave
-│   │   └── FragmentCard.jsx    # Single review fragment card
+│   ├── pages/
+│   │   ├── ProjectPage.js      # Main project UI
+│   │   ├── DashboardPage.js    # Projects list
+│   │   ├── SpeakerDirectoryPage.js  # Speaker directory management
+│   │   └── ...
+│   ├── components/project/
+│   │   ├── SpeakersTab.jsx     # Speaker name mapping with combobox
+│   │   ├── SpeakerCombobox.jsx # Autocomplete from directory
+│   │   └── ...
 │   └── contexts/AuthContext.js
 ```
 
 ## DB Schema
 - **users:** {id, email, hashed_password, name, role, created_at}
-- **projects:** {id, name, description, user_id, status, language, reasoning_effort, recording_filename, recording_duration}
-- **transcripts:** {id, project_id, version_type (raw|processed|confirmed), content}
-- **uncertain_fragments:** {id, project_id, original_text, corrected_text, context, status, source}
+- **projects:** {id, name, description, user_id, status, language, reasoning_effort}
+- **transcripts:** {id, project_id, version_type, content}
+- **uncertain_fragments:** {id, project_id, original_text, corrected_text, context, status}
 - **speaker_maps:** {id, project_id, speaker_label, speaker_name}
+- **speaker_directory:** {id, user_id, name, email, company, role, created_at, updated_at} ← NEW
 - **prompts:** {id, name, content, prompt_type, user_id, project_id, is_public}
-- **chat_requests:** {id, project_id, prompt_id, prompt_content, additional_text, reasoning_effort, response_text}
+- **chat_requests:** {id, project_id, prompt_id, response_text, ...}
 
 ## What's Implemented
+
+### Core Features
 - JWT auth (register/login)
-- Project CRUD
-- File upload with Deepgram transcription
-- Manual GPT-5.2 processing with master prompt
+- Project CRUD with file upload
+- Deepgram transcription
+- GPT-5.2 processing with master prompt
 - Speaker diarization and name mapping
-- Uncertain word review UI
-- Thematic analysis with selectable prompts
-- Reasoning effort selector in sticky tab bar
-- Admin panel (users, prompts)
-- Seed data endpoint
+- Uncertain word review UI with revert capability
+- Thematic analysis with context-aware prompts
+- Autosave drafts (localStorage)
+- Admin panel
 
-## Completed Features (Feb 2026)
-
-### Parser Stability
-- [x] Enhanced master prompt to always output "Сомнительные места" section
-- [x] Explicit fallback: "Нет сомнительных мест" when no uncertainties found
-- [x] Added `/api/update-master-prompt` endpoint
-
-### Frontend Refactoring
-- [x] Decomposed ProjectPage.js (1280 → 220 lines) into modular components
-- [x] Created reusable components: UploadSection, TranscriptTab, ProcessedTab, ReviewTab, SpeakersTab, AnalysisTab, FragmentCard
-
-### Autosave Drafts
-- [x] ProcessedTab: auto-saves edits to localStorage every 2 seconds
-- [x] Shows "Есть черновик" badge when unsaved draft exists
-- [x] "Восстановить" / "Удалить" buttons for draft management
-- [x] Visual indicator "Черновик сохранён" during editing
-- [x] Draft cleared on successful save
-- [x] AnalysisTab: same autosave functionality for chat response editing
-
-### Fragment Review Revert
-- [x] Added "Отменить" button for confirmed fragments
-- [x] `POST /api/projects/{id}/fragments/{id}/revert` endpoint
-- [x] Restores [word?] marker in transcript when reverting
-- [x] Returns fragment to appropriate status (pending or auto_corrected)
+### Speaker Directory (NEW - Feb 2026)
+- Global contacts list per user (`/speakers` page)
+- Add/Edit/Delete speakers with name, company, role, email
+- Search by name with autocomplete
+- Combobox in project speakers tab for quick selection
+- "Add to directory" button when typing new name
+- Navigation from Dashboard and Project page
 
 ## Key API Endpoints
-- `/api/auth/register`, `/api/auth/login`, `/api/auth/me`
-- `/api/projects` (CRUD)
-- `/api/projects/{id}/upload` - file upload + Deepgram transcription
-- `/api/projects/{id}/process` - manual GPT processing with master prompt
-- `/api/projects/{id}/analyze` - multi-turn analysis
-- `/api/projects/{id}/transcripts` (GET, PUT by version_type)
-- `/api/projects/{id}/fragments` (GET, PUT)
-- `/api/projects/{id}/fragments/{id}/revert` - **NEW** revert confirmed fragment
-- `/api/projects/{id}/chat-history` (GET sorted ASC, PUT to update response)
-- `/api/prompts` (CRUD)
-- `/api/update-master-prompt` - update master prompt to improved version
-- `/api/seed` - seed initial data
+
+### Speaker Directory (NEW)
+- `GET /api/speaker-directory` - List all speakers (optional ?q=search)
+- `POST /api/speaker-directory` - Add speaker to directory
+- `PUT /api/speaker-directory/{id}` - Update speaker
+- `DELETE /api/speaker-directory/{id}` - Delete speaker
+
+### Existing
+- `/api/auth/*` - Authentication
+- `/api/projects/*` - Project CRUD
+- `/api/projects/{id}/upload` - File upload
+- `/api/projects/{id}/process` - GPT processing
+- `/api/projects/{id}/analyze` - Analysis
+- `/api/projects/{id}/speakers` - Project-specific speaker mapping
+- `/api/projects/{id}/fragments` - Uncertain fragments
+- `/api/projects/{id}/fragments/{id}/revert` - Revert confirmation
+- `/api/prompts` - Prompt management
+- `/api/update-master-prompt` - Update master prompt
+
+## Master Prompt Features
+- Исправление ошибок распознавания по контексту
+- Объединение реплик спикеров (перенос фраз с маленькой буквы)
+- Замена Speaker N на имена
+- Форматирование: болд для имён, пробелы между репликами
+- Обязательная секция "Сомнительные места" с форматом «исходное» → «исправленное»
 
 ## Known Issues
-- Automated transcript pipeline disabled (manual "Обработать" button is workaround)
-- server.py is still monolithic (~1400 lines) — consider splitting into modules
+- server.py is monolithic (~1500 lines) — consider splitting
 
 ## Future/Backlog (P2-P3)
+- Refactor server.py into modules
 - Collaborative project access
 - Team workspaces
 - Global full-text search
+- Export transcripts (docx, pdf)
+- Keyboard shortcuts
 - Mobile applications
-- Refactor server.py into modules (routes/, models/, services/)
-- Add tests for new components
-- Batch processing for multiple files
-- Export transcripts to various formats (docx, txt, pdf)
-- Keyboard shortcuts for common actions
-- Undo/redo stack for text editing
 
 ## Credentials
 - Admin: admin@voiceworkspace.com / admin123
-- API keys: Deepgram + OpenAI in /app/backend/.env
