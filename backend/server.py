@@ -1168,6 +1168,35 @@ async def delete_speaker_directory_entry(
     await db.speaker_directory.delete_one({"id": speaker_id})
     return {"message": "Speaker deleted"}
 
+@api_router.post("/speaker-directory/{speaker_id}/photo")
+async def upload_speaker_photo(
+    speaker_id: str,
+    file: UploadFile = File(...),
+    user = Depends(get_current_user)
+):
+    """Upload photo for a speaker"""
+    speaker = await db.speaker_directory.find_one({"id": speaker_id, "user_id": user["id"]})
+    if not speaker:
+        raise HTTPException(status_code=404, detail="Speaker not found")
+    
+    # Validate file type
+    if not file.content_type.startswith('image/'):
+        raise HTTPException(status_code=400, detail="Only image files allowed")
+    
+    # Save file
+    import base64
+    content = await file.read()
+    
+    # Store as base64 data URL (for simplicity, in production use cloud storage)
+    photo_url = f"data:{file.content_type};base64,{base64.b64encode(content).decode()}"
+    
+    await db.speaker_directory.update_one(
+        {"id": speaker_id},
+        {"$set": {"photo_url": photo_url, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    return {"photo_url": photo_url}
+
 # ==================== PROMPTS ====================
 
 @api_router.post("/prompts", response_model=PromptResponse)
