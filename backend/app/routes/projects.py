@@ -224,26 +224,36 @@ async def process_transcription(project_id: str, filename: str, language: str = 
             {"$set": {"status": "transcribing", "updated_at": now}}
         )
         
-        # Deepgram transcription
+        logger.info(f"[{project_id}] Starting Deepgram transcription for {filename}")
+        
+        # Deepgram transcription - run in executor to not block event loop
         from deepgram import DeepgramClient, PrerecordedOptions
+        import concurrent.futures
         
-        deepgram = DeepgramClient(DEEPGRAM_API_KEY)
+        def run_deepgram():
+            deepgram = DeepgramClient(DEEPGRAM_API_KEY)
+            
+            with open(file_path, "rb") as audio_file:
+                buffer_data = audio_file.read()
+            
+            payload = {"buffer": buffer_data}
+            options = PrerecordedOptions(
+                model="nova-3",
+                language=language,
+                smart_format=True,
+                diarize=True,
+                paragraphs=True,
+                punctuate=True,
+            )
+            
+            response = deepgram.listen.rest.v("1").transcribe_file(payload, options)
+            return response.to_dict()
         
-        with open(file_path, "rb") as audio_file:
-            buffer_data = audio_file.read()
+        loop = asyncio.get_event_loop()
+        with concurrent.futures.ThreadPoolExecutor() as pool:
+            result = await loop.run_in_executor(pool, run_deepgram)
         
-        payload = {"buffer": buffer_data}
-        options = PrerecordedOptions(
-            model="nova-3",
-            language=language,
-            smart_format=True,
-            diarize=True,
-            paragraphs=True,
-            punctuate=True,
-        )
-        
-        response = deepgram.listen.rest.v("1").transcribe_file(payload, options)
-        result = response.to_dict()
+        logger.info(f"[{project_id}] Deepgram transcription received")
         
         duration = result.get("metadata", {}).get("duration", 0)
         
