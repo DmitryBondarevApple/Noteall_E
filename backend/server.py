@@ -1080,6 +1080,8 @@ async def analyze_transcript(
             new_user_msg += f"\n\nДополнительные указания: {data.additional_text}"
         conversation.append({"role": "user", "content": new_user_msg})
         
+        logger.info(f"[{project_id}] Analysis with {len(previous_analyses)} previous results, {len(conversation)} messages total")
+        
         reasoning_effort = data.reasoning_effort or "high"
         response_text = await call_gpt52(
             system_message=system_message,
