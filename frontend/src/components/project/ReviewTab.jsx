@@ -261,6 +261,7 @@ export function ReviewTab({
                     onConfirm={(text) => handleConfirmFragment(fragment, text)}
                     onEdit={() => setEditingFragment(fragment)}
                     onRevert={() => handleRevertFragment(fragment)}
+                    onEditContext={() => handleEditContext(fragment)}
                   />
                 ))}
               </div>
@@ -284,6 +285,52 @@ export function ReviewTab({
               onSave={(text) => handleConfirmFragment(editingFragment, text)}
               onCancel={() => setEditingFragment(null)}
             />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Context Dialog */}
+      <Dialog open={!!editingContext} onOpenChange={() => setEditingContext(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileEdit className="w-5 h-5" />
+              Редактировать контекст
+            </DialogTitle>
+            <DialogDescription>
+              Отредактируйте текст вокруг проблемного слова. Это полезно для исправления разбитых слов (например, "прос ить" → "просить").
+            </DialogDescription>
+          </DialogHeader>
+          {editingContext && (
+            <div className="space-y-4 mt-4">
+              <div className="space-y-2">
+                <Label>Сомнительное слово</Label>
+                <code className="block bg-orange-100 text-orange-800 p-2 rounded">
+                  {editingContext.fragment.original_text}
+                </code>
+              </div>
+              <div className="space-y-2">
+                <Label>Контекст (отредактируйте текст ниже)</Label>
+                <Textarea
+                  value={editingContext.editedContext}
+                  onChange={(e) => setEditingContext(prev => ({ ...prev, editedContext: e.target.value }))}
+                  className="min-h-[150px] font-mono text-sm"
+                  placeholder="Текст контекста..."
+                  data-testid="edit-context-textarea"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Совет: Найдите лишние пробелы внутри слов и удалите их
+                </p>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setEditingContext(null)}>
+                  Отмена
+                </Button>
+                <Button onClick={handleSaveContext} data-testid="save-context-btn">
+                  Сохранить
+                </Button>
+              </div>
+            </div>
           )}
         </DialogContent>
       </Dialog>
