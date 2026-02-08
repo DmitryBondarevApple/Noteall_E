@@ -95,6 +95,9 @@ export default function ProjectPage() {
   const [isEditingProcessed, setIsEditingProcessed] = useState(false);
   const [editProcessedText, setEditProcessedText] = useState('');
   const [savingProcessed, setSavingProcessed] = useState(false);
+  const [editingChatId, setEditingChatId] = useState(null);
+  const [editChatText, setEditChatText] = useState('');
+  const [savingChat, setSavingChat] = useState(false);
 
   const languageOptions = [
     { value: 'ru', label: 'Русский' },
