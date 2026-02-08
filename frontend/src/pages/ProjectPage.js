@@ -757,6 +757,8 @@ export default function ProjectPage() {
                             className={`transition-all ${
                               fragment.status === 'confirmed' 
                                 ? 'bg-green-50/50 border-green-200' 
+                                : fragment.status === 'auto_corrected'
+                                ? 'bg-blue-50/50 border-blue-200 hover:border-blue-300'
                                 : 'bg-orange-50/50 border-orange-200 hover:border-orange-300'
                             }`}
                           >
@@ -767,13 +769,42 @@ export default function ProjectPage() {
                                   <div className="flex items-center gap-2">
                                     <span className="text-xs text-muted-foreground font-mono">#{index + 1}</span>
                                     <Badge 
-                                      variant={fragment.status === 'confirmed' ? 'default' : 'destructive'}
-                                      className={fragment.status === 'confirmed' ? 'bg-green-600' : ''}
+                                      variant={fragment.status === 'confirmed' ? 'default' : fragment.status === 'auto_corrected' ? 'secondary' : 'destructive'}
+                                      className={
+                                        fragment.status === 'confirmed' ? 'bg-green-600' 
+                                        : fragment.status === 'auto_corrected' ? 'bg-blue-500 text-white' 
+                                        : ''
+                                      }
                                     >
-                                      {fragment.status === 'confirmed' ? 'Проверено' : 'Требует проверки'}
+                                      {fragment.status === 'confirmed' ? 'Проверено' 
+                                        : fragment.status === 'auto_corrected' ? 'Исправлено AI' 
+                                        : 'Требует проверки'}
                                     </Badge>
                                   </div>
-                                  {fragment.status !== 'confirmed' && (
+                                  {fragment.status === 'auto_corrected' && (
+                                    <div className="flex items-center gap-2">
+                                      <Button
+                                        variant="default"
+                                        size="sm"
+                                        className="h-8 bg-blue-600 hover:bg-blue-700 gap-1"
+                                        onClick={() => handleConfirmFragment(fragment, fragment.corrected_text)}
+                                        data-testid={`confirm-auto-${fragment.id}`}
+                                      >
+                                        <Check className="w-3 h-3" />
+                                        Подтвердить
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-8"
+                                        onClick={() => setEditingFragment(fragment)}
+                                        data-testid={`edit-fragment-${fragment.id}`}
+                                      >
+                                        Изменить
+                                      </Button>
+                                    </div>
+                                  )}
+                                  {fragment.status === 'pending' && (
                                     <div className="flex items-center gap-2">
                                       <Button
                                         variant="outline"
@@ -798,14 +829,30 @@ export default function ProjectPage() {
                                   )}
                                 </div>
                                 
+                                {/* Auto-corrected notice */}
+                                {fragment.status === 'auto_corrected' && fragment.corrected_text && (
+                                  <div className="flex items-center gap-2 px-3 py-2 bg-blue-100/60 rounded-lg text-sm text-blue-800">
+                                    <Sparkles className="w-4 h-4 shrink-0" />
+                                    <span>
+                                      AI уже исправил <code className="bg-blue-200/60 px-1.5 py-0.5 rounded text-blue-900">{fragment.original_text}</code> на <code className="bg-green-200/60 px-1.5 py-0.5 rounded text-green-900 font-medium">{fragment.corrected_text}</code> в тексте
+                                    </span>
+                                  </div>
+                                )}
+                                
                                 {/* Full sentence with highlighted word */}
                                 <div className="bg-white rounded-lg p-4 border">
                                   <p className="text-sm leading-relaxed">
-                                    {renderContextWithHighlight(fullSentence || fragment.context, fragment.original_text)}
+                                    {renderContextWithHighlight(
+                                      fullSentence || fragment.context, 
+                                      fragment.status === 'auto_corrected' && fragment.corrected_text 
+                                        ? fragment.corrected_text 
+                                        : fragment.original_text
+                                    )}
                                   </p>
                                 </div>
                                 
                                 {/* Current word and correction */}
+                                {fragment.status !== 'auto_corrected' && (
                                 <div className="flex items-center gap-3 text-sm">
                                   <span className="text-muted-foreground">Сомнительное слово:</span>
                                   <code className="bg-orange-100 text-orange-800 px-2 py-1 rounded font-medium">
@@ -819,6 +866,8 @@ export default function ProjectPage() {
                                       </code>
                                     </>
                                   )}
+                                </div>
+                                )}
                                 </div>
                               </div>
                             </CardContent>
