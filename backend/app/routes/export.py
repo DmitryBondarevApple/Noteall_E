@@ -190,7 +190,7 @@ async def export_to_pdf(request: ExportRequest):
         
         styles.add(ParagraphStyle(
             name='CustomH2',
-            parent=styles['Heading2'],
+            fontName=bold_font,
             fontSize=14,
             spaceBefore=12,
             spaceAfter=6,
@@ -199,7 +199,7 @@ async def export_to_pdf(request: ExportRequest):
         
         styles.add(ParagraphStyle(
             name='CustomH3',
-            parent=styles['Heading3'],
+            fontName=bold_font,
             fontSize=12,
             spaceBefore=10,
             spaceAfter=4,
@@ -208,7 +208,7 @@ async def export_to_pdf(request: ExportRequest):
         
         styles.add(ParagraphStyle(
             name='CustomBody',
-            parent=styles['Normal'],
+            fontName=default_font,
             fontSize=10,
             spaceAfter=6,
             leading=14
@@ -216,7 +216,7 @@ async def export_to_pdf(request: ExportRequest):
         
         styles.add(ParagraphStyle(
             name='CustomListItem',
-            parent=styles['Normal'],
+            fontName=default_font,
             fontSize=10,
             leftIndent=20,
             spaceAfter=3,
