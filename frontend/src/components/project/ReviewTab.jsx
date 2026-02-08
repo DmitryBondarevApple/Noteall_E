@@ -78,6 +78,9 @@ export function ReviewTab({
       );
       onFragmentsUpdate(updatedFragments);
 
+      // Update project status - now has pending fragments
+      onProjectStatusUpdate?.('needs_review');
+
       // Reload transcript to get updated content with restored [word?] marker
       try {
         const transcriptsRes = await transcriptsApi.list(projectId);
