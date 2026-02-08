@@ -314,12 +314,15 @@ export default function ProjectPage() {
   const handleStartEditProcessed = () => {
     const processed = getTranscript('processed');
     if (processed) {
+      const scrollY = window.scrollY;
       setEditProcessedText(processed.content);
       setIsEditingProcessed(true);
+      requestAnimationFrame(() => window.scrollTo(0, scrollY));
     }
   };
 
   const handleSaveProcessed = async () => {
+    const scrollY = window.scrollY;
     setSavingProcessed(true);
     try {
       await transcriptsApi.updateContent(projectId, 'processed', editProcessedText);
@@ -328,6 +331,7 @@ export default function ProjectPage() {
       ));
       setIsEditingProcessed(false);
       toast.success('Текст сохранён');
+      requestAnimationFrame(() => window.scrollTo(0, scrollY));
     } catch (error) {
       toast.error('Ошибка сохранения');
     } finally {
@@ -336,8 +340,37 @@ export default function ProjectPage() {
   };
 
   const handleCancelEditProcessed = () => {
+    const scrollY = window.scrollY;
     setIsEditingProcessed(false);
     setEditProcessedText('');
+    requestAnimationFrame(() => window.scrollTo(0, scrollY));
+  };
+
+  const handleStartEditChat = (chat) => {
+    setEditingChatId(chat.id);
+    setEditChatText(chat.response_text);
+  };
+
+  const handleSaveChat = async () => {
+    setSavingChat(true);
+    try {
+      await chatApi.updateResponse(projectId, editingChatId, editChatText);
+      setChatHistory(chatHistory.map(c =>
+        c.id === editingChatId ? { ...c, response_text: editChatText } : c
+      ));
+      setEditingChatId(null);
+      setEditChatText('');
+      toast.success('Текст сохранён');
+    } catch (error) {
+      toast.error('Ошибка сохранения');
+    } finally {
+      setSavingChat(false);
+    }
+  };
+
+  const handleCancelEditChat = () => {
+    setEditingChatId(null);
+    setEditChatText('');
   };
 
   const getTranscript = (type) => transcripts.find(t => t.version_type === type);
