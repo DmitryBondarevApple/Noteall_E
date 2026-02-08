@@ -7,11 +7,22 @@ class SpeakerMapCreate(BaseModel):
     speaker_name: str
 
 
+class SpeakerMapUpdate(BaseModel):
+    speaker_label: str
+    speaker_name: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    company: Optional[str] = None
+
+
 class SpeakerMapResponse(BaseModel):
     id: str
     project_id: str
     speaker_label: str
     speaker_name: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    company: Optional[str] = None
 
 
 # Speaker Directory (global user's contact list)
