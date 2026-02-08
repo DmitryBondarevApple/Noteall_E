@@ -263,13 +263,13 @@ async def process_transcription(project_id: str, filename: str, language: str = 
                     logger.info(f"[{project_id}] Channel {i} alternatives: {len(ch.alternatives) if ch.alternatives else 0}")
                     if ch.alternatives:
                         for j, alt in enumerate(ch.alternatives):
-                            logger.info(f"[{project_id}] Alt {j} transcript: '{alt.transcript[:100] if alt.transcript else 'None'}...'")
-                            logger.info(f"[{project_id}] Alt {j} has paragraphs obj: {alt.paragraphs is not None}")
+                            logger.info(f"[{project_id}] Alt {j} direct transcript: '{alt.transcript[:100] if alt.transcript else 'None'}...'")
                             if alt.paragraphs:
-                                logger.info(f"[{project_id}] Paragraphs attrs: {dir(alt.paragraphs)}")
-                                # Try to access paragraphs list
-                                paras = getattr(alt.paragraphs, 'paragraphs', None)
-                                logger.info(f"[{project_id}] Paragraphs list: {paras}")
+                                logger.info(f"[{project_id}] Paragraphs.transcript: '{alt.paragraphs.transcript[:100] if alt.paragraphs.transcript else 'None'}...'")
+                                logger.info(f"[{project_id}] Paragraphs list len: {len(alt.paragraphs.paragraphs) if alt.paragraphs.paragraphs else 0}")
+                            # Check words attribute
+                            if hasattr(alt, 'words') and alt.words:
+                                logger.info(f"[{project_id}] Words count: {len(alt.words)}")
         
         # Extract metadata
         duration = response.metadata.duration if response.metadata else 0
