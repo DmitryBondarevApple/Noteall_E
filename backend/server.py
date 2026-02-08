@@ -1215,6 +1215,41 @@ async def admin_list_all_prompts(admin = Depends(get_admin_user)):
 
 # ==================== SEED DATA ====================
 
+@api_router.post("/update-master-prompt")
+async def update_master_prompt():
+    """Update master prompt to improved version"""
+    now = datetime.now(timezone.utc).isoformat()
+    
+    new_content = """Обработай транскрипт встречи:
+
+1. Исправь очевидные ошибки распознавания речи
+2. Расставь знаки препинания и разбей на абзацы для читаемости
+3. Сохрани разметку спикеров в формате "Speaker N:" в начале каждой реплики
+4. Сомнительные слова (имена собственные, технические термины, числа, аббревиатуры) оставь в формате [слово?] — НЕ исправляй их самостоятельно, даже если уверен
+
+ОБЯЗАТЕЛЬНО в конце добавь секцию:
+
+---
+Сомнительные места:
+1. «слово» — краткое пояснение почему сомнительно (напр. "неразборчиво", "возможно имя", "технический термин")
+2. ...
+
+Если сомнительных мест нет, напиши:
+---
+Сомнительные места:
+Нет сомнительных мест."""
+    
+    result = await db.prompts.update_one(
+        {"prompt_type": "master"},
+        {"$set": {"content": new_content, "updated_at": now}}
+    )
+    
+    if result.matched_count == 0:
+        return {"message": "Master prompt not found, run /seed first"}
+    
+    return {"message": "Master prompt updated successfully"}
+
+
 @api_router.post("/seed")
 async def seed_data():
     """Seed initial prompts"""
