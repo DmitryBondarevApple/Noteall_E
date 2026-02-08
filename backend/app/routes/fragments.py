@@ -9,6 +9,29 @@ from app.models.fragment import UncertainFragmentUpdate, UncertainFragmentRespon
 router = APIRouter(prefix="/projects/{project_id}/fragments", tags=["fragments"])
 
 
+async def update_project_status_if_needed(project_id: str):
+    """Update project status based on remaining pending fragments"""
+    pending_count = await db.uncertain_fragments.count_documents({
+        "project_id": project_id,
+        "status": {"$in": ["pending", "auto_corrected"]}
+    })
+    
+    if pending_count == 0:
+        # All fragments confirmed - mark project as ready
+        await db.projects.update_one(
+            {"id": project_id},
+            {"$set": {"status": "ready", "updated_at": datetime.now(timezone.utc).isoformat()}}
+        )
+    else:
+        # Still has pending fragments - ensure status is needs_review
+        project = await db.projects.find_one({"id": project_id})
+        if project and project.get("status") == "ready":
+            await db.projects.update_one(
+                {"id": project_id},
+                {"$set": {"status": "needs_review", "updated_at": datetime.now(timezone.utc).isoformat()}}
+            )
+
+
 @router.get("", response_model=List[UncertainFragmentResponse])
 async def get_fragments(project_id: str, user=Depends(get_current_user)):
     project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
