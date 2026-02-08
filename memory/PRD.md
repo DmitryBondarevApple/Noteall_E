@@ -70,6 +70,8 @@ Platform for transcribing and analyzing work meetings. Users upload audio/video,
 - [x] Auto-corrected fragments: blue cards with "AI уже исправил X на Y", one-click confirm
 - [x] Upload polling fix: project status set to 'transcribing' in React state after upload
 - [x] Auto-corrected detection: word absent from main text = auto_corrected (regardless of → pattern)
+- [x] Markdown removed from Processed text tab (plain text render), kept only on Analysis tab
+- [x] Speaker name **markers** cleaned from display (GPT's `**Name:**` → `Name:`)
 
 ## Known Issues
 - Automated transcript pipeline disabled (manual "Обработать" button is workaround)
