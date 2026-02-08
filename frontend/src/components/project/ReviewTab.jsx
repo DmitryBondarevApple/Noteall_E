@@ -26,6 +26,7 @@ export function ReviewTab({
   const [editingFragment, setEditingFragment] = useState(null);
   
   const pendingFragments = fragments.filter(f => f.status === 'pending' || f.status === 'auto_corrected');
+  const confirmedFragments = fragments.filter(f => f.status === 'confirmed');
 
   const handleConfirmFragment = async (fragment, correctedText) => {
     try {
@@ -59,6 +60,34 @@ export function ReviewTab({
     }
   };
 
+  const handleRevertFragment = async (fragment) => {
+    try {
+      const response = await fragmentsApi.revert(projectId, fragment.id);
+      const revertedFragment = response.data;
+      
+      // Update fragments list with reverted status
+      const updatedFragments = fragments.map(f => 
+        f.id === fragment.id ? { ...f, status: revertedFragment.status } : f
+      );
+      onFragmentsUpdate(updatedFragments);
+
+      // Reload transcript to get updated content with restored [word?] marker
+      try {
+        const transcriptsRes = await transcriptsApi.list(projectId);
+        const processed = transcriptsRes.data.find(t => t.version_type === 'processed');
+        if (processed) {
+          onTranscriptUpdate(processed.content);
+        }
+      } catch (e) {
+        // Ignore transcript reload error
+      }
+
+      toast.success('Подтверждение отменено');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Ошибка отмены');
+    }
+  };
+
   return (
     <>
       <Card>
@@ -85,7 +114,7 @@ export function ReviewTab({
               {/* Summary */}
               <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-lg text-sm">
                 <span>Всего: <strong>{fragments.length}</strong></span>
-                <span className="text-green-600">Проверено: <strong>{fragments.filter(f => f.status === 'confirmed').length}</strong></span>
+                <span className="text-green-600">Проверено: <strong>{confirmedFragments.length}</strong></span>
                 {fragments.filter(f => f.status === 'auto_corrected').length > 0 && (
                   <span className="text-blue-600">Исправлено AI: <strong>{fragments.filter(f => f.status === 'auto_corrected').length}</strong></span>
                 )}
@@ -103,6 +132,7 @@ export function ReviewTab({
                     speakers={speakers}
                     onConfirm={(text) => handleConfirmFragment(fragment, text)}
                     onEdit={() => setEditingFragment(fragment)}
+                    onRevert={() => handleRevertFragment(fragment)}
                   />
                 ))}
               </div>
