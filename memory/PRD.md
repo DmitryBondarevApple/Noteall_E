@@ -30,6 +30,7 @@ Build a sophisticated web application for transcribing and analyzing audio files
 - Project status update logic fix
 - Admin panel /api/admin/prompts endpoint
 - **[2025-12-08] Fixed: speaker_hints field missing from ProjectResponse Pydantic model** — AI hints were saved to DB but not returned by API
+- **[2025-12-08] UX/UI overhaul of SpeakersTab** — removed "Применить" buttons, new card design with left accent borders, inline AI hint badges, hover-reveal edit button, pill-shaped controls, better typography
 
 ## Known Issues
 - **P2: Cosmetic bug** — Words appear split in Review tab UI (e.g., "п о м н ю"). CSS/rendering issue in FragmentCard.jsx.
