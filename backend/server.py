@@ -666,10 +666,10 @@ async def parse_uncertain_fragments(project_id: str, text: str):
     
     # Look for section "Сомнительные места"
     uncertain_headers = [
-        r'Сомнительные места[^:]*:',
-        r'Сомнительные[^:]*:',
-        r'Возможные ошибки[^:]*:',
-        r'Ошибки распознавания[^:]*:',
+        r'Сомнительные места[^\n]*',
+        r'Сомнительные[^\n]*',
+        r'Возможные ошибки[^\n]*',
+        r'Ошибки распознавания[^\n]*',
     ]
     
     uncertain_section = ""
@@ -680,7 +680,7 @@ async def parse_uncertain_fragments(project_id: str, text: str):
         if match:
             split_pos = match.start()
             main_text = text[:split_pos].strip()
-            uncertain_section = text[split_pos:].strip()
+            uncertain_section = text[match.end():].strip()
             break
     
     # Parse [word?] patterns in main text
