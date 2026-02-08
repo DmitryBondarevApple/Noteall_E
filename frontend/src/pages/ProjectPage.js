@@ -27,7 +27,8 @@ import {
   AlertCircle,
   Loader2,
   Users,
-  Sparkles
+  Sparkles,
+  Wand2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
