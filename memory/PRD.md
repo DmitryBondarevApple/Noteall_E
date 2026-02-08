@@ -7,103 +7,97 @@ Platform for transcribing and analyzing work meetings. Users upload audio/video,
 - **Backend:** FastAPI, PyMongo (async), python-jose (JWT)
 - **Frontend:** React, Tailwind CSS, Shadcn UI, Axios
 - **Database:** MongoDB
-- **Integrations:** Deepgram (Nova-3), OpenAI GPT-4o/5.2 (user's API key)
+- **Integrations:** Deepgram (Nova-3), OpenAI GPT-4o/5.2
 
 ## Core Workflow
 1. User uploads audio/video file
 2. Deepgram transcribes -> raw transcript saved
-3. User clicks "Обработать" -> GPT-5.2 processes with master prompt -> processed text saved
+3. User clicks "Обработать" -> GPT-5.2 processes with master prompt
 4. User reviews uncertain words, maps speaker names (from directory)
-5. User runs thematic analysis prompts on the transcript
+5. User runs thematic analysis prompts
 
-## Architecture
+## Architecture (Refactored Feb 2026)
 ```
-/app
-├── backend/server.py           # Monolithic FastAPI (all routes, models, logic)
-├── frontend/src/
-│   ├── App.js                  # Router
-│   ├── lib/api.js              # Axios API client
-│   ├── pages/
-│   │   ├── ProjectPage.js      # Main project UI
-│   │   ├── DashboardPage.js    # Projects list
-│   │   ├── SpeakerDirectoryPage.js  # Speaker directory management
-│   │   └── ...
-│   ├── components/project/
-│   │   ├── SpeakersTab.jsx     # Speaker name mapping with combobox
-│   │   ├── SpeakerCombobox.jsx # Autocomplete from directory
-│   │   └── ...
-│   └── contexts/AuthContext.js
+/app/backend/
+├── server.py                    # Entry point (imports from app/)
+├── app/
+│   ├── main.py                  # FastAPI app, routers, middleware
+│   ├── core/
+│   │   ├── config.py            # Environment variables
+│   │   ├── database.py          # MongoDB connection
+│   │   └── security.py          # JWT, password hashing, auth deps
+│   ├── models/
+│   │   ├── user.py              # User schemas
+│   │   ├── project.py           # Project schemas
+│   │   ├── transcript.py        # Transcript schemas
+│   │   ├── fragment.py          # Uncertain fragment schemas
+│   │   ├── speaker.py           # Speaker map + directory schemas
+│   │   ├── prompt.py            # Prompt schemas
+│   │   └── chat.py              # Chat/analysis schemas
+│   ├── routes/
+│   │   ├── auth.py              # /auth/* endpoints
+│   │   ├── projects.py          # /projects/* + upload, process
+│   │   ├── transcripts.py       # /projects/{id}/transcripts/*
+│   │   ├── fragments.py         # /projects/{id}/fragments/*
+│   │   ├── speakers.py          # Project speakers + directory
+│   │   ├── prompts.py           # /prompts/*
+│   │   ├── chat.py              # /projects/{id}/analyze, chat-history
+│   │   ├── admin.py             # /admin/*
+│   │   └── seed.py              # /seed, /update-master-prompt
+│   └── services/
+│       ├── gpt.py               # GPT-4o, GPT-5.2 calls
+│       └── text_parser.py       # Parse uncertain fragments
+/app/frontend/src/
+├── pages/
+│   ├── ProjectPage.js           # Main project UI
+│   ├── SpeakerDirectoryPage.js  # Speaker directory with grouping
+│   └── ...
+├── components/project/
+│   ├── UploadSection.jsx
+│   ├── TranscriptTab.jsx
+│   ├── ProcessedTab.jsx         # With autosave drafts
+│   ├── ReviewTab.jsx            # With revert capability
+│   ├── SpeakersTab.jsx          # With combobox search
+│   ├── AnalysisTab.jsx          # With autosave drafts
+│   ├── SpeakerCombobox.jsx      # Autocomplete from directory
+│   └── utils.js
 ```
 
-## DB Schema
-- **users:** {id, email, hashed_password, name, role, created_at}
-- **projects:** {id, name, description, user_id, status, language, reasoning_effort}
-- **transcripts:** {id, project_id, version_type, content}
-- **uncertain_fragments:** {id, project_id, original_text, corrected_text, context, status}
+## DB Collections
+- **users:** {id, email, password, name, role, created_at}
+- **projects:** {id, name, description, user_id, status, language, reasoning_effort, ...}
+- **transcripts:** {id, project_id, version_type, content, created_at}
+- **uncertain_fragments:** {id, project_id, original_text, corrected_text, context, status, source}
 - **speaker_maps:** {id, project_id, speaker_label, speaker_name}
-- **speaker_directory:** {id, user_id, name, email, company, role, created_at, updated_at} ← NEW
+- **speaker_directory:** {id, user_id, name, email, company, role, phone, telegram, whatsapp, photo_url, comment}
 - **prompts:** {id, name, content, prompt_type, user_id, project_id, is_public}
-- **chat_requests:** {id, project_id, prompt_id, response_text, ...}
+- **chat_requests:** {id, project_id, prompt_id, prompt_content, additional_text, reasoning_effort, response_text}
 
-## What's Implemented
-
-### Core Features
-- JWT auth (register/login)
+## Features Implemented
+- JWT authentication
 - Project CRUD with file upload
-- Deepgram transcription
-- GPT-5.2 processing with master prompt
+- Deepgram transcription (Nova-3)
+- Manual GPT-5.2 processing with master prompt
 - Speaker diarization and name mapping
-- Uncertain word review UI with revert capability
-- Thematic analysis with context-aware prompts
+- Speaker directory with search, grouping by company
+- Uncertain word review with auto-corrected detection
+- Revert confirmed fragments
 - Autosave drafts (localStorage)
+- Context-aware multi-turn analysis
 - Admin panel
 
-### Speaker Directory (NEW - Feb 2026)
-- Global contacts list per user (`/speakers` page)
-- Add/Edit/Delete speakers with name, company, role, email
-- Search by name with autocomplete
-- Combobox in project speakers tab for quick selection
-- "Add to directory" button when typing new name
-- Navigation from Dashboard and Project page
-
 ## Key API Endpoints
-
-### Speaker Directory (NEW)
-- `GET /api/speaker-directory` - List all speakers (optional ?q=search)
-- `POST /api/speaker-directory` - Add speaker to directory
-- `PUT /api/speaker-directory/{id}` - Update speaker
-- `DELETE /api/speaker-directory/{id}` - Delete speaker
-
-### Existing
-- `/api/auth/*` - Authentication
-- `/api/projects/*` - Project CRUD
-- `/api/projects/{id}/upload` - File upload
-- `/api/projects/{id}/process` - GPT processing
-- `/api/projects/{id}/analyze` - Analysis
-- `/api/projects/{id}/speakers` - Project-specific speaker mapping
-- `/api/projects/{id}/fragments` - Uncertain fragments
-- `/api/projects/{id}/fragments/{id}/revert` - Revert confirmation
-- `/api/prompts` - Prompt management
-- `/api/update-master-prompt` - Update master prompt
-
-## Master Prompt Features
-- Исправление ошибок распознавания по контексту
-- Объединение реплик спикеров (перенос фраз с маленькой буквы)
-- Замена Speaker N на имена
-- Форматирование: болд для имён, пробелы между репликами
-- Обязательная секция "Сомнительные места" с форматом «исходное» → «исправленное»
-
-## Known Issues
-- server.py is monolithic (~1500 lines) — consider splitting
-
-## Future/Backlog (P2-P3)
-- Refactor server.py into modules
-- Collaborative project access
-- Team workspaces
-- Global full-text search
-- Export transcripts (docx, pdf)
-- Keyboard shortcuts
-- Mobile applications
+- `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me`
+- `GET/POST /api/projects`, `GET/PUT/DELETE /api/projects/{id}`
+- `POST /api/projects/{id}/upload`, `POST /api/projects/{id}/process`
+- `GET/PUT /api/projects/{id}/transcripts/{version_type}`
+- `GET/PUT /api/projects/{id}/fragments/{id}`, `POST .../revert`
+- `GET/PUT /api/projects/{id}/speakers/{id}`
+- `GET/POST/PUT/DELETE /api/speaker-directory`, `POST .../photo`
+- `GET/POST/PUT/DELETE /api/prompts`
+- `POST /api/projects/{id}/analyze`, `GET/PUT /api/projects/{id}/chat-history`
+- `GET/POST/DELETE /api/admin/users`
+- `POST /api/seed`, `POST /api/update-master-prompt`
 
 ## Credentials
 - Admin: admin@voiceworkspace.com / admin123
