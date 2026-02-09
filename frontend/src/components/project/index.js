@@ -7,4 +7,5 @@ export { FullAnalysisTab } from './FullAnalysisTab';
 export { ResultsTab } from './ResultsTab';
 export { FragmentCard } from './FragmentCard';
 export { SpeakerCombobox } from './SpeakerCombobox';
+export { AttachmentsPanel } from './AttachmentsPanel';
 export * from './utils';
