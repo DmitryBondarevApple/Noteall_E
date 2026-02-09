@@ -190,6 +190,17 @@ Speaker 1 — Сабина
                     "node_type": "template",
                     "label": "Тема встречи",
                     "template_text": "{{meeting_subject}}",
+                    "step_title": "Настройка",
+                    "step_description": "Укажите тему встречи для анализа",
+                    "continue_button_label": "Извлечь темы",
+                    "variable_config": {
+                        "meeting_subject": {
+                            "label": "Предмет обсуждения",
+                            "placeholder": "Например: разработка нового продукта, квартальное планирование...",
+                            "input_type": "text",
+                            "required": True
+                        }
+                    },
                     "input_from": None,
                     "position_x": 250, "position_y": 0,
                     "prompt_id": None, "inline_prompt": None, "system_message": None,
