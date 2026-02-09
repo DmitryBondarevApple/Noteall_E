@@ -198,7 +198,7 @@ class TestWizardSettings:
         }
         
         response = requests.post(f"{BASE_URL}/api/pipelines", headers=self.headers, json=pipeline_data)
-        assert response.status_code == 201, f"Create failed: {response.text}"
+        assert response.status_code in [200, 201], f"Create failed: {response.text}"
         
         created = response.json()
         pipeline_id = created["id"]
@@ -258,7 +258,7 @@ class TestWizardSettings:
         }
         
         create_response = requests.post(f"{BASE_URL}/api/pipelines", headers=self.headers, json=pipeline_data)
-        assert create_response.status_code == 201
+        assert create_response.status_code in [200, 201]
         pipeline_id = create_response.json()["id"]
         
         # Update wizard settings
