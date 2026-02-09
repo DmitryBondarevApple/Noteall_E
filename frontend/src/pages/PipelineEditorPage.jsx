@@ -58,24 +58,28 @@ const NODE_TYPE_OPTIONS = [
   { type: 'user_review', label: 'Просмотр результата', icon: Eye },
 ];
 
-// Detect edge type by handle IDs
+// Detect edge type by handle IDs — any handle with "data" in the name = data edge
 function getEdgeType(sourceHandle, targetHandle) {
-  if (sourceHandle === 'data-out' || targetHandle === 'data-in') return 'data';
+  const sh = sourceHandle || '';
+  const th = targetHandle || '';
+  if (sh.includes('data') || th.includes('data')) return 'data';
   return 'flow';
 }
 
 function makeEdgeStyle(edgeType) {
   if (edgeType === 'data') {
     return {
+      type: 'smoothstep',
       animated: false,
       style: { stroke: '#f97316', strokeWidth: 2, strokeDasharray: '6 3' },
-      markerEnd: { type: MarkerType.ArrowClosed, color: '#f97316' },
+      markerEnd: { type: MarkerType.ArrowClosed, color: '#f97316', width: 16, height: 16 },
     };
   }
   return {
-    animated: true,
-    style: { stroke: '#94a3b8', strokeWidth: 2 },
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' },
+    type: 'smoothstep',
+    animated: false,
+    style: { stroke: '#94a3b8', strokeWidth: 1.5 },
+    markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8', width: 14, height: 14 },
   };
 }
 
