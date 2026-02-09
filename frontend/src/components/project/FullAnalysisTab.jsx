@@ -705,14 +705,15 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
   const handleSaveResult = useCallback(async () => {
     setIsSaving(true);
     try {
-      // Find meeting subject from outputs
       const subject = nodeOutputs['meeting_subject'] || nodeOutputs['subject'] || 'Анализ встречи';
       await chatApi.saveFullAnalysis(projectId, {
         subject: typeof subject === 'string' ? subject : 'Анализ встречи',
         content: reviewContent,
+        pipeline_id: selectedPipelineId || null,
+        pipeline_name: pipelineData?.name || null,
       });
       onSaveResult?.(reviewContent);
-      toast.success('Результат сохранён');
+      toast.success('Результат сохранён во вкладке "Результаты"');
     } catch (error) {
       console.error('Save error:', error);
       toast.error('Ошибка сохранения');
