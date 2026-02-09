@@ -136,7 +136,7 @@ export function TranscriptTab({ transcript, speakers, projectId, onSpeakersUpdat
   return (
     <>
       <Card>
-        <CardHeader className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+        <CardHeader className="flex flex-col gap-4">
           <div>
             <CardTitle>Исходный транскрипт</CardTitle>
             <CardDescription>
@@ -144,7 +144,7 @@ export function TranscriptTab({ transcript, speakers, projectId, onSpeakersUpdat
             </CardDescription>
           </div>
           {speakers.length > 0 && (
-            <div className="flex flex-col items-end gap-1.5" data-testid="speakers-summary">
+            <div className="flex flex-col gap-1.5 max-w-md" data-testid="speakers-summary">
               <div className="flex flex-wrap items-center gap-1.5">
                 {speakers.map((s, i) => {
                   const color = getSpeakerColor(i);
