@@ -85,10 +85,27 @@ async def analyze_raw(
         raise HTTPException(status_code=400, detail="No transcript found")
     
     # Build messages with transcript context
+    user_content = data.user_message
+
+    # Inject attachment context if any
+    text_parts = []
+    file_parts = []
+    if data.attachment_ids:
+        text_parts, file_parts = await build_attachment_context(data.attachment_ids, project_id)
+
+    if text_parts:
+        user_content = user_content + "\n\n" + "\n\n".join(text_parts)
+
+    # Build message content — multimodal if file_parts exist
+    if file_parts:
+        user_msg_content = [{"type": "text", "text": user_content}] + file_parts
+    else:
+        user_msg_content = user_content
+
     messages = [
         {"role": "user", "content": f"Вот транскрипт встречи:\n\n{transcript['content']}"},
         {"role": "assistant", "content": "Спасибо, я прочитал транскрипт. Готов помочь с анализом."},
-        {"role": "user", "content": data.user_message}
+        {"role": "user", "content": user_msg_content}
     ]
     
     response_text = await call_gpt52(
