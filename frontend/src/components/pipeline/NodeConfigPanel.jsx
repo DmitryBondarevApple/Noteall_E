@@ -132,6 +132,7 @@ const SCRIPT_DESCRIPTIONS = {
 export function NodeConfigPanel({ node, allNodes, edges, onUpdate, onDelete, onClose }) {
   const [aiPrompt, setAiPrompt] = useState('');
   const [generating, setGenerating] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   if (!node) return null;
 
