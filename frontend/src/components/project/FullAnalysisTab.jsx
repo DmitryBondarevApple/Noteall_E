@@ -883,6 +883,15 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
               )}
             </div>
 
+            {/* Attachments */}
+            <div className="border-t pt-4">
+              <AttachmentsPanel
+                projectId={projectId}
+                selectedIds={selectedAttachmentIds}
+                onSelectionChange={setSelectedAttachmentIds}
+              />
+            </div>
+
             <Button
               onClick={startWizard}
               disabled={!selectedPipelineId || stages.length === 0}
