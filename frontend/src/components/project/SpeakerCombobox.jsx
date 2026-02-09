@@ -45,8 +45,11 @@ export function SpeakerCombobox({ value, onChange, onAddToDirectory, placeholder
   }, [value]);
 
   const handleSelect = useCallback((speaker) => {
-    setInputValue(speaker.name);
-    onChange(speaker.name);
+    const displayName = speaker.company
+      ? `${speaker.name} (${speaker.company})`
+      : speaker.name;
+    setInputValue(displayName);
+    onChange(displayName);
     setIsOpen(false);
     setHighlightedIndex(-1);
   }, [onChange]);
