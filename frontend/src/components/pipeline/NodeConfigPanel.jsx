@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
@@ -10,33 +10,142 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select';
-import { X } from 'lucide-react';
+import { X, Sparkles, Loader2 } from 'lucide-react';
 import { NODE_STYLES } from './PipelineNode';
+import { chatApi } from '../../lib/api';
+import { toast } from 'sonner';
 
-const DEFAULT_PARSE_SCRIPT = `// Парсинг нумерованного списка из ответа AI
-// input: строка текста от AI
-// output: массив строк (элементов списка)
+// --- Default scripts matching current FullAnalysisTab logic ---
 
-function parse(input) {
-  const lines = input.split('\\n');
-  return lines
+const DEFAULT_SCRIPTS = {
+  parse_list: `// Парсинг нумерованного списка из ответа AI
+// context.input — строка текста (ответ AI)
+// Возвращает: { output: string[] }
+
+function run(context) {
+  const lines = context.input.split('\\n');
+  const items = lines
     .map(line => line.replace(/^\\d+[\\.)\\-]\\s*/, '').trim())
     .filter(line => line.length > 0);
-}`;
+  return { output: items };
+}`,
+
+  batch_loop: `// Нарезка на батчи + подстановка в промпт
+// context.input — массив элементов (например, тем)
+// context.iteration — номер текущей итерации (0, 1, 2...)
+// context.batchSize — размер батча из настроек узла
+// context.results — массив ответов AI от предыдущих итераций
+// Возвращает: { done, output?, promptVars? }
+
+function run(context) {
+  const items = context.input;
+  const size = context.batchSize || 3;
+  const effectiveSize = size === 0 ? items.length : size;
+  const start = context.iteration * effectiveSize;
+  const batch = items.slice(start, start + effectiveSize);
+
+  // Условие остановки — элементы закончились
+  if (batch.length === 0) {
+    return {
+      done: true,
+      output: context.results.join('\\n\\n')
+    };
+  }
+
+  // Формируем нумерованный список для подстановки
+  const topicsList = batch
+    .map((t, i) => \`\${start + i + 1}. \${t}\`)
+    .join('\\n');
+
+  const prefix = context.iteration === 0
+    ? 'Сделай анализ следующих тем:'
+    : 'Продолжай анализ следующих тем:';
+
+  return {
+    done: false,
+    promptVars: {
+      topics_batch: \`\${prefix}\\n\${topicsList}\`
+    }
+  };
+}`,
+
+  aggregate: `// Склейка результатов из нескольких итераций
+// context.input — массив строк (результаты батч-анализа)
+// Возвращает: { output: string }
+
+function run(context) {
+  const parts = Array.isArray(context.input)
+    ? context.input
+    : [context.input];
+  return {
+    output: parts.join('\\n\\n')
+  };
+}`,
+
+  template: `// Подстановка переменных в шаблон
+// context.vars — объект переменных из источников данных
+// context.input — данные от предыдущего узла
+// Возвращает: { output: string }
+
+function run(context) {
+  let text = context.input || '';
+  if (context.vars) {
+    for (const [key, value] of Object.entries(context.vars)) {
+      text = text.replace(
+        new RegExp('\\\\{\\\\{' + key + '\\\\}\\\\}', 'g'),
+        value
+      );
+    }
+  }
+  return { output: text };
+}`,
+
+  ai_prompt: `// Подготовка данных перед отправкой промпта в AI
+// context.input — данные от источника данных
+// context.prompt — шаблон промпта из настроек узла
+// context.vars — переменные из источников данных
+// Возвращает: { promptVars: { key: value } }
+// Подставленные переменные заменят {{key}} в промпте
+
+function run(context) {
+  return {
+    promptVars: {
+      // Пример: meeting_subject будет подставлен в {{meeting_subject}}
+    }
+  };
+}`,
+
+  user_edit_list: null,
+  user_review: null,
+};
+
+const SCRIPT_DESCRIPTIONS = {
+  parse_list: 'Скрипт парсинга: преобразует текст ответа AI в структурированные данные',
+  batch_loop: 'Скрипт цикла: нарезает данные на порции и управляет повторным вызовом AI',
+  aggregate: 'Скрипт склейки: объединяет результаты нескольких итераций',
+  template: 'Скрипт шаблона: подставляет переменные в текст',
+  ai_prompt: 'Скрипт подготовки: формирует данные перед отправкой в AI',
+};
 
 export function NodeConfigPanel({ node, allNodes, edges, onUpdate, onDelete, onClose }) {
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [generating, setGenerating] = useState(false);
+
   if (!node) return null;
 
   const nodeData = node.data;
+  const nodeType = nodeData.node_type;
 
   const handleChange = (field, value) => {
     onUpdate(node.id, { ...nodeData, [field]: value });
   };
 
-  const style = NODE_STYLES[nodeData.node_type] || NODE_STYLES.template;
+  const style = NODE_STYLES[nodeType] || NODE_STYLES.template;
   const Icon = style.icon;
 
-  // Determine flow predecessors and data sources from edges
+  const hasScript = DEFAULT_SCRIPTS[nodeType] !== null && DEFAULT_SCRIPTS[nodeType] !== undefined;
+  const currentScript = nodeData.script || DEFAULT_SCRIPTS[nodeType] || '';
+
   const flowSources = (edges || [])
     .filter((e) => e.target === node.id && e.data?.edgeType !== 'data')
     .map((e) => allNodes.find((n) => n.id === e.source))
@@ -47,8 +156,30 @@ export function NodeConfigPanel({ node, allNodes, edges, onUpdate, onDelete, onC
     .map((e) => allNodes.find((n) => n.id === e.source))
     .filter(Boolean);
 
+  const handleGenerateScript = async () => {
+    if (!aiPrompt.trim()) {
+      toast.error('Опишите что должен делать скрипт');
+      return;
+    }
+    setGenerating(true);
+    try {
+      const res = await chatApi.generateScript({
+        description: aiPrompt,
+        node_type: nodeType,
+        context: `Текущий скрипт узла:\n${currentScript}`
+      });
+      handleChange('script', res.data.response_text);
+      setAiPrompt('');
+      toast.success('Скрипт сгенерирован');
+    } catch (err) {
+      toast.error('Ошибка генерации скрипта');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   return (
-    <div className="w-80 border-l bg-white overflow-y-auto" data-testid="node-config-panel">
+    <div className="w-[340px] border-l bg-white overflow-y-auto" data-testid="node-config-panel">
       <div className="sticky top-0 bg-white border-b px-4 py-3 flex items-center justify-between z-10">
         <div className="flex items-center gap-2">
           <div className={`w-7 h-7 rounded-md flex items-center justify-center ${style.iconBg}`}>
@@ -72,8 +203,8 @@ export function NodeConfigPanel({ node, allNodes, edges, onUpdate, onDelete, onC
           />
         </div>
 
-        {/* AI Prompt fields */}
-        {nodeData.node_type === 'ai_prompt' && (
+        {/* AI Prompt specific fields */}
+        {nodeType === 'ai_prompt' && (
           <>
             <div className="space-y-1.5">
               <Label className="text-xs">System message</Label>
@@ -90,12 +221,12 @@ export function NodeConfigPanel({ node, allNodes, edges, onUpdate, onDelete, onC
               <Textarea
                 value={nodeData.inline_prompt || ''}
                 onChange={(e) => handleChange('inline_prompt', e.target.value)}
-                rows={6}
+                rows={5}
                 placeholder="Текст промпта..."
                 data-testid="node-inline-prompt"
               />
               <p className="text-[10px] text-muted-foreground">
-                {'{{переменная}}'} — подстановка данных
+                {'{{переменная}}'} — подстановка из скрипта
               </p>
             </div>
             <div className="space-y-1.5">
@@ -117,25 +248,8 @@ export function NodeConfigPanel({ node, allNodes, edges, onUpdate, onDelete, onC
           </>
         )}
 
-        {/* Parse list — script editor */}
-        {nodeData.node_type === 'parse_list' && (
-          <div className="space-y-1.5">
-            <Label className="text-xs">Скрипт парсинга</Label>
-            <Textarea
-              value={nodeData.script || DEFAULT_PARSE_SCRIPT}
-              onChange={(e) => handleChange('script', e.target.value)}
-              rows={12}
-              className="font-mono text-xs leading-relaxed"
-              data-testid="node-parse-script"
-            />
-            <p className="text-[10px] text-muted-foreground">
-              JavaScript-функция parse(input).
-            </p>
-          </div>
-        )}
-
-        {/* Template fields */}
-        {nodeData.node_type === 'template' && (
+        {/* Template text (for template nodes) */}
+        {nodeType === 'template' && (
           <div className="space-y-1.5">
             <Label className="text-xs">Шаблон</Label>
             <Textarea
@@ -148,8 +262,8 @@ export function NodeConfigPanel({ node, allNodes, edges, onUpdate, onDelete, onC
           </div>
         )}
 
-        {/* Batch loop fields */}
-        {nodeData.node_type === 'batch_loop' && (
+        {/* Batch size (for batch_loop) */}
+        {nodeType === 'batch_loop' && (
           <div className="space-y-1.5">
             <Label className="text-xs">Размер батча</Label>
             <Input
@@ -162,6 +276,56 @@ export function NodeConfigPanel({ node, allNodes, edges, onUpdate, onDelete, onC
             <p className="text-[10px] text-muted-foreground">
               0 = все элементы за один раз
             </p>
+          </div>
+        )}
+
+        {/* ===== SCRIPT EDITOR (for all script-capable nodes) ===== */}
+        {hasScript && (
+          <div className="space-y-2 pt-2 border-t">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-semibold text-slate-700">
+                {SCRIPT_DESCRIPTIONS[nodeType] || 'Скрипт'}
+              </Label>
+            </div>
+
+            <Textarea
+              value={currentScript}
+              onChange={(e) => handleChange('script', e.target.value)}
+              rows={14}
+              className="font-mono text-[11px] leading-relaxed bg-slate-50"
+              data-testid="node-script-editor"
+            />
+
+            {/* AI Script Generator */}
+            <div className="bg-violet-50 border border-violet-200 rounded-lg p-3 space-y-2">
+              <Label className="text-xs text-violet-700 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5" />
+                AI-помощник
+              </Label>
+              <Textarea
+                value={aiPrompt}
+                onChange={(e) => setAiPrompt(e.target.value)}
+                rows={2}
+                className="text-xs"
+                placeholder="Опишите что должен делать скрипт..."
+                data-testid="ai-script-prompt"
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full gap-1.5 text-xs border-violet-300 text-violet-700 hover:bg-violet-100"
+                onClick={handleGenerateScript}
+                disabled={generating}
+                data-testid="generate-script-btn"
+              >
+                {generating ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="w-3.5 h-3.5" />
+                )}
+                Сгенерировать скрипт
+              </Button>
+            </div>
           </div>
         )}
 
@@ -201,7 +365,7 @@ export function NodeConfigPanel({ node, allNodes, edges, onUpdate, onDelete, onC
             </div>
           ) : (
             <p className="text-[11px] text-muted-foreground italic">
-              Нет. Соедините оранжевый выход другого узла с оранжевым входом этого.
+              Соедините оранжевые порты для передачи данных
             </p>
           )}
         </div>
