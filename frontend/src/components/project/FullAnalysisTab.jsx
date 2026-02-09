@@ -92,12 +92,24 @@ function resolveExecutionOrder(nodes, edges) {
 }
 
 // Build data dependency map: nodeId -> [sourceNodeIds]
-function buildDataDeps(edges) {
+// Uses both edge types AND input_from field on nodes
+function buildDataDeps(nodes, edges) {
   const deps = {};
+  // From edges with data type
   for (const e of edges) {
     if (e.data?.edgeType === 'data') {
       if (!deps[e.target]) deps[e.target] = [];
-      deps[e.target].push(e.source);
+      if (!deps[e.target].includes(e.source)) deps[e.target].push(e.source);
+    }
+  }
+  // From input_from field on nodes
+  for (const node of nodes) {
+    const inputFrom = node.data.input_from;
+    if (inputFrom && inputFrom.length > 0) {
+      if (!deps[node.id]) deps[node.id] = [];
+      for (const src of inputFrom) {
+        if (!deps[node.id].includes(src)) deps[node.id].push(src);
+      }
     }
   }
   return deps;
