@@ -46,6 +46,13 @@ import {
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select';
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
