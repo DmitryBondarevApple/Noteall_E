@@ -202,7 +202,6 @@ export function ResultsTab({ projectId, selectedReasoningEffort }) {
           reasoning_effort: selectedReasoningEffort || 'high',
         });
 
-        // Save the result
         await chatApi.saveFullAnalysis(projectId, {
           subject: `Анализ: ${prompt?.title || prompt?.name || 'промпт'}`,
           content: response.data.response_text,
@@ -214,6 +213,96 @@ export function ResultsTab({ projectId, selectedReasoningEffort }) {
         toast.success('Анализ завершён и сохранён');
       } catch (err) {
         toast.error('Ошибка анализа: ' + (err.response?.data?.detail || err.message));
+      } finally {
+        setAnalyzing(false);
+      }
+    }
+
+    if (analysisMode === 'pipeline' && selectedPipelineId) {
+      setAnalyzing(true);
+      try {
+        const plRes = await pipelinesApi.get(selectedPipelineId);
+        const pl = plRes.data;
+
+        // Build nodes and resolve execution order
+        const nodes = pl.nodes.map((n) => ({ id: n.node_id, data: { ...n } }));
+        const edges = pl.edges.map((e) => {
+          const sh = e.source_handle || '';
+          const th = e.target_handle || '';
+          const edgeType = (sh.includes('data') || th.includes('data')) ? 'data' : 'flow';
+          return { source: e.source, target: e.target, data: { edgeType } };
+        });
+
+        const ordered = topoSort(nodes, edges);
+        const deps = buildDeps(nodes, edges);
+
+        // Execute nodes sequentially, injecting sourceText as initial context
+        let outputs = { _source_text: sourceText, input: sourceText };
+        for (const node of ordered) {
+          const type = node.data.node_type;
+          // Skip interactive nodes — auto-execute only
+          if (['template', 'user_edit_list', 'user_review'].includes(type)) continue;
+
+          const depIds = deps[node.id] || [];
+          const depInput = depIds.length === 1
+            ? (outputs[depIds[0]] || sourceText)
+            : depIds.length > 1
+              ? depIds.map((id) => outputs[id]).filter(Boolean).join('\n\n')
+              : sourceText;
+
+          if (type === 'ai_prompt') {
+            let prompt = node.data.inline_prompt || '';
+            const sysMsg = node.data.system_message || 'Ты — ассистент для анализа.';
+
+            // Substitute {{input}} and other variables
+            prompt = prompt.replace(/\{\{input\}\}/g, depInput);
+            const varMatches = prompt.match(/\{\{(\w+)\}\}/g) || [];
+            for (const m of varMatches) {
+              const varName = m.replace(/[{}]/g, '');
+              if (outputs[varName] !== undefined) {
+                prompt = prompt.replace(new RegExp(`\\{\\{${varName}\\}\\}`, 'g'), String(outputs[varName]));
+              }
+            }
+
+            const response = await chatApi.analyzeRaw(projectId, {
+              system_message: sysMsg,
+              user_message: prompt,
+              reasoning_effort: node.data.reasoning_effort || 'high',
+            });
+            outputs[node.id] = response.data.response_text;
+            if (node.data.label) outputs[node.data.label] = response.data.response_text;
+          } else if (['parse_list', 'aggregate'].includes(type) && node.data.script) {
+            try {
+              const fnMatch = node.data.script.match(/function\s+run\s*\([\w]*\)\s*\{([\s\S]*)\}$/);
+              const fn = fnMatch
+                ? new Function('context', fnMatch[1])
+                : new Function('context', node.data.script);
+              const result = fn({ input: depInput, vars: outputs });
+              outputs[node.id] = result.output;
+              if (node.data.label) outputs[node.data.label] = result.output;
+            } catch (e) {
+              outputs[node.id] = depInput;
+            }
+          }
+        }
+
+        // Find the last node's output as the final result
+        const lastNode = ordered[ordered.length - 1];
+        const finalText = outputs[lastNode.id] || outputs[ordered[ordered.length - 2]?.id] || sourceText;
+
+        await chatApi.saveFullAnalysis(projectId, {
+          subject: `Сценарий: ${pl.name}`,
+          content: typeof finalText === 'string' ? finalText : JSON.stringify(finalText, null, 2),
+          pipeline_id: selectedPipelineId,
+          pipeline_name: pl.name,
+        });
+
+        await loadResults();
+        setSelectedIds(new Set());
+        setAnalysisMode(null);
+        toast.success('Анализ по сценарию завершён и сохранён');
+      } catch (err) {
+        toast.error('Ошибка: ' + (err.response?.data?.detail || err.message));
       } finally {
         setAnalyzing(false);
       }
