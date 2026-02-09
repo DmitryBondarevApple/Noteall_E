@@ -155,10 +155,23 @@ async def process_transcript_with_gpt(
         {"$set": {"status": "processing", "updated_at": datetime.now(timezone.utc).isoformat()}}
     )
     
+    # Fetch speaker mappings to replace "Speaker N" with real names
+    speaker_maps = await db.speaker_maps.find(
+        {"project_id": project_id}, {"_id": 0}
+    ).to_list(100)
+    
+    # Apply speaker names to raw content before sending to GPT
+    content_for_gpt = raw_transcript["content"]
+    for s in speaker_maps:
+        if s.get("speaker_name") and s["speaker_name"] != s.get("speaker_label"):
+            content_for_gpt = content_for_gpt.replace(
+                f'{s["speaker_label"]}:', f'{s["speaker_name"]}:'
+            )
+    
     background_tasks.add_task(
         _run_gpt_processing,
         project_id,
-        raw_transcript["content"],
+        content_for_gpt,
         master_prompt,
         project.get("reasoning_effort", "high")
     )
