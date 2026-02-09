@@ -14,11 +14,17 @@ export function SpeakerCombobox({ value, onChange, onAddToDirectory, placeholder
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const inputRef = useRef(null);
   const listRef = useRef(null);
+  const skipSearchRef = useRef(false);
 
   // Debounced search
   useEffect(() => {
     if (!inputValue.trim()) {
       setSuggestions([]);
+      return;
+    }
+
+    if (skipSearchRef.current) {
+      skipSearchRef.current = false;
       return;
     }
 
@@ -48,9 +54,11 @@ export function SpeakerCombobox({ value, onChange, onAddToDirectory, placeholder
     const displayName = speaker.company
       ? `${speaker.name} (${speaker.company})`
       : speaker.name;
+    skipSearchRef.current = true;
     setInputValue(displayName);
     onChange(displayName);
     setIsOpen(false);
+    setSuggestions([]);
     setHighlightedIndex(-1);
   }, [onChange]);
 
