@@ -18,6 +18,7 @@ import Markdown from 'react-markdown';
 import { formatDistanceToNow } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { chatApi } from '../../lib/api';
+import { AttachmentsPanel } from './AttachmentsPanel';
 
 const DRAFT_KEY_PREFIX = 'voice_workspace_draft_';
 const AUTOSAVE_DELAY = 2000;
