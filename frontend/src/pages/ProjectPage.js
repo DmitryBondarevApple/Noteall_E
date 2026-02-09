@@ -39,6 +39,7 @@ import {
   ReviewTab,
   AnalysisTab,
   FullAnalysisTab,
+  ResultsTab,
   statusConfig,
   reasoningEffortOptions
 } from '../components/project';
