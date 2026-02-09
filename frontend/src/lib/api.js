@@ -94,5 +94,15 @@ export const exportApi = {
   toPdf: (content, filename) => axios.post(`${API}/export/pdf`, { content, filename }, { responseType: 'blob' })
 };
 
+// Pipelines (analysis scenarios)
+export const pipelinesApi = {
+  list: () => axios.get(`${API}/pipelines`),
+  get: (id) => axios.get(`${API}/pipelines/${id}`),
+  create: (data) => axios.post(`${API}/pipelines`, data),
+  update: (id, data) => axios.put(`${API}/pipelines/${id}`, data),
+  delete: (id) => axios.delete(`${API}/pipelines/${id}`),
+  duplicate: (id) => axios.post(`${API}/pipelines/${id}/duplicate`)
+};
+
 // Seed
 export const seedData = () => axios.post(`${API}/seed`);
