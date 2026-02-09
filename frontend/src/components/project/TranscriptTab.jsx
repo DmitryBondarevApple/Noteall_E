@@ -14,6 +14,7 @@ import { FileText, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { speakersApi } from '../../lib/api';
 import { SpeakerCombobox } from './SpeakerCombobox';
+import { AttachmentsPanel } from './AttachmentsPanel';
 
 const SPEAKER_COLORS = [
   { bg: 'bg-sky-100 hover:bg-sky-200', text: 'text-sky-800', border: 'border-sky-200' },
