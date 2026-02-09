@@ -109,7 +109,8 @@ export function AnalysisTab({
       const response = await chatApi.analyze(projectId, {
         prompt_id: selectedPrompt,
         additional_text: additionalText,
-        reasoning_effort: selectedReasoningEffort
+        reasoning_effort: selectedReasoningEffort,
+        attachment_ids: selectedAttachmentIds.size > 0 ? [...selectedAttachmentIds] : undefined,
       });
       onChatHistoryUpdate([...chatHistory, response.data]);
       setAdditionalText('');
