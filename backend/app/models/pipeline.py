@@ -1,0 +1,67 @@
+from pydantic import BaseModel
+from typing import Optional, List, Literal, Any
+
+
+class PipelineNodeConfig(BaseModel):
+    """Configuration for a single node in the pipeline"""
+    node_id: str
+    node_type: Literal[
+        "ai_prompt",
+        "parse_list",
+        "batch_loop",
+        "aggregate",
+        "template",
+        "user_edit_list",
+        "user_review"
+    ]
+    label: str
+    # For ai_prompt nodes
+    prompt_id: Optional[str] = None
+    inline_prompt: Optional[str] = None
+    system_message: Optional[str] = None
+    reasoning_effort: Optional[str] = "high"
+    # For batch_loop nodes
+    batch_size: Optional[int] = 3
+    # For template nodes
+    template_text: Optional[str] = None
+    # Which node's output to use as input (node_id reference)
+    input_from: Optional[List[str]] = None
+    # Visual position on canvas
+    position_x: Optional[float] = 0
+    position_y: Optional[float] = 0
+
+
+class PipelineEdge(BaseModel):
+    """Connection between two nodes"""
+    source: str
+    target: str
+    source_handle: Optional[str] = None
+    target_handle: Optional[str] = None
+
+
+class PipelineCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    nodes: List[PipelineNodeConfig]
+    edges: List[PipelineEdge]
+    is_public: bool = False
+
+
+class PipelineUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    nodes: Optional[List[PipelineNodeConfig]] = None
+    edges: Optional[List[PipelineEdge]] = None
+    is_public: Optional[bool] = None
+
+
+class PipelineResponse(BaseModel):
+    id: str
+    name: str
+    description: Optional[str] = None
+    nodes: List[PipelineNodeConfig]
+    edges: List[PipelineEdge]
+    user_id: Optional[str] = None
+    is_public: bool
+    created_at: str
+    updated_at: str
