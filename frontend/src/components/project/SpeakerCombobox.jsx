@@ -131,9 +131,17 @@ export function SpeakerCombobox({ value, onChange, onAddToDirectory, placeholder
 
   const exactMatch = suggestions.some(s => {
     const input = inputValue.toLowerCase().trim();
-    const nameMatch = s.name.toLowerCase() === input;
-    const displayName = s.company ? `${s.name} (${s.company})`.toLowerCase() : s.name.toLowerCase();
-    return nameMatch || displayName === input;
+    // Direct name match
+    if (s.name.toLowerCase() === input) return true;
+    // Full display "Name (Company)" match
+    if (s.company) {
+      const display = `${s.name} (${s.company})`.toLowerCase();
+      if (display === input) return true;
+    }
+    // Parse input "Name (Company)" and match name part only
+    const m = input.match(/^(.+?)\s*\((.+?)\)\s*$/);
+    if (m && s.name.toLowerCase() === m[1].trim()) return true;
+    return false;
   });
   const showAddButton = inputValue.trim() && !exactMatch && !loading;
 
