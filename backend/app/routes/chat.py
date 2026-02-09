@@ -21,6 +21,40 @@ class RawAnalysisResponse(BaseModel):
     response_text: str
 
 
+class GenerateScriptRequest(BaseModel):
+    description: str
+    node_type: str
+    context: Optional[str] = None
+
+
+@router.post("/ai/generate-script", response_model=RawAnalysisResponse)
+async def generate_script(data: GenerateScriptRequest, user=Depends(get_current_user)):
+    """Generate a JavaScript script for a pipeline node using AI."""
+    system_message = """Ты генерируешь JavaScript-функции для конвейера анализа текстов.
+Каждая функция получает объект context и должна вернуть объект результата.
+
+Доступные поля context:
+- context.input — данные от предыдущего узла (строка или массив)
+- context.prompt — шаблон промпта из настроек узла (для AI-узлов)
+- context.results — массив результатов предыдущих итераций цикла
+- context.iteration — номер текущей итерации (0, 1, 2...)
+- context.batchSize — размер батча (если задан)
+- context.vars — объект переменных из источников данных
+
+Формат возвращаемого значения:
+Для обычных скриптов: { output: <результат> }
+Для циклических (AI с повторами): { done: true/false, output: <если done>, promptVars: {key: value} }
+
+Верни ТОЛЬКО код функции без пояснений, без markdown-блоков."""
+
+    user_message = f"Тип узла: {data.node_type}\nОписание задачи: {data.description}"
+    if data.context:
+        user_message += f"\nДополнительный контекст: {data.context}"
+
+    result = await call_gpt52(system_message, user_message, reasoning_effort="medium")
+    return RawAnalysisResponse(response_text=result)
+
+
 @router.post("/projects/{project_id}/analyze-raw", response_model=RawAnalysisResponse)
 async def analyze_raw(
     project_id: str,
