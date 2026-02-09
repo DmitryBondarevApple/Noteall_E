@@ -378,10 +378,16 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
   }, [projectId, getNodeInput]);
 
   // Run all auto nodes for a stage (before/after primary node)
+  // nodesConsumedByLoop tracks AI nodes handled inside batch_loop
+  const nodesConsumedByLoop = useRef(new Set());
+
   const runAutoNodes = useCallback(async (nodes, currentOutputs) => {
     let outputs = { ...currentOutputs };
     for (const node of nodes) {
       if (pausedRef.current) return outputs;
+      // Skip nodes already consumed by a batch loop
+      if (nodesConsumedByLoop.current.has(node.id)) continue;
+
       setProcessingLabel(node.data.step_title || node.data.label);
 
       if (node.data.node_type === 'batch_loop') {
