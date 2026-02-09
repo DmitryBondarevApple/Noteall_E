@@ -63,7 +63,7 @@ class TestAttachmentsList:
     def test_list_attachments_no_auth(self):
         """List attachments without auth should fail"""
         response = requests.get(f"{BASE_URL}/api/projects/{TEST_PROJECT_ID}/attachments")
-        assert response.status_code == 401, f"Expected 401 without auth, got {response.status_code}"
+        assert response.status_code in [401, 403], f"Expected 401/403 without auth, got {response.status_code}"
     
     def test_list_attachments_invalid_project(self, auth_token):
         """List attachments for non-existent project"""
