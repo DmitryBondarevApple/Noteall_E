@@ -35,7 +35,7 @@ async def get_pipeline(pipeline_id: str, user=Depends(get_current_user)):
     return PipelineResponse(**pipeline)
 
 
-@router.post("", response_model=PipelineResponse)
+@router.post("", response_model=PipelineResponse, status_code=201)
 async def create_pipeline(data: PipelineCreate, user=Depends(get_current_user)):
     pipeline_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
