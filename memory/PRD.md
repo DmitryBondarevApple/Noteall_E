@@ -71,6 +71,17 @@
 - [x] Бэкенд: GET /api/projects/:id/analysis-results, DELETE /api/projects/:id/chat-history/:id
 - [x] Метаданные pipeline_id/pipeline_name в сохранённых результатах
 
+### Вложения (файлы и ссылки) (Feb 2025)
+- [x] Бэкенд: CRUD API для вложений (upload, addUrl, list, delete)
+- [x] Поддержка файлов: PDF, DOCX, TXT, CSV, MD, PNG, JPG, WEBP, GIF, ZIP (до 100MB)
+- [x] URL-ссылки: хранение, инжекция в промпт как "Также изучи информацию по ссылке: URL"
+- [x] Текстовые файлы: извлечение текста → инжекция в промпт
+- [x] PDF/картинки: base64 → multimodal content parts в LLM-запрос
+- [x] ZIP: распаковка + обработка каждого файла по типу
+- [x] Инжекция в промпт динамически (промпты в базе НЕ меняются)
+- [x] AttachmentsPanel на вкладках "Анализ" и "Результаты"
+- [x] Чекбоксы для выбора вложений, включаемых в контекст анализа
+
 ## Key Files
 - `frontend/src/components/project/FullAnalysisTab.jsx` — динамический визард
 - `frontend/src/components/pipeline/NodeConfigPanel.jsx` — панель конфигурации с настройками визарда
