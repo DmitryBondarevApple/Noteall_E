@@ -108,9 +108,17 @@ export function SpeakerCombobox({ value, onChange, onAddToDirectory, placeholder
     if (!inputValue.trim()) return;
     
     try {
-      const res = await speakerDirectoryApi.create({ name: inputValue.trim() });
+      // Parse "Name (Company)" format
+      const trimmed = inputValue.trim();
+      const companyMatch = trimmed.match(/^(.+?)\s*\((.+?)\)\s*$/);
+      
+      const createData = companyMatch
+        ? { name: companyMatch[1].trim(), company: companyMatch[2].trim() }
+        : { name: trimmed };
+      
+      const res = await speakerDirectoryApi.create(createData);
       toast.success(`${res.data.name} добавлен в справочник`);
-      onChange(res.data.name);
+      onChange(trimmed);
       setIsOpen(false);
       onAddToDirectory?.(res.data);
     } catch (error) {
