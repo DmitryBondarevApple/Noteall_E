@@ -5,10 +5,10 @@ import {
   ListOrdered,
   Repeat,
   Layers,
-  FileText,
   UserPen,
   Eye,
   Variable,
+  Code,
 } from 'lucide-react';
 
 const NODE_STYLES = {
@@ -19,10 +19,10 @@ const NODE_STYLES = {
     label: 'AI Промпт',
   },
   parse_list: {
-    icon: ListOrdered,
+    icon: Code,
     bg: 'bg-sky-50 border-sky-300',
     iconBg: 'bg-sky-100 text-sky-600',
-    label: 'Парсинг списка',
+    label: 'Скрипт парсинга',
   },
   batch_loop: {
     icon: Repeat,
@@ -56,28 +56,31 @@ const NODE_STYLES = {
   },
 };
 
+const handleClass = '!w-2.5 !h-2.5 !bg-slate-400 !border-2 !border-white hover:!bg-indigo-500 !transition-colors';
+
 export function PipelineNode({ data, selected }) {
   const style = NODE_STYLES[data.node_type] || NODE_STYLES.template;
   const Icon = style.icon;
 
   return (
     <div
-      className={`rounded-xl border-2 shadow-sm min-w-[200px] max-w-[260px] transition-shadow ${style.bg} ${
+      className={`rounded-xl border-2 shadow-sm min-w-[180px] max-w-[240px] transition-shadow ${style.bg} ${
         selected ? 'ring-2 ring-indigo-400 shadow-md' : ''
       }`}
       data-testid={`pipeline-node-${data.node_id}`}
     >
-      <Handle
-        type="target"
-        position={Position.Top}
-        className="!w-3 !h-3 !bg-slate-400 !border-2 !border-white"
-      />
-      <div className="px-3 py-2.5">
-        <div className="flex items-center gap-2 mb-1">
-          <div className={`w-6 h-6 rounded-md flex items-center justify-center ${style.iconBg}`}>
-            <Icon className="w-3.5 h-3.5" />
+      {/* Handles on all 4 sides */}
+      <Handle type="target" position={Position.Top} id="top" className={handleClass} />
+      <Handle type="target" position={Position.Left} id="left" className={handleClass} />
+      <Handle type="source" position={Position.Bottom} id="bottom" className={handleClass} />
+      <Handle type="source" position={Position.Right} id="right" className={handleClass} />
+
+      <div className="px-3 py-2">
+        <div className="flex items-center gap-2 mb-0.5">
+          <div className={`w-5 h-5 rounded flex items-center justify-center ${style.iconBg}`}>
+            <Icon className="w-3 h-3" />
           </div>
-          <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
             {style.label}
           </span>
         </div>
@@ -85,7 +88,7 @@ export function PipelineNode({ data, selected }) {
           {data.label}
         </div>
         {data.node_type === 'ai_prompt' && data.reasoning_effort && (
-          <div className="mt-1">
+          <div className="mt-0.5">
             <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
               data.reasoning_effort === 'high' ? 'bg-red-100 text-red-600' :
               data.reasoning_effort === 'medium' ? 'bg-amber-100 text-amber-600' :
@@ -96,16 +99,16 @@ export function PipelineNode({ data, selected }) {
           </div>
         )}
         {data.node_type === 'batch_loop' && data.batch_size && (
-          <div className="text-[11px] text-muted-foreground mt-1">
+          <div className="text-[10px] text-muted-foreground mt-0.5">
             По {data.batch_size} за раз
           </div>
         )}
+        {data.node_type === 'parse_list' && (
+          <div className="text-[10px] text-sky-600 mt-0.5 font-mono truncate">
+            {data.script ? '{ скрипт }' : '{ по умолчанию }'}
+          </div>
+        )}
       </div>
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        className="!w-3 !h-3 !bg-slate-400 !border-2 !border-white"
-      />
     </div>
   );
 }
