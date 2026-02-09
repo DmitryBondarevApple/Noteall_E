@@ -495,6 +495,17 @@ export function ResultsTab({ projectId, selectedReasoningEffort }) {
               </div>
             )}
           </CardContent>
+          {/* Attachments panel when analysis mode active */}
+          {analysisMode && (
+            <CardContent className="pt-0 pb-3 px-3 border-t">
+              <AttachmentsPanel
+                projectId={projectId}
+                selectedIds={selectedAttachmentIds}
+                onSelectionChange={setSelectedAttachmentIds}
+                compact
+              />
+            </CardContent>
+          )}
         </Card>
       )}
 
