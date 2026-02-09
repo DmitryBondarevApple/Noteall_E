@@ -530,61 +530,67 @@ export default function PipelineEditorPage() {
         </div>
       </header>
 
-      {/* Canvas + Config Panel */}
+      {/* Canvas (Editor) or Step Preview */}
       <div className="flex-1 flex overflow-hidden">
-        <div className="flex-1 relative">
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChangeWrapped}
-            onEdgesChange={onEdgesChangeWrapped}
-            onConnect={onConnect}
-            onNodeClick={onNodeClick}
-            onPaneClick={onPaneClick}
-            nodeTypes={nodeTypes}
-            fitView
-            fitViewOptions={{ padding: 0.3 }}
-            deleteKeyCode={['Backspace', 'Delete']}
-            connectionMode="loose"
-          >
-            <Background color="#e2e8f0" gap={20} size={1} />
-            <Controls position="bottom-left" />
-            <MiniMap
-              nodeColor={(n) => {
-                const type = n.data?.node_type;
-                const colors = {
-                  ai_prompt: '#c4b5fd', parse_list: '#7dd3fc', batch_loop: '#fcd34d',
-                  aggregate: '#6ee7b7', template: '#cbd5e1', user_edit_list: '#f9a8d4', user_review: '#5eead4',
-                };
-                return colors[type] || '#cbd5e1';
-              }}
-              position="bottom-right"
-              style={{ height: 100, width: 150 }}
-            />
-          </ReactFlow>
+        {mode === 'editor' ? (
+          <>
+            <div className="flex-1 relative">
+              <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                onNodesChange={onNodesChangeWrapped}
+                onEdgesChange={onEdgesChangeWrapped}
+                onConnect={onConnect}
+                onNodeClick={onNodeClick}
+                onPaneClick={onPaneClick}
+                nodeTypes={nodeTypes}
+                fitView
+                fitViewOptions={{ padding: 0.3 }}
+                deleteKeyCode={['Backspace', 'Delete']}
+                connectionMode="loose"
+              >
+                <Background color="#e2e8f0" gap={20} size={1} />
+                <Controls position="bottom-left" />
+                <MiniMap
+                  nodeColor={(n) => {
+                    const type = n.data?.node_type;
+                    const colors = {
+                      ai_prompt: '#c4b5fd', parse_list: '#7dd3fc', batch_loop: '#fcd34d',
+                      aggregate: '#6ee7b7', template: '#cbd5e1', user_edit_list: '#f9a8d4', user_review: '#5eead4',
+                    };
+                    return colors[type] || '#cbd5e1';
+                  }}
+                  position="bottom-right"
+                  style={{ height: 100, width: 150 }}
+                />
+              </ReactFlow>
 
-          {/* Legend */}
-          <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-[11px] space-y-1.5 z-10 pointer-events-none" data-testid="edge-legend">
-            <div className="flex items-center gap-2">
-              <svg width="32" height="10"><line x1="0" y1="5" x2="32" y2="5" stroke="#94a3b8" strokeWidth="2" /><polygon points="28,2 32,5 28,8" fill="#94a3b8" /></svg>
-              <span className="text-slate-600">Порядок выполнения</span>
+              {/* Legend */}
+              <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-[11px] space-y-1.5 z-10 pointer-events-none" data-testid="edge-legend">
+                <div className="flex items-center gap-2">
+                  <svg width="32" height="10"><line x1="0" y1="5" x2="32" y2="5" stroke="#94a3b8" strokeWidth="2" /><polygon points="28,2 32,5 28,8" fill="#94a3b8" /></svg>
+                  <span className="text-slate-600">Порядок выполнения</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <svg width="32" height="10"><line x1="0" y1="5" x2="32" y2="5" stroke="#f97316" strokeWidth="2" strokeDasharray="4 2" /><polygon points="28,2 32,5 28,8" fill="#f97316" /></svg>
+                  <span className="text-orange-600">Источник данных</span>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <svg width="32" height="10"><line x1="0" y1="5" x2="32" y2="5" stroke="#f97316" strokeWidth="2" strokeDasharray="4 2" /><polygon points="28,2 32,5 28,8" fill="#f97316" /></svg>
-              <span className="text-orange-600">Источник данных</span>
-            </div>
-          </div>
-        </div>
 
-        {selectedNode && (
-          <NodeConfigPanel
-            node={selectedNode}
-            allNodes={nodes}
-            edges={edges}
-            onUpdate={updateNodeData}
-            onDelete={deleteNode}
-            onClose={() => setSelectedNode(null)}
-          />
+            {selectedNode && (
+              <NodeConfigPanel
+                node={selectedNode}
+                allNodes={nodes}
+                edges={edges}
+                onUpdate={updateNodeData}
+                onDelete={deleteNode}
+                onClose={() => setSelectedNode(null)}
+              />
+            )}
+          </>
+        ) : (
+          <PipelineStepPreview nodes={nodes} edges={edges} />
         )}
       </div>
 
