@@ -493,6 +493,7 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
       if (aiNode) {
         outputs[aiNode.id] = results.join('\n\n');
         if (aiNode.data.label) outputs[aiNode.data.label] = results.join('\n\n');
+        nodesConsumedByLoop.current.add(aiNode.id);
       }
     }
 
