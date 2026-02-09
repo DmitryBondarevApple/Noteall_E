@@ -177,4 +177,118 @@ Speaker 1 — Сабина
             "created_at": now
         })
     
+    # Seed default pipeline if not exists
+    existing_pipeline = await db.pipelines.find_one({"name": "Стандартный анализ встречи"})
+    if not existing_pipeline:
+        await db.pipelines.insert_one({
+            "id": str(uuid.uuid4()),
+            "name": "Стандартный анализ встречи",
+            "description": "Извлечение тем, анализ по темам батчами, итоговое резюме",
+            "nodes": [
+                {
+                    "node_id": "input_subject",
+                    "node_type": "template",
+                    "label": "Тема встречи",
+                    "template_text": "{{meeting_subject}}",
+                    "input_from": None,
+                    "position_x": 250, "position_y": 0,
+                    "prompt_id": None, "inline_prompt": None, "system_message": None,
+                    "reasoning_effort": None, "batch_size": None
+                },
+                {
+                    "node_id": "extract_topics",
+                    "node_type": "ai_prompt",
+                    "label": "Извлечение тем",
+                    "inline_prompt": "Данный текст является транскриптом встречи для \"{{meeting_subject}}\".\nСоставь общий список обсужденных тем.\nВыдай только нумерованный список тем, без дополнительных пояснений.\nФормат:\n1. Тема\n2. Тема\n...",
+                    "system_message": "Ты — ассистент для анализа встреч. Выдавай только запрошенную информацию без лишних комментариев.",
+                    "reasoning_effort": "medium",
+                    "input_from": ["input_subject"],
+                    "position_x": 250, "position_y": 120,
+                    "prompt_id": None, "template_text": None, "batch_size": None
+                },
+                {
+                    "node_id": "parse_topics",
+                    "node_type": "parse_list",
+                    "label": "Парсинг тем",
+                    "input_from": ["extract_topics"],
+                    "position_x": 250, "position_y": 240,
+                    "prompt_id": None, "inline_prompt": None, "system_message": None,
+                    "reasoning_effort": None, "batch_size": None, "template_text": None
+                },
+                {
+                    "node_id": "edit_topics",
+                    "node_type": "user_edit_list",
+                    "label": "Редактирование тем",
+                    "input_from": ["parse_topics"],
+                    "position_x": 250, "position_y": 360,
+                    "prompt_id": None, "inline_prompt": None, "system_message": None,
+                    "reasoning_effort": None, "batch_size": None, "template_text": None
+                },
+                {
+                    "node_id": "batch_analyze",
+                    "node_type": "batch_loop",
+                    "label": "Батч-анализ тем",
+                    "batch_size": 3,
+                    "input_from": ["edit_topics"],
+                    "position_x": 250, "position_y": 480,
+                    "prompt_id": None, "inline_prompt": None, "system_message": None,
+                    "reasoning_effort": None, "template_text": None
+                },
+                {
+                    "node_id": "analyze_prompt",
+                    "node_type": "ai_prompt",
+                    "label": "Анализ порции тем",
+                    "inline_prompt": "Сделай анализ следующих тем:\n{{topics_batch}}\n\nСтрой предложения не от чьего-то имени, а в безличной форме - излагаем факты.\nФормат: в заголовке пишем краткое описание темы, булитные списки внутри тем не нужны - пишем просто отдельными абзацами.",
+                    "system_message": "Ты анализируешь транскрипт встречи по теме \"{{meeting_subject}}\". Анализируй только указанные темы, используя информацию из транскрипта.",
+                    "reasoning_effort": "high",
+                    "input_from": ["batch_analyze"],
+                    "position_x": 250, "position_y": 600,
+                    "prompt_id": None, "template_text": None, "batch_size": None
+                },
+                {
+                    "node_id": "aggregate_results",
+                    "node_type": "aggregate",
+                    "label": "Склейка результатов",
+                    "input_from": ["analyze_prompt"],
+                    "position_x": 250, "position_y": 720,
+                    "prompt_id": None, "inline_prompt": None, "system_message": None,
+                    "reasoning_effort": None, "batch_size": None, "template_text": None
+                },
+                {
+                    "node_id": "summarize",
+                    "node_type": "ai_prompt",
+                    "label": "Итоговое резюме",
+                    "inline_prompt": "На основе следующего подробного анализа встречи по теме \"{{meeting_subject}}\":\n\n{{aggregated_text}}\n\nСделай общее резюме наиболее существенных с точки зрения ключевой цели тем, итоговый вывод о чем договорились и план дальнейших шагов.\nФормат: краткий связный текст без списков.",
+                    "system_message": "Ты — ассистент для создания резюме встреч. Пиши кратко и по существу.",
+                    "reasoning_effort": "high",
+                    "input_from": ["aggregate_results"],
+                    "position_x": 250, "position_y": 840,
+                    "prompt_id": None, "template_text": None, "batch_size": None
+                },
+                {
+                    "node_id": "final_review",
+                    "node_type": "user_review",
+                    "label": "Просмотр результата",
+                    "input_from": ["summarize", "aggregate_results"],
+                    "position_x": 250, "position_y": 960,
+                    "prompt_id": None, "inline_prompt": None, "system_message": None,
+                    "reasoning_effort": None, "batch_size": None, "template_text": None
+                }
+            ],
+            "edges": [
+                {"source": "input_subject", "target": "extract_topics", "source_handle": None, "target_handle": None},
+                {"source": "extract_topics", "target": "parse_topics", "source_handle": None, "target_handle": None},
+                {"source": "parse_topics", "target": "edit_topics", "source_handle": None, "target_handle": None},
+                {"source": "edit_topics", "target": "batch_analyze", "source_handle": None, "target_handle": None},
+                {"source": "batch_analyze", "target": "analyze_prompt", "source_handle": None, "target_handle": None},
+                {"source": "analyze_prompt", "target": "aggregate_results", "source_handle": None, "target_handle": None},
+                {"source": "aggregate_results", "target": "summarize", "source_handle": None, "target_handle": None},
+                {"source": "summarize", "target": "final_review", "source_handle": None, "target_handle": None}
+            ],
+            "user_id": None,
+            "is_public": True,
+            "created_at": now,
+            "updated_at": now
+        })
+    
     return {"message": "Data seeded successfully"}
