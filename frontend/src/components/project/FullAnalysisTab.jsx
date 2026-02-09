@@ -246,6 +246,9 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
   const [isSaving, setIsSaving] = useState(false);
   // Pause-stage result display
   const [pauseResult, setPauseResult] = useState('');
+
+  // Attachments
+  const [selectedAttachmentIds, setSelectedAttachmentIds] = useState(new Set());
   
   // Track if wizard has meaningful results (to warn on reset)
   const hasResults = currentStageIdx > 0 || reviewContent.length > 0;
