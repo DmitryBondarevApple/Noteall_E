@@ -448,7 +448,7 @@ ${detailedAnalysis}`;
               <div>
                 <h2 className="text-xl font-semibold mb-2">Настройка анализа</h2>
                 <p className="text-muted-foreground">
-                  Укажите ключевую тему встречи для более точного анализа
+                  Укажите тему встречи и выберите сценарий анализа
                 </p>
               </div>
               
@@ -461,6 +461,49 @@ ${detailedAnalysis}`;
                   placeholder="Например: разработка нового продукта, квартальное планирование..."
                   data-testid="meeting-subject-input"
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5">
+                  <Workflow className="w-4 h-4" />
+                  Сценарий анализа
+                </Label>
+                {loadingPipelines ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Загрузка сценариев...
+                  </div>
+                ) : pipelines.length > 0 ? (
+                  <Select
+                    value={selectedPipelineId}
+                    onValueChange={setSelectedPipelineId}
+                  >
+                    <SelectTrigger data-testid="pipeline-select">
+                      <SelectValue placeholder="Выберите сценарий" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {pipelines.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          <div className="flex items-center gap-2">
+                            <span>{p.name}</span>
+                            {p.is_public && (
+                              <span className="text-[10px] text-muted-foreground">(общий)</span>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Нет доступных сценариев. Используется стандартный анализ.
+                  </p>
+                )}
+                {selectedPipelineId && pipelines.length > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    {pipelines.find(p => p.id === selectedPipelineId)?.description}
+                  </p>
+                )}
               </div>
               
               <Button 
