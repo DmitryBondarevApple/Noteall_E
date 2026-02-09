@@ -1226,10 +1226,28 @@ function ReviewStageContent({
               {isEditing ? 'Просмотр' : 'Редактировать'}
             </Button>
           )}
-          <Button variant="outline" size="sm" onClick={onReset}>
-            <RotateCcw className="w-4 h-4 mr-1" />
-            Начать заново
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" size="sm" data-testid="new-analysis-btn">
+                <RotateCcw className="w-4 h-4 mr-1" />
+                Новый анализ
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Начать новый анализ?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Текущий результат анализа будет потерян. Если вы ещё не сохранили его, используйте кнопки экспорта или «Сохранить в историю» перед тем, как начать заново.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Отмена</AlertDialogCancel>
+                <AlertDialogAction onClick={onReset} data-testid="confirm-new-analysis-btn">
+                  Да, начать заново
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
 
