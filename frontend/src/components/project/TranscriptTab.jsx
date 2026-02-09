@@ -205,6 +205,13 @@ export function TranscriptTab({ transcript, speakers, projectId, onSpeakersUpdat
         </CardContent>
       </Card>
 
+      {/* Attachments */}
+      <Card className="mt-4">
+        <CardContent className="p-4">
+          <AttachmentsPanel projectId={projectId} />
+        </CardContent>
+      </Card>
+
       {/* Edit Speaker Dialog */}
       <Dialog open={!!editingSpeaker} onOpenChange={() => setEditingSpeaker(null)}>
         <DialogContent className="sm:max-w-md">
