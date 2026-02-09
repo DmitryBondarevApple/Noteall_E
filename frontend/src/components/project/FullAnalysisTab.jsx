@@ -561,10 +561,24 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
         outputs = await runAutoNodes(nextStage.autoNodesBefore, outputs);
       }
 
+      // If next stage is a non-interactive pause stage, execute its primary node
+      if (nextStage.isPauseStage && !nextStage.isInteractive) {
+        setProcessingLabel(nextStage.primaryNode.data.step_title || nextStage.primaryNode.data.label);
+        if (nextStage.primaryNode.data.node_type === 'batch_loop') {
+          outputs = await runBatchLoop(nextStage.primaryNode, outputs);
+        } else {
+          const result = await executeNode(nextStage.primaryNode, outputs);
+          outputs[nextStage.primaryNode.id] = result;
+          if (nextStage.primaryNode.data.label) {
+            outputs[nextStage.primaryNode.data.label] = result;
+          }
+        }
+      }
+
       setNodeOutputs(outputs);
       setCurrentStageIdx(nextIdx);
 
-      // Prepare state for next interactive node
+      // Prepare state for next stage
       prepareStageUI(nextStage, outputs);
 
     } catch (err) {
