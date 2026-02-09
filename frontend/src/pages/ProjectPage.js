@@ -100,6 +100,7 @@ export default function ProjectPage() {
   // Poll for status updates when transcribing/processing
   useEffect(() => {
     if (project?.status === 'transcribing' || project?.status === 'processing') {
+      const wasProcessing = project?.status === 'processing';
       const interval = setInterval(async () => {
         try {
           const res = await projectsApi.get(projectId);
@@ -107,9 +108,12 @@ export default function ProjectPage() {
           if (res.data.status !== 'transcribing' && res.data.status !== 'processing') {
             setProcessing(false);
             loadData();
-            if (res.data.status === 'ready') {
+            if (wasProcessing && (res.data.status === 'ready' || res.data.status === 'needs_review')) {
               toast.success('Обработка завершена');
               setActiveTab('processed');
+            } else if (!wasProcessing) {
+              toast.success('Транскрибация завершена');
+              setActiveTab('transcript');
             }
           }
         } catch (e) {}
