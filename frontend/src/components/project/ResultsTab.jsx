@@ -63,6 +63,7 @@ export function ResultsTab({ projectId, selectedReasoningEffort }) {
   const [pipelines, setPipelines] = useState([]);
   const [selectedPromptId, setSelectedPromptId] = useState('');
   const [selectedPipelineId, setSelectedPipelineId] = useState('');
+  const [selectedAttachmentIds, setSelectedAttachmentIds] = useState(new Set());
 
   const loadResults = useCallback(async () => {
     try {
