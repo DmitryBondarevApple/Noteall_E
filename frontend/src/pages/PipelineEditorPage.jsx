@@ -461,39 +461,67 @@ export default function PipelineEditorPage() {
         </div>
 
         <div className="flex items-center gap-1.5">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={undo} disabled={!canUndo} title="Ctrl+Z" data-testid="undo-btn">
-            <Undo2 className="w-4 h-4" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={redo} disabled={!canRedo} title="Ctrl+Y" data-testid="redo-btn">
-            <Redo2 className="w-4 h-4" />
-          </Button>
+          {/* Mode Toggle */}
+          <div className="flex bg-slate-100 rounded-lg p-0.5 mr-2">
+            <button
+              onClick={() => setMode('editor')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                mode === 'editor' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'
+              }`}
+              data-testid="mode-editor"
+            >
+              <PenTool className="w-3.5 h-3.5" />
+              Редактор
+            </button>
+            <button
+              onClick={() => setMode('preview')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                mode === 'preview' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'
+              }`}
+              data-testid="mode-preview"
+            >
+              <Play className="w-3.5 h-3.5" />
+              Предпросмотр
+            </button>
+          </div>
 
-          <div className="w-px h-6 bg-slate-200 mx-1" />
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1.5" data-testid="add-node-btn">
-                <Plus className="w-4 h-4" />
-                Добавить узел
+          {mode === 'editor' && (
+            <>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={undo} disabled={!canUndo} title="Ctrl+Z" data-testid="undo-btn">
+                <Undo2 className="w-4 h-4" />
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              {NODE_TYPE_OPTIONS.map((opt) => {
-                const Icon = opt.icon;
-                return (
-                  <DropdownMenuItem
-                    key={opt.type}
-                    onClick={() => addNode(opt.type)}
-                    className="gap-2"
-                    data-testid={`add-node-${opt.type}`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    {opt.label}
-                  </DropdownMenuItem>
-                );
-              })}
-            </DropdownMenuContent>
-          </DropdownMenu>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={redo} disabled={!canRedo} title="Ctrl+Y" data-testid="redo-btn">
+                <Redo2 className="w-4 h-4" />
+              </Button>
+
+              <div className="w-px h-6 bg-slate-200 mx-1" />
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-1.5" data-testid="add-node-btn">
+                    <Plus className="w-4 h-4" />
+                    Добавить узел
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  {NODE_TYPE_OPTIONS.map((opt) => {
+                    const Icon = opt.icon;
+                    return (
+                      <DropdownMenuItem
+                        key={opt.type}
+                        onClick={() => addNode(opt.type)}
+                        className="gap-2"
+                        data-testid={`add-node-${opt.type}`}
+                      >
+                        <Icon className="w-4 h-4" />
+                        {opt.label}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          )}
 
           <Button size="sm" className="gap-1.5" onClick={handleSave} disabled={saving} data-testid="save-pipeline-btn">
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
