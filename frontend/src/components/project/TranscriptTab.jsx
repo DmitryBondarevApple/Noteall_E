@@ -202,13 +202,10 @@ export function TranscriptTab({ transcript, speakers, projectId, onSpeakersUpdat
               <p>Транскрибация в процессе...</p>
             </div>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Attachments */}
-      <Card className="mt-4">
-        <CardContent className="p-4">
-          <AttachmentsPanel projectId={projectId} />
+          {/* Attachments inside transcript card */}
+          <div className="mt-4 pt-4 border-t">
+            <AttachmentsPanel projectId={projectId} />
+          </div>
         </CardContent>
       </Card>
 
