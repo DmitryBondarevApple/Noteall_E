@@ -107,5 +107,20 @@ export const pipelinesApi = {
   duplicate: (id) => axios.post(`${API}/pipelines/${id}/duplicate`)
 };
 
+// Attachments
+export const attachmentsApi = {
+  list: (projectId) => axios.get(`${API}/projects/${projectId}/attachments`),
+  upload: (projectId, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return axios.post(`${API}/projects/${projectId}/attachments`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      maxBodyLength: 100 * 1024 * 1024,
+    });
+  },
+  addUrl: (projectId, url, name) => axios.post(`${API}/projects/${projectId}/attachments/url`, { url, name }),
+  delete: (projectId, attachmentId) => axios.delete(`${API}/projects/${projectId}/attachments/${attachmentId}`),
+};
+
 // Seed
 export const seedData = () => axios.post(`${API}/seed`);
