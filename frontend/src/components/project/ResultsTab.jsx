@@ -433,7 +433,16 @@ export function ResultsTab({ projectId, selectedReasoningEffort }) {
                   <Sparkles className="w-4 h-4" />
                   Анализ по промпту
                 </Button>
-                {/* Pipeline analysis can be added later */}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setAnalysisMode('pipeline')}
+                  className="gap-1.5"
+                  data-testid="analyze-with-pipeline-btn"
+                >
+                  <Workflow className="w-4 h-4" />
+                  Анализ по сценарию
+                </Button>
               </div>
             ) : (
               <div className="flex items-center gap-2 flex-1 min-w-[200px]">
@@ -451,10 +460,24 @@ export function ResultsTab({ projectId, selectedReasoningEffort }) {
                     </SelectContent>
                   </Select>
                 )}
+                {analysisMode === 'pipeline' && (
+                  <Select value={selectedPipelineId} onValueChange={setSelectedPipelineId}>
+                    <SelectTrigger className="h-8 text-xs flex-1 max-w-[300px]" data-testid="analysis-pipeline-select">
+                      <SelectValue placeholder="Выберите сценарий..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {pipelines.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
                 <Button
                   size="sm"
                   onClick={handleAnalyze}
-                  disabled={analyzing || (analysisMode === 'prompt' && !selectedPromptId)}
+                  disabled={analyzing || (analysisMode === 'prompt' && !selectedPromptId) || (analysisMode === 'pipeline' && !selectedPipelineId)}
                   className="gap-1.5 shrink-0"
                   data-testid="run-analysis-btn"
                 >
