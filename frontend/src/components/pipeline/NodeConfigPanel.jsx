@@ -10,7 +10,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select';
-import { X, Sparkles, Loader2 } from 'lucide-react';
+import { X, Sparkles, Loader2, Settings2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Switch } from '../ui/switch';
+import { Checkbox } from '../ui/checkbox';
 import { NODE_STYLES } from './PipelineNode';
 import { chatApi } from '../../lib/api';
 import { toast } from 'sonner';
