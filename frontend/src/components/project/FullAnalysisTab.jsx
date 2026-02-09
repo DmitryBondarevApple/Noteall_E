@@ -249,6 +249,12 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
 
   // Attachments
   const [selectedAttachmentIds, setSelectedAttachmentIds] = useState(new Set());
+  const attachmentIdsRef = useRef([]);
+
+  // Keep ref in sync
+  useEffect(() => {
+    attachmentIdsRef.current = selectedAttachmentIds.size > 0 ? [...selectedAttachmentIds] : [];
+  }, [selectedAttachmentIds]);
   
   // Track if wizard has meaningful results (to warn on reset)
   const hasResults = currentStageIdx > 0 || reviewContent.length > 0;
