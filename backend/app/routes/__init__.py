@@ -10,3 +10,4 @@ from app.routes.admin import router as admin_router
 from app.routes.seed import router as seed_router
 from app.routes.export import router as export_router
 from app.routes.pipelines import router as pipelines_router
+from app.routes.attachments import router as attachments_router
