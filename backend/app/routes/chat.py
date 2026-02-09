@@ -101,6 +101,8 @@ async def analyze_raw(
 class SaveFullAnalysisRequest(BaseModel):
     subject: str
     content: str
+    pipeline_id: Optional[str] = None
+    pipeline_name: Optional[str] = None
 
 
 @router.post("/projects/{project_id}/save-full-analysis", response_model=ChatRequestResponse)
@@ -121,15 +123,53 @@ async def save_full_analysis(
         "id": chat_id,
         "project_id": project_id,
         "prompt_id": "full-analysis",
-        "prompt_content": f"Полный анализ встречи: {data.subject}",
+        "prompt_content": f"Мастер-анализ: {data.subject}",
         "additional_text": None,
         "reasoning_effort": "high",
         "response_text": data.content,
+        "pipeline_id": data.pipeline_id,
+        "pipeline_name": data.pipeline_name,
         "created_at": now
     }
     
     await db.chat_requests.insert_one(chat_doc)
     return ChatRequestResponse(**chat_doc)
+
+
+@router.get("/projects/{project_id}/analysis-results")
+async def get_analysis_results(
+    project_id: str,
+    user=Depends(get_current_user)
+):
+    """Get all analysis results (from master analysis and re-analysis)"""
+    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    results = await db.chat_requests.find(
+        {"project_id": project_id, "prompt_id": {"$in": ["full-analysis", "result-analysis"]}},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(length=100)
+    
+    return results
+
+
+@router.delete("/projects/{project_id}/chat-history/{chat_id}")
+async def delete_chat_history(
+    project_id: str,
+    chat_id: str,
+    user=Depends(get_current_user)
+):
+    """Delete a chat history entry"""
+    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    result = await db.chat_requests.delete_one({"id": chat_id, "project_id": project_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Chat entry not found")
+    
+    return {"message": "Deleted"}
 
 
 @router.post("/projects/{project_id}/analyze", response_model=ChatRequestResponse)
