@@ -7,6 +7,7 @@ from app.core.database import db
 from app.core.security import get_current_user
 from app.models.chat import ChatRequestCreate, ChatRequestResponse, ChatResponseUpdate
 from app.services.gpt import call_gpt52
+from app.routes.attachments import build_attachment_context
 
 router = APIRouter(tags=["chat"])
 
