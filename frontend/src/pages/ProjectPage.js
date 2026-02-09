@@ -217,7 +217,6 @@ export default function ProjectPage() {
                       <Wand2 className="w-4 h-4" />
                       <span className="hidden sm:inline">Мастер</span>
                     </TabsTrigger>
-                  </TabsList>
                 </div>
               
               {/* Process Button with Reasoning Selector */}
