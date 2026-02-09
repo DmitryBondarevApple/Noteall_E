@@ -39,8 +39,7 @@ Build a sophisticated web application for transcribing and analyzing audio files
 - `speaker_maps` collection: `{id, project_id, speaker_label, speaker_name, first_name?, last_name?, company?}`
 - Input format: "Антон Петров (Яндекс)" → first_name: "Антон", last_name: "Петров", company: "Яндекс"
 
-## Known Issues
-- **P2: Cosmetic bug** — Words appear split in Review tab UI (e.g., "п о м н ю"). CSS/rendering issue in FragmentCard.jsx.
+- **[2025-12-08] Fixed: cosmetic bug** — words in Review tab appeared with spaces between letters due to JetBrains Mono (monospace) font on `<code>` elements. Replaced with `<span>` using proportional body font.
 
 ## Upcoming Tasks (P1)
 - Tags for Speaker Directory — tagging system for better speaker organization
