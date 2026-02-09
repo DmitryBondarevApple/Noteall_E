@@ -36,7 +36,7 @@ const TYPE_COLORS = {
   zip: 'bg-amber-50 text-amber-600 border-amber-200',
 };
 
-export function AttachmentsPanel({ projectId, selectedIds, onSelectionChange, compact = false }) {
+export function AttachmentsPanel({ projectId, selectedIds = new Set(), onSelectionChange, compact = false }) {
   const [attachments, setAttachments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
