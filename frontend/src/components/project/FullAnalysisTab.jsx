@@ -385,7 +385,7 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
       }
     }
     return outputs;
-  }, [executeNode]);
+  }, [executeNode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Run a batch loop node
   const runBatchLoop = useCallback(async (loopNode, currentOutputs) => {
