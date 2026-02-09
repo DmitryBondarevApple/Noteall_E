@@ -385,6 +385,7 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
         system_message: systemMsg,
         user_message: prompt,
         reasoning_effort: node.data.reasoning_effort || 'high',
+        attachment_ids: attachmentIdsRef.current.length > 0 ? attachmentIdsRef.current : undefined,
       });
       return response.data.response_text;
     }
