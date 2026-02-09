@@ -280,7 +280,7 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
         const ordered = resolveExecutionOrder(nodes, edges);
         setOrderedNodes(ordered);
         setStages(buildWizardStages(ordered));
-        setDataDeps(buildDataDeps(edges));
+        setDataDeps(buildDataDeps(nodes, edges));
       } catch (err) {
         console.error('Failed to load pipeline:', err);
       }
