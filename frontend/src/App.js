@@ -11,6 +11,8 @@ import ProjectPage from "./pages/ProjectPage";
 import PromptsPage from "./pages/PromptsPage";
 import AdminPage from "./pages/AdminPage";
 import SpeakerDirectoryPage from "./pages/SpeakerDirectoryPage";
+import PipelinesPage from "./pages/PipelinesPage";
+import PipelineEditorPage from "./pages/PipelineEditorPage";
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -90,6 +92,30 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <SpeakerDirectoryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pipelines"
+        element={
+          <ProtectedRoute>
+            <PipelinesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pipelines/new"
+        element={
+          <ProtectedRoute>
+            <PipelineEditorPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pipelines/:pipelineId"
+        element={
+          <ProtectedRoute>
+            <PipelineEditorPage />
           </ProtectedRoute>
         }
       />
