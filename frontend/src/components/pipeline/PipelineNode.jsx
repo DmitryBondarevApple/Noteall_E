@@ -2,7 +2,6 @@ import React from 'react';
 import { Handle, Position } from '@xyflow/react';
 import {
   Sparkles,
-  ListOrdered,
   Repeat,
   Layers,
   UserPen,
@@ -56,7 +55,8 @@ const NODE_STYLES = {
   },
 };
 
-const handleClass = '!w-2.5 !h-2.5 !bg-slate-400 !border-2 !border-white hover:!bg-indigo-500 !transition-colors';
+const flowHandleClass = '!w-2.5 !h-2.5 !bg-slate-400 !border-2 !border-white hover:!bg-slate-600 !transition-colors';
+const dataHandleClass = '!w-3 !h-3 !bg-orange-400 !border-2 !border-white hover:!bg-orange-600 !transition-colors !rounded-sm';
 
 export function PipelineNode({ data, selected }) {
   const style = NODE_STYLES[data.node_type] || NODE_STYLES.template;
@@ -69,11 +69,13 @@ export function PipelineNode({ data, selected }) {
       }`}
       data-testid={`pipeline-node-${data.node_id}`}
     >
-      {/* Handles on all 4 sides */}
-      <Handle type="target" position={Position.Top} id="top" className={handleClass} />
-      <Handle type="target" position={Position.Left} id="left" className={handleClass} />
-      <Handle type="source" position={Position.Bottom} id="bottom" className={handleClass} />
-      <Handle type="source" position={Position.Right} id="right" className={handleClass} />
+      {/* Flow handles — execution order (top/bottom, round, gray) */}
+      <Handle type="target" position={Position.Top} id="flow-in" className={flowHandleClass} style={{ left: '30%' }} />
+      <Handle type="source" position={Position.Bottom} id="flow-out" className={flowHandleClass} style={{ left: '30%' }} />
+
+      {/* Data handles — data source (left=in, right=out, square, orange) */}
+      <Handle type="target" position={Position.Left} id="data-in" className={dataHandleClass} />
+      <Handle type="source" position={Position.Right} id="data-out" className={dataHandleClass} />
 
       <div className="px-3 py-2">
         <div className="flex items-center gap-2 mb-0.5">
