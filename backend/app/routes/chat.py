@@ -243,7 +243,22 @@ async def analyze_with_prompt(
     user_prompt = prompt["content"]
     if data.additional_text:
         user_prompt += f"\n\nДополнительно: {data.additional_text}"
-    messages.append({"role": "user", "content": user_prompt})
+
+    # Inject attachment context
+    text_parts = []
+    file_parts = []
+    if data.attachment_ids:
+        text_parts, file_parts = await build_attachment_context(data.attachment_ids, project_id)
+
+    if text_parts:
+        user_prompt = user_prompt + "\n\n" + "\n\n".join(text_parts)
+
+    if file_parts:
+        user_msg_content = [{"type": "text", "text": user_prompt}] + file_parts
+    else:
+        user_msg_content = user_prompt
+
+    messages.append({"role": "user", "content": user_msg_content})
     
     # System message
     system_message = """Ты — профессиональный ассистент для анализа рабочих встреч.
