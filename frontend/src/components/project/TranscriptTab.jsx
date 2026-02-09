@@ -136,13 +136,32 @@ export function TranscriptTab({ transcript, speakers, projectId, onSpeakersUpdat
   return (
     <>
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div>
             <CardTitle>Исходный транскрипт</CardTitle>
             <CardDescription>
               Результат распознавания от Deepgram (без обработки)
             </CardDescription>
           </div>
+          {speakers.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5" data-testid="speakers-summary">
+              {speakers.map((s, i) => {
+                const color = getSpeakerColor(i);
+                const isUnnamed = s.speaker_name.startsWith('Speaker ');
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border cursor-pointer transition-colors duration-150 ${color.bg} ${color.text} ${color.border} ${isUnnamed ? 'border-dashed opacity-70' : ''}`}
+                    onClick={() => setEditingSpeaker(s)}
+                    data-testid={`speaker-summary-${s.id}`}
+                  >
+                    {s.speaker_name}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           {transcript ? (
