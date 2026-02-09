@@ -16,6 +16,8 @@ class ChatRequestResponse(BaseModel):
     additional_text: Optional[str]
     reasoning_effort: Optional[str]
     response_text: str
+    pipeline_id: Optional[str] = None
+    pipeline_name: Optional[str] = None
     created_at: str
 
 
