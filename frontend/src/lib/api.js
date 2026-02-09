@@ -78,7 +78,8 @@ export const chatApi = {
   saveFullAnalysis: (projectId, data) => axios.post(`${API}/projects/${projectId}/save-full-analysis`, data),
   history: (projectId) => axios.get(`${API}/projects/${projectId}/chat-history`),
   updateResponse: (projectId, chatId, responseText) =>
-    axios.put(`${API}/projects/${projectId}/chat-history/${chatId}`, { response_text: responseText })
+    axios.put(`${API}/projects/${projectId}/chat-history/${chatId}`, { response_text: responseText }),
+  generateScript: (data) => axios.post(`${API}/ai/generate-script`, data)
 };
 
 // Admin
