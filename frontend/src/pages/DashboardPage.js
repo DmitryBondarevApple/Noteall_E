@@ -149,6 +149,13 @@ export default function DashboardPage() {
               </Button>
             </Link>
             
+            <Link to="/pipelines">
+              <Button variant="ghost" size="sm" className="gap-1 sm:gap-2 px-2 sm:px-3" data-testid="pipelines-nav-btn">
+                <Workflow className="w-4 h-4" />
+                <span className="hidden sm:inline">Сценарии</span>
+              </Button>
+            </Link>
+            
             {isAdmin() && (
               <Link to="/admin">
                 <Button variant="ghost" size="sm" className="gap-1 sm:gap-2 px-2 sm:px-3" data-testid="admin-nav-btn">
