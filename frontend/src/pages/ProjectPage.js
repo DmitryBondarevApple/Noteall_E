@@ -330,7 +330,7 @@ export default function ProjectPage() {
             </TabsContent>
 
             {/* Full Analysis Wizard Tab */}
-            <TabsContent value="full-analysis">
+            <TabsContent value="full-analysis" forceMount className="data-[state=inactive]:hidden">
               <FullAnalysisTab
                 projectId={projectId}
                 processedTranscript={getTranscript('processed')}
