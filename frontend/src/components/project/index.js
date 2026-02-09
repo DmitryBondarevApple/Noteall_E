@@ -4,6 +4,7 @@ export { ProcessedTab } from './ProcessedTab';
 export { ReviewTab } from './ReviewTab';
 export { AnalysisTab } from './AnalysisTab';
 export { FullAnalysisTab } from './FullAnalysisTab';
+export { ResultsTab } from './ResultsTab';
 export { FragmentCard } from './FragmentCard';
 export { SpeakerCombobox } from './SpeakerCombobox';
 export * from './utils';
