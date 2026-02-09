@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
@@ -12,6 +12,17 @@ import {
 } from '../ui/select';
 import { X } from 'lucide-react';
 import { NODE_STYLES } from './PipelineNode';
+
+const DEFAULT_PARSE_SCRIPT = `// Парсинг нумерованного списка из ответа AI
+// input: строка текста от AI
+// output: массив строк (элементов списка)
+
+function parse(input) {
+  const lines = input.split('\\n');
+  return lines
+    .map(line => line.replace(/^\\d+[\\.)\\-]\\s*/, '').trim())
+    .filter(line => line.length > 0);
+}`;
 
 export function NodeConfigPanel({ node, allNodes, onUpdate, onDelete, onClose }) {
   if (!node) return null;
@@ -93,6 +104,23 @@ export function NodeConfigPanel({ node, allNodes, onUpdate, onDelete, onClose })
               </Select>
             </div>
           </>
+        )}
+
+        {/* Parse list — script editor */}
+        {nodeData.node_type === 'parse_list' && (
+          <div className="space-y-1.5">
+            <Label className="text-xs">Скрипт парсинга</Label>
+            <Textarea
+              value={nodeData.script || DEFAULT_PARSE_SCRIPT}
+              onChange={(e) => handleChange('script', e.target.value)}
+              rows={12}
+              className="font-mono text-xs leading-relaxed"
+              data-testid="node-parse-script"
+            />
+            <p className="text-[10px] text-muted-foreground">
+              JavaScript-функция parse(input). Получает текст ответа AI, возвращает массив строк.
+            </p>
+          </div>
         )}
 
         {/* Template fields */}
