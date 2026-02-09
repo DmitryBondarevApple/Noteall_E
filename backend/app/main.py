@@ -13,7 +13,8 @@ from app.routes import (
     admin_router,
     seed_router,
     export_router,
-    pipelines_router
+    pipelines_router,
+    attachments_router
 )
 from app.core.database import client
 
