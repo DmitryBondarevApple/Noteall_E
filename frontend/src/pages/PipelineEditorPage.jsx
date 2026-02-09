@@ -29,6 +29,7 @@ import {
 } from '../components/ui/dropdown-menu';
 import { nodeTypes, NODE_STYLES } from '../components/pipeline/PipelineNode';
 import { NodeConfigPanel } from '../components/pipeline/NodeConfigPanel';
+import { PipelineStepPreview } from '../components/pipeline/PipelineStepPreview';
 import { pipelinesApi } from '../lib/api';
 import { toast } from 'sonner';
 import {
@@ -46,6 +47,8 @@ import {
   Undo2,
   Redo2,
   Code,
+  Play,
+  PenTool,
 } from 'lucide-react';
 
 const NODE_TYPE_OPTIONS = [
