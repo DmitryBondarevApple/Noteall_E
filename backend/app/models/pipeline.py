@@ -24,6 +24,8 @@ class PipelineNodeConfig(BaseModel):
     batch_size: Optional[int] = 3
     # For template nodes
     template_text: Optional[str] = None
+    # For parse_list nodes — custom script
+    script: Optional[str] = None
     # Which node's output to use as input (node_id reference)
     input_from: Optional[List[str]] = None
     # Visual position on canvas
