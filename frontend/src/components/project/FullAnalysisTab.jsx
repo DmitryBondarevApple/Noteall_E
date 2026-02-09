@@ -555,7 +555,7 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
       setIsProcessing(false);
       setProcessingLabel('');
     }
-  }, [stages, currentStageIdx, nodeOutputs, runAutoNodes]);
+  }, [stages, currentStageIdx, nodeOutputs, runAutoNodes]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Prepare UI state when entering a new stage
   const prepareStageUI = useCallback((stage, outputs) => {
