@@ -65,7 +65,13 @@ async def list_speaker_directory(
     
     if q:
         import re
-        query["name"] = {"$regex": re.escape(q), "$options": "i"}
+        # Strip "(Company)" part so "Антон (AX10)" searches for "Антон"
+        clean_q = re.sub(r'\s*\(.*?\)\s*$', '', q).strip()
+        search_term = re.escape(clean_q) if clean_q else re.escape(q)
+        query["$or"] = [
+            {"name": {"$regex": search_term, "$options": "i"}},
+            {"company": {"$regex": search_term, "$options": "i"}},
+        ]
     
     speakers = await db.speaker_directory.find(query, {"_id": 0}).sort("name", 1).to_list(500)
     return [SpeakerDirectoryResponse(**s) for s in speakers]

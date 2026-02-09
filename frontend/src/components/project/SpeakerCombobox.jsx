@@ -129,7 +129,12 @@ export function SpeakerCombobox({ value, onChange, onAddToDirectory, placeholder
     }
   };
 
-  const exactMatch = suggestions.some(s => s.name.toLowerCase() === inputValue.toLowerCase().trim());
+  const exactMatch = suggestions.some(s => {
+    const input = inputValue.toLowerCase().trim();
+    const nameMatch = s.name.toLowerCase() === input;
+    const displayName = s.company ? `${s.name} (${s.company})`.toLowerCase() : s.name.toLowerCase();
+    return nameMatch || displayName === input;
+  });
   const showAddButton = inputValue.trim() && !exactMatch && !loading;
 
   return (
