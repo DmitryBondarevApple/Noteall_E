@@ -304,7 +304,7 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
     setReviewContent('');
     setIsEditingReview(false);
     setPauseResult('');
-  }, []);
+    nodesConsumedByLoop.current = new Set();  }, []);
 
   // Get data for a node from its data dependencies
   const getNodeInput = useCallback((nodeId, outputs) => {
