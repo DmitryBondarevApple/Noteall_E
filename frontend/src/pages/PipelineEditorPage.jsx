@@ -36,7 +36,6 @@ import {
   Save,
   Plus,
   Sparkles,
-  ListOrdered,
   Repeat,
   Layers,
   Variable,
@@ -59,11 +58,26 @@ const NODE_TYPE_OPTIONS = [
   { type: 'user_review', label: 'Просмотр результата', icon: Eye },
 ];
 
-const defaultEdgeOptions = {
-  animated: true,
-  style: { stroke: '#94a3b8', strokeWidth: 2 },
-  markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' },
-};
+// Detect edge type by handle IDs
+function getEdgeType(sourceHandle, targetHandle) {
+  if (sourceHandle === 'data-out' || targetHandle === 'data-in') return 'data';
+  return 'flow';
+}
+
+function makeEdgeStyle(edgeType) {
+  if (edgeType === 'data') {
+    return {
+      animated: false,
+      style: { stroke: '#f97316', strokeWidth: 2, strokeDasharray: '6 3' },
+      markerEnd: { type: MarkerType.ArrowClosed, color: '#f97316' },
+    };
+  }
+  return {
+    animated: true,
+    style: { stroke: '#94a3b8', strokeWidth: 2 },
+    markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' },
+  };
+}
 
 function generateNodeId() {
   return 'node_' + Math.random().toString(36).substr(2, 9);
@@ -84,7 +98,6 @@ function useUndoRedo(nodes, edges, setNodes, setEdges) {
       nodes: JSON.parse(JSON.stringify(nodes)),
       edges: JSON.parse(JSON.stringify(edges)),
     };
-    // Trim future states
     historyRef.current = historyRef.current.slice(0, indexRef.current + 1);
     historyRef.current.push(snapshot);
     if (historyRef.current.length > 50) historyRef.current.shift();
@@ -136,12 +149,10 @@ export default function PipelineEditorPage() {
     nodes, edges, setNodes, setEdges
   );
 
-  // Save state on meaningful changes (debounced)
   const saveTimerRef = useRef(null);
   const onNodesChangeWrapped = useCallback(
     (changes) => {
       onNodesChange(changes);
-      // Save undo state after drag ends
       const hasDragStop = changes.some(
         (c) => c.type === 'position' && c.dragging === false
       );
@@ -155,13 +166,38 @@ export default function PipelineEditorPage() {
 
   const onEdgesChangeWrapped = useCallback(
     (changes) => {
+      // When removing a data edge, also clean up input_from
+      const removedEdges = changes
+        .filter((c) => c.type === 'remove')
+        .map((c) => edges.find((e) => e.id === c.id))
+        .filter(Boolean);
+
       onEdgesChange(changes);
-      if (changes.some((c) => c.type === 'remove')) {
+
+      if (removedEdges.length > 0) {
+        setNodes((nds) =>
+          nds.map((n) => {
+            const removedDataSources = removedEdges
+              .filter((e) => e.target === n.id && e.data?.edgeType === 'data')
+              .map((e) => e.source);
+            if (removedDataSources.length > 0) {
+              const currentInputs = n.data.input_from || [];
+              return {
+                ...n,
+                data: {
+                  ...n.data,
+                  input_from: currentInputs.filter((id) => !removedDataSources.includes(id)),
+                },
+              };
+            }
+            return n;
+          })
+        );
         clearTimeout(saveTimerRef.current);
         saveTimerRef.current = setTimeout(pushState, 100);
       }
     },
-    [onEdgesChange, pushState]
+    [onEdgesChange, edges, setNodes, pushState]
   );
 
   // Keyboard shortcuts
@@ -197,14 +233,19 @@ export default function PipelineEditorPage() {
           position: { x: n.position_x || 0, y: n.position_y || 0 },
           data: { ...n },
         }));
-        const loadedEdges = pipeline.edges.map((e, i) => ({
-          id: `e-${e.source}-${e.target}-${i}`,
-          source: e.source,
-          target: e.target,
-          sourceHandle: e.source_handle || null,
-          targetHandle: e.target_handle || null,
-          ...defaultEdgeOptions,
-        }));
+
+        const loadedEdges = pipeline.edges.map((e, i) => {
+          const edgeType = getEdgeType(e.source_handle, e.target_handle);
+          return {
+            id: `e-${e.source}-${e.target}-${i}`,
+            source: e.source,
+            target: e.target,
+            sourceHandle: e.source_handle || null,
+            targetHandle: e.target_handle || null,
+            data: { edgeType },
+            ...makeEdgeStyle(edgeType),
+          };
+        });
 
         setNodes(loadedNodes);
         setEdges(loadedEdges);
@@ -217,7 +258,7 @@ export default function PipelineEditorPage() {
     })();
   }, [pipelineId, navigate, setNodes, setEdges]);
 
-  // Save initial state for undo after load
+  // Save initial state for undo
   const initialSaved = useRef(false);
   useEffect(() => {
     if (nodes.length > 0 && !initialSaved.current) {
@@ -228,29 +269,38 @@ export default function PipelineEditorPage() {
 
   const onConnect = useCallback(
     (params) => {
+      const edgeType = getEdgeType(params.sourceHandle, params.targetHandle);
+      const edgeStyle = makeEdgeStyle(edgeType);
+
       setEdges((eds) =>
         addEdge(
           {
             ...params,
-            ...defaultEdgeOptions,
+            ...edgeStyle,
+            data: { edgeType },
           },
           eds
         )
       );
-      setNodes((nds) =>
-        nds.map((n) => {
-          if (n.id === params.target) {
-            const currentInputs = n.data.input_from || [];
-            if (!currentInputs.includes(params.source)) {
-              return {
-                ...n,
-                data: { ...n.data, input_from: [...currentInputs, params.source] },
-              };
+
+      // If it's a data edge, update input_from on the target node
+      if (edgeType === 'data') {
+        setNodes((nds) =>
+          nds.map((n) => {
+            if (n.id === params.target) {
+              const currentInputs = n.data.input_from || [];
+              if (!currentInputs.includes(params.source)) {
+                return {
+                  ...n,
+                  data: { ...n.data, input_from: [...currentInputs, params.source] },
+                };
+              }
             }
-          }
-          return n;
-        })
-      );
+            return n;
+          })
+        );
+      }
+
       setTimeout(pushState, 50);
     },
     [setEdges, setNodes, pushState]
@@ -271,7 +321,7 @@ export default function PipelineEditorPage() {
       const newNode = {
         id: nodeId,
         type: 'pipelineNode',
-        position: { x: (nodes.length % 4) * 280 + 50, y: Math.floor(nodes.length / 4) * 140 + 50 },
+        position: { x: (nodes.length % 4) * 280 + 50, y: Math.floor(nodes.length / 4) * 160 + 50 },
         data: {
           node_id: nodeId,
           node_type: nodeType,
@@ -281,10 +331,8 @@ export default function PipelineEditorPage() {
           reasoning_effort: nodeType === 'ai_prompt' ? 'high' : null,
           batch_size: nodeType === 'batch_loop' ? 3 : null,
           template_text: nodeType === 'template' ? '' : null,
-          script: nodeType === 'parse_list' ? null : null,
+          script: null,
           input_from: [],
-          position_x: (nodes.length % 4) * 280 + 50,
-          position_y: Math.floor(nodes.length / 4) * 140 + 50,
         },
       };
       setNodes((nds) => [...nds, newNode]);
@@ -338,6 +386,7 @@ export default function PipelineEditorPage() {
         reasoning_effort: n.data.reasoning_effort || null,
         batch_size: n.data.batch_size || null,
         template_text: n.data.template_text || null,
+        script: n.data.script || null,
         input_from: n.data.input_from || null,
         position_x: n.position.x,
         position_y: n.position.y,
@@ -404,33 +453,15 @@ export default function PipelineEditorPage() {
         </div>
 
         <div className="flex items-center gap-1.5">
-          {/* Undo / Redo */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={undo}
-            disabled={!canUndo}
-            title="Отменить (Ctrl+Z)"
-            data-testid="undo-btn"
-          >
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={undo} disabled={!canUndo} title="Ctrl+Z" data-testid="undo-btn">
             <Undo2 className="w-4 h-4" />
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={redo}
-            disabled={!canRedo}
-            title="Повторить (Ctrl+Y)"
-            data-testid="redo-btn"
-          >
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={redo} disabled={!canRedo} title="Ctrl+Y" data-testid="redo-btn">
             <Redo2 className="w-4 h-4" />
           </Button>
 
           <div className="w-px h-6 bg-slate-200 mx-1" />
 
-          {/* Add Node */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-1.5" data-testid="add-node-btn">
@@ -456,19 +487,8 @@ export default function PipelineEditorPage() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Save */}
-          <Button
-            size="sm"
-            className="gap-1.5"
-            onClick={handleSave}
-            disabled={saving}
-            data-testid="save-pipeline-btn"
-          >
-            {saving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
+          <Button size="sm" className="gap-1.5" onClick={handleSave} disabled={saving} data-testid="save-pipeline-btn">
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             Сохранить
           </Button>
         </div>
@@ -476,7 +496,7 @@ export default function PipelineEditorPage() {
 
       {/* Canvas + Config Panel */}
       <div className="flex-1 flex overflow-hidden">
-        <div className="flex-1">
+        <div className="flex-1 relative">
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -486,7 +506,6 @@ export default function PipelineEditorPage() {
             onNodeClick={onNodeClick}
             onPaneClick={onPaneClick}
             nodeTypes={nodeTypes}
-            defaultEdgeOptions={defaultEdgeOptions}
             fitView
             fitViewOptions={{ padding: 0.3 }}
             deleteKeyCode={['Backspace', 'Delete']}
@@ -498,13 +517,8 @@ export default function PipelineEditorPage() {
               nodeColor={(n) => {
                 const type = n.data?.node_type;
                 const colors = {
-                  ai_prompt: '#c4b5fd',
-                  parse_list: '#7dd3fc',
-                  batch_loop: '#fcd34d',
-                  aggregate: '#6ee7b7',
-                  template: '#cbd5e1',
-                  user_edit_list: '#f9a8d4',
-                  user_review: '#5eead4',
+                  ai_prompt: '#c4b5fd', parse_list: '#7dd3fc', batch_loop: '#fcd34d',
+                  aggregate: '#6ee7b7', template: '#cbd5e1', user_edit_list: '#f9a8d4', user_review: '#5eead4',
                 };
                 return colors[type] || '#cbd5e1';
               }}
@@ -512,12 +526,25 @@ export default function PipelineEditorPage() {
               style={{ height: 100, width: 150 }}
             />
           </ReactFlow>
+
+          {/* Legend */}
+          <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm border rounded-lg px-3 py-2 text-[11px] space-y-1.5 z-10 pointer-events-none" data-testid="edge-legend">
+            <div className="flex items-center gap-2">
+              <svg width="32" height="10"><line x1="0" y1="5" x2="32" y2="5" stroke="#94a3b8" strokeWidth="2" /><polygon points="28,2 32,5 28,8" fill="#94a3b8" /></svg>
+              <span className="text-slate-600">Порядок выполнения</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <svg width="32" height="10"><line x1="0" y1="5" x2="32" y2="5" stroke="#f97316" strokeWidth="2" strokeDasharray="4 2" /><polygon points="28,2 32,5 28,8" fill="#f97316" /></svg>
+              <span className="text-orange-600">Источник данных</span>
+            </div>
+          </div>
         </div>
 
         {selectedNode && (
           <NodeConfigPanel
             node={selectedNode}
             allNodes={nodes}
+            edges={edges}
             onUpdate={updateNodeData}
             onDelete={deleteNode}
             onClose={() => setSelectedNode(null)}
