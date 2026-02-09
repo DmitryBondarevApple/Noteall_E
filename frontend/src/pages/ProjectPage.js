@@ -217,6 +217,11 @@ export default function ProjectPage() {
                       <Wand2 className="w-4 h-4" />
                       <span className="hidden sm:inline">Мастер</span>
                     </TabsTrigger>
+                    <TabsTrigger value="results" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3" data-testid="results-tab">
+                      <Archive className="w-4 h-4" />
+                      <span className="hidden sm:inline">Результаты</span>
+                    </TabsTrigger>
+                  </TabsList>
                 </div>
               
               {/* Process Button with Reasoning Selector */}
