@@ -554,3 +554,84 @@ export function NodeConfigPanel({ node, allNodes, edges, onUpdate, onDelete, onC
     </div>
   );
 }
+
+
+// --- Template variable config sub-component ---
+function TemplateVarConfig({ templateText, variableConfig, onChange }) {
+  const vars = (templateText.match(/\{\{(\w+)\}\}/g) || [])
+    .map((v) => v.replace(/[{}]/g, ''));
+  const uniqueVars = [...new Set(vars)];
+
+  if (uniqueVars.length === 0) {
+    return (
+      <p className="text-[11px] text-muted-foreground italic">
+        Добавьте {'{{переменные}}'} в шаблон для настройки полей ввода
+      </p>
+    );
+  }
+
+  const getVarCfg = (name) => variableConfig[name] || {};
+  const updateVar = (name, field, value) => {
+    onChange({ ...variableConfig, [name]: { ...getVarCfg(name), [field]: value } });
+  };
+
+  return (
+    <div className="space-y-3 bg-slate-50 rounded-lg p-3 border border-slate-200">
+      <p className="text-[10px] font-semibold text-slate-700 uppercase tracking-wide">Поля ввода</p>
+      {uniqueVars.map((varName) => {
+        const cfg = getVarCfg(varName);
+        return (
+          <div key={varName} className="space-y-1.5 bg-white rounded p-2 border">
+            <p className="text-xs font-mono font-semibold text-slate-600">{`{{${varName}}}`}</p>
+            <div className="space-y-1">
+              <Label className="text-[10px]">Подпись</Label>
+              <Input
+                value={cfg.label || ''}
+                onChange={(e) => updateVar(varName, 'label', e.target.value)}
+                placeholder={varName}
+                className="h-7 text-xs"
+                data-testid={`var-label-${varName}`}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[10px]">Подсказка</Label>
+              <Input
+                value={cfg.placeholder || ''}
+                onChange={(e) => updateVar(varName, 'placeholder', e.target.value)}
+                placeholder="Текст подсказки..."
+                className="h-7 text-xs"
+                data-testid={`var-placeholder-${varName}`}
+              />
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="space-y-1 flex-1">
+                <Label className="text-[10px]">Тип</Label>
+                <Select
+                  value={cfg.input_type || 'text'}
+                  onValueChange={(v) => updateVar(varName, 'input_type', v)}
+                >
+                  <SelectTrigger className="h-7 text-xs" data-testid={`var-type-${varName}`}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="text">Текст</SelectItem>
+                    <SelectItem value="textarea">Многострочный</SelectItem>
+                    <SelectItem value="number">Число</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-1.5 pt-3">
+                <Checkbox
+                  checked={cfg.required !== false}
+                  onCheckedChange={(v) => updateVar(varName, 'required', v)}
+                  data-testid={`var-required-${varName}`}
+                />
+                <Label className="text-[10px]">Обяз.</Label>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
