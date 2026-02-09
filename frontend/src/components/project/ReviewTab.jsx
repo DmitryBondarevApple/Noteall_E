@@ -326,9 +326,9 @@ export function ReviewTab({
             <div className="space-y-4 mt-4">
               <div className="space-y-2">
                 <Label>Сомнительное слово</Label>
-                <code className="block bg-orange-100 text-orange-800 p-2 rounded">
+                <span className="block bg-orange-100 text-orange-800 p-2 rounded">
                   {editingContext.fragment.original_text}
-                </code>
+                </span>
               </div>
               <div className="space-y-2">
                 <Label>Контекст (отредактируйте текст ниже)</Label>
@@ -366,7 +366,7 @@ function EditFragmentForm({ fragment, onSave, onCancel }) {
     <div className="space-y-4 mt-4">
       <div className="space-y-2">
         <Label>Исходный текст</Label>
-        <code className="block bg-slate-100 p-2 rounded">{fragment.original_text}</code>
+        <span className="block bg-slate-100 p-2 rounded">{fragment.original_text}</span>
       </div>
       <div className="space-y-2">
         <Label>Исправленный текст</Label>
