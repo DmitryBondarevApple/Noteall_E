@@ -12,7 +12,8 @@ from app.routes import (
     chat_router,
     admin_router,
     seed_router,
-    export_router
+    export_router,
+    pipelines_router
 )
 from app.core.database import client
 
