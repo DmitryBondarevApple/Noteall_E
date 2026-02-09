@@ -40,12 +40,16 @@ import { toast } from 'sonner';
 import Markdown from 'react-markdown';
 import { chatApi, exportApi, pipelinesApi } from '../../lib/api';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../ui/select';
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '../ui/alert-dialog';
 
 // ==================== PIPELINE ENGINE UTILITIES ====================
 
