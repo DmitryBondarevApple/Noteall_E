@@ -28,18 +28,10 @@ function getSpeakerColor(index) {
   return SPEAKER_COLORS[index % SPEAKER_COLORS.length];
 }
 
-/** Build display name: "Имя Фамилия (Компания)" */
+/** Build display name — always use speaker_name which stores full format */
 function formatSpeakerDisplay(speaker) {
   if (!speaker) return '';
-  const name = speaker.speaker_name || speaker.speaker_label;
-  if (name.startsWith('Speaker ')) return name;
-  // If we have structured data, format it
-  if (speaker.first_name || speaker.last_name) {
-    const fullName = [speaker.first_name, speaker.last_name].filter(Boolean).join(' ');
-    if (speaker.company) return `${fullName} (${speaker.company})`;
-    return fullName;
-  }
-  return name;
+  return speaker.speaker_name || speaker.speaker_label;
 }
 
 /** Parse "Имя Фамилия (Компания)" into parts */
