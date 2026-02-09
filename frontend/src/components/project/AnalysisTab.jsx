@@ -200,6 +200,13 @@ export function AnalysisTab({
               data-testid="additional-text-input"
             />
           </div>
+          <div className="border-t pt-3">
+            <AttachmentsPanel
+              projectId={projectId}
+              selectedIds={selectedAttachmentIds}
+              onSelectionChange={setSelectedAttachmentIds}
+            />
+          </div>
           <Button
             onClick={handleAnalyze}
             disabled={analyzing || !selectedPrompt || projectStatus === 'needs_review'}
