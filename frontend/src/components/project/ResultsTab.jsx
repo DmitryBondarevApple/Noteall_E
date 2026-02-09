@@ -624,3 +624,54 @@ function pluralize(n, one, few, many) {
   if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return few;
   return many;
 }
+
+// Pipeline utilities (lightweight versions for re-analysis)
+
+function topoSort(nodes, edges) {
+  const flowEdges = edges.filter((e) => !e.data?.edgeType || e.data.edgeType === 'flow');
+  const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+  const inDegree = new Map(nodes.map((n) => [n.id, 0]));
+  const adj = new Map(nodes.map((n) => [n.id, []]));
+
+  for (const e of flowEdges) {
+    adj.get(e.source)?.push(e.target);
+    inDegree.set(e.target, (inDegree.get(e.target) || 0) + 1);
+  }
+
+  const queue = [];
+  for (const [id, deg] of inDegree) {
+    if (deg === 0) queue.push(id);
+  }
+
+  const sorted = [];
+  while (queue.length > 0) {
+    const current = queue.shift();
+    sorted.push(current);
+    for (const next of adj.get(current) || []) {
+      inDegree.set(next, inDegree.get(next) - 1);
+      if (inDegree.get(next) === 0) queue.push(next);
+    }
+  }
+
+  return sorted.map((id) => nodeMap.get(id)).filter(Boolean);
+}
+
+function buildDeps(nodes, edges) {
+  const deps = {};
+  for (const e of edges) {
+    if (e.data?.edgeType === 'data') {
+      if (!deps[e.target]) deps[e.target] = [];
+      if (!deps[e.target].includes(e.source)) deps[e.target].push(e.source);
+    }
+  }
+  for (const node of nodes) {
+    const inputFrom = node.data.input_from;
+    if (inputFrom && inputFrom.length > 0) {
+      if (!deps[node.id]) deps[node.id] = [];
+      for (const src of inputFrom) {
+        if (!deps[node.id].includes(src)) deps[node.id].push(src);
+      }
+    }
+  }
+  return deps;
+}
