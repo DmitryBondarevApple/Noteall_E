@@ -57,6 +57,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select';
+import { AttachmentsPanel } from './AttachmentsPanel';
 
 // ==================== PIPELINE ENGINE UTILITIES ====================
 
