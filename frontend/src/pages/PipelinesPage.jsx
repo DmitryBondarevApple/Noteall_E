@@ -1,0 +1,231 @@
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { pipelinesApi } from '../lib/api';
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../components/ui/dropdown-menu';
+import {
+  ArrowLeft,
+  Plus,
+  Workflow,
+  Globe,
+  MoreVertical,
+  Edit2,
+  Trash2,
+  Copy,
+  Loader2,
+  Sparkles,
+  ListOrdered,
+  Repeat,
+  Layers,
+  Variable,
+  UserPen,
+  Eye,
+} from 'lucide-react';
+import { toast } from 'sonner';
+
+const NODE_ICON_MAP = {
+  ai_prompt: Sparkles,
+  parse_list: ListOrdered,
+  batch_loop: Repeat,
+  aggregate: Layers,
+  template: Variable,
+  user_edit_list: UserPen,
+  user_review: Eye,
+};
+
+export default function PipelinesPage() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [pipelines, setPipelines] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadPipelines();
+  }, []);
+
+  const loadPipelines = async () => {
+    try {
+      const res = await pipelinesApi.list();
+      setPipelines(res.data);
+    } catch (err) {
+      toast.error('Ошибка загрузки сценариев');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Удалить сценарий?')) return;
+    try {
+      await pipelinesApi.delete(id);
+      setPipelines((prev) => prev.filter((p) => p.id !== id));
+      toast.success('Сценарий удалён');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Ошибка удаления');
+    }
+  };
+
+  const handleDuplicate = async (id) => {
+    try {
+      const res = await pipelinesApi.duplicate(id);
+      setPipelines((prev) => [res.data, ...prev]);
+      toast.success('Копия создана');
+    } catch (err) {
+      toast.error('Ошибка копирования');
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      {/* Header */}
+      <header className="bg-white border-b sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link to="/dashboard">
+              <Button variant="ghost" size="icon" data-testid="back-to-dashboard">
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+            </Link>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-slate-900 flex items-center justify-center">
+                <Workflow className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-xl font-bold tracking-tight">Сценарии анализа</span>
+            </div>
+          </div>
+          <Button
+            className="gap-2 rounded-full"
+            onClick={() => navigate('/pipelines/new')}
+            data-testid="create-pipeline-btn"
+          >
+            <Plus className="w-4 h-4" />
+            Новый сценарий
+          </Button>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-6 py-8">
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+          </div>
+        ) : pipelines.length === 0 ? (
+          <Card className="text-center py-16">
+            <CardContent>
+              <Workflow className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Нет сценариев</h3>
+              <p className="text-muted-foreground mb-6">
+                Создайте первый сценарий для анализа встреч
+              </p>
+              <Button onClick={() => navigate('/pipelines/new')} className="rounded-full">
+                <Plus className="w-4 h-4 mr-2" />
+                Создать сценарий
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {pipelines.map((pipeline) => {
+              const canEdit = pipeline.user_id === user?.id;
+              const nodeTypeCounts = {};
+              (pipeline.nodes || []).forEach((n) => {
+                nodeTypeCounts[n.node_type] = (nodeTypeCounts[n.node_type] || 0) + 1;
+              });
+
+              return (
+                <Card
+                  key={pipeline.id}
+                  className="group hover:shadow-md transition-shadow cursor-pointer"
+                  data-testid={`pipeline-card-${pipeline.id}`}
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1" onClick={() => navigate(`/pipelines/${pipeline.id}`)}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge className="bg-indigo-100 text-indigo-700 gap-1">
+                            <Workflow className="w-3 h-3" />
+                            Сценарий
+                          </Badge>
+                          {pipeline.is_public && (
+                            <Badge variant="outline" className="gap-1">
+                              <Globe className="w-3 h-3" />
+                              Общий
+                            </Badge>
+                          )}
+                        </div>
+                        <CardTitle className="text-lg">{pipeline.name}</CardTitle>
+                        {pipeline.description && (
+                          <CardDescription className="mt-1">
+                            {pipeline.description}
+                          </CardDescription>
+                        )}
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => navigate(`/pipelines/${pipeline.id}`)}>
+                            <Edit2 className="w-4 h-4 mr-2" />
+                            {canEdit ? 'Редактировать' : 'Просмотреть'}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDuplicate(pipeline.id)}>
+                            <Copy className="w-4 h-4 mr-2" />
+                            Дублировать
+                          </DropdownMenuItem>
+                          {canEdit && (
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => handleDelete(pipeline.id)}
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Удалить
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </CardHeader>
+                  <CardContent onClick={() => navigate(`/pipelines/${pipeline.id}`)}>
+                    {/* Node type badges */}
+                    <div className="flex flex-wrap gap-1.5">
+                      {Object.entries(nodeTypeCounts).map(([type, count]) => {
+                        const Icon = NODE_ICON_MAP[type] || Workflow;
+                        return (
+                          <span
+                            key={type}
+                            className="inline-flex items-center gap-1 text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full"
+                          >
+                            <Icon className="w-3 h-3" />
+                            {count}
+                          </span>
+                        );
+                      })}
+                      <span className="text-[11px] text-muted-foreground ml-1">
+                        {pipeline.nodes?.length || 0} узлов
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
