@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from typing import Optional, List
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
-from app.core.config import db
+from app.core.database import db
 from app.routes.auth import get_current_user
 
 router = APIRouter()
