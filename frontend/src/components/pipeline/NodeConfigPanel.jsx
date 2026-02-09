@@ -24,7 +24,7 @@ function parse(input) {
     .filter(line => line.length > 0);
 }`;
 
-export function NodeConfigPanel({ node, allNodes, onUpdate, onDelete, onClose }) {
+export function NodeConfigPanel({ node, allNodes, edges, onUpdate, onDelete, onClose }) {
   if (!node) return null;
 
   const nodeData = node.data;
@@ -35,6 +35,17 @@ export function NodeConfigPanel({ node, allNodes, onUpdate, onDelete, onClose })
 
   const style = NODE_STYLES[nodeData.node_type] || NODE_STYLES.template;
   const Icon = style.icon;
+
+  // Determine flow predecessors and data sources from edges
+  const flowSources = (edges || [])
+    .filter((e) => e.target === node.id && e.data?.edgeType !== 'data')
+    .map((e) => allNodes.find((n) => n.id === e.source))
+    .filter(Boolean);
+
+  const dataSources = (edges || [])
+    .filter((e) => e.target === node.id && e.data?.edgeType === 'data')
+    .map((e) => allNodes.find((n) => n.id === e.source))
+    .filter(Boolean);
 
   return (
     <div className="w-80 border-l bg-white overflow-y-auto" data-testid="node-config-panel">
@@ -80,11 +91,11 @@ export function NodeConfigPanel({ node, allNodes, onUpdate, onDelete, onClose })
                 value={nodeData.inline_prompt || ''}
                 onChange={(e) => handleChange('inline_prompt', e.target.value)}
                 rows={6}
-                placeholder="Текст промпта. Используйте {{переменная}} для подстановки..."
+                placeholder="Текст промпта..."
                 data-testid="node-inline-prompt"
               />
               <p className="text-[10px] text-muted-foreground">
-                Переменные: {'{{meeting_subject}}'}, {'{{topics_batch}}'}, {'{{aggregated_text}}'}
+                {'{{переменная}}'} — подстановка данных
               </p>
             </div>
             <div className="space-y-1.5">
@@ -118,7 +129,7 @@ export function NodeConfigPanel({ node, allNodes, onUpdate, onDelete, onClose })
               data-testid="node-parse-script"
             />
             <p className="text-[10px] text-muted-foreground">
-              JavaScript-функция parse(input). Получает текст ответа AI, возвращает массив строк.
+              JavaScript-функция parse(input).
             </p>
           </div>
         )}
@@ -154,25 +165,46 @@ export function NodeConfigPanel({ node, allNodes, onUpdate, onDelete, onClose })
           </div>
         )}
 
-        {/* Input from */}
-        {nodeData.input_from && nodeData.input_from.length > 0 && (
+        {/* Flow connections */}
+        {flowSources.length > 0 && (
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Входные данные от</Label>
+            <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <span className="inline-block w-3 h-0.5 bg-slate-400 rounded" />
+              Выполняется после
+            </Label>
             <div className="flex flex-wrap gap-1">
-              {nodeData.input_from.map((sourceId) => {
-                const sourceNode = allNodes.find((n) => n.id === sourceId);
-                return (
-                  <span
-                    key={sourceId}
-                    className="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full"
-                  >
-                    {sourceNode?.data?.label || sourceId}
-                  </span>
-                );
-              })}
+              {flowSources.map((src) => (
+                <span key={src.id} className="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+                  {src.data?.label || src.id}
+                </span>
+              ))}
             </div>
           </div>
         )}
+
+        {/* Data connections */}
+        <div className="space-y-1.5">
+          <Label className="text-xs text-orange-600 flex items-center gap-1.5">
+            <span className="inline-block w-3 h-0.5 bg-orange-400 rounded" style={{ borderTop: '2px dashed #f97316', height: 0 }} />
+            Источники данных
+          </Label>
+          {dataSources.length > 0 ? (
+            <div className="flex flex-wrap gap-1">
+              {dataSources.map((src) => (
+                <span
+                  key={src.id}
+                  className="text-[11px] bg-orange-50 text-orange-700 border border-orange-200 px-2 py-0.5 rounded-full"
+                >
+                  {src.data?.label || src.id}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[11px] text-muted-foreground italic">
+              Нет. Соедините оранжевый выход другого узла с оранжевым входом этого.
+            </p>
+          )}
+        </div>
 
         {/* Delete */}
         <div className="pt-4 border-t">
