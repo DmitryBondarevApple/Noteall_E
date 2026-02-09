@@ -44,11 +44,14 @@ import {
   Eye,
   Loader2,
   Pencil,
+  Undo2,
+  Redo2,
+  Code,
 } from 'lucide-react';
 
 const NODE_TYPE_OPTIONS = [
   { type: 'ai_prompt', label: 'AI Промпт', icon: Sparkles },
-  { type: 'parse_list', label: 'Парсинг списка', icon: ListOrdered },
+  { type: 'parse_list', label: 'Скрипт парсинга', icon: Code },
   { type: 'batch_loop', label: 'Батч-цикл', icon: Repeat },
   { type: 'aggregate', label: 'Агрегация', icon: Layers },
   { type: 'template', label: 'Шаблон / Переменная', icon: Variable },
@@ -66,6 +69,54 @@ function generateNodeId() {
   return 'node_' + Math.random().toString(36).substr(2, 9);
 }
 
+// --- Undo/Redo hook ---
+function useUndoRedo(nodes, edges, setNodes, setEdges) {
+  const historyRef = useRef([]);
+  const indexRef = useRef(-1);
+  const skipRef = useRef(false);
+
+  const pushState = useCallback(() => {
+    if (skipRef.current) {
+      skipRef.current = false;
+      return;
+    }
+    const snapshot = {
+      nodes: JSON.parse(JSON.stringify(nodes)),
+      edges: JSON.parse(JSON.stringify(edges)),
+    };
+    // Trim future states
+    historyRef.current = historyRef.current.slice(0, indexRef.current + 1);
+    historyRef.current.push(snapshot);
+    if (historyRef.current.length > 50) historyRef.current.shift();
+    indexRef.current = historyRef.current.length - 1;
+  }, [nodes, edges]);
+
+  const undo = useCallback(() => {
+    if (indexRef.current <= 0) return;
+    indexRef.current -= 1;
+    const state = historyRef.current[indexRef.current];
+    skipRef.current = true;
+    setNodes(state.nodes);
+    skipRef.current = true;
+    setEdges(state.edges);
+  }, [setNodes, setEdges]);
+
+  const redo = useCallback(() => {
+    if (indexRef.current >= historyRef.current.length - 1) return;
+    indexRef.current += 1;
+    const state = historyRef.current[indexRef.current];
+    skipRef.current = true;
+    setNodes(state.nodes);
+    skipRef.current = true;
+    setEdges(state.edges);
+  }, [setNodes, setEdges]);
+
+  const canUndo = indexRef.current > 0;
+  const canRedo = indexRef.current < historyRef.current.length - 1;
+
+  return { pushState, undo, redo, canUndo, canRedo };
+}
+
 export default function PipelineEditorPage() {
   const { pipelineId } = useParams();
   const navigate = useNavigate();
@@ -80,7 +131,54 @@ export default function PipelineEditorPage() {
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [editMetaOpen, setEditMetaOpen] = useState(isNew);
-  const reactFlowWrapper = useRef(null);
+
+  const { pushState, undo, redo, canUndo, canRedo } = useUndoRedo(
+    nodes, edges, setNodes, setEdges
+  );
+
+  // Save state on meaningful changes (debounced)
+  const saveTimerRef = useRef(null);
+  const onNodesChangeWrapped = useCallback(
+    (changes) => {
+      onNodesChange(changes);
+      // Save undo state after drag ends
+      const hasDragStop = changes.some(
+        (c) => c.type === 'position' && c.dragging === false
+      );
+      if (hasDragStop) {
+        clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = setTimeout(pushState, 100);
+      }
+    },
+    [onNodesChange, pushState]
+  );
+
+  const onEdgesChangeWrapped = useCallback(
+    (changes) => {
+      onEdgesChange(changes);
+      if (changes.some((c) => c.type === 'remove')) {
+        clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = setTimeout(pushState, 100);
+      }
+    },
+    [onEdgesChange, pushState]
+  );
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      }
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+        e.preventDefault();
+        redo();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [undo, redo]);
 
   // Load existing pipeline
   useEffect(() => {
@@ -103,6 +201,8 @@ export default function PipelineEditorPage() {
           id: `e-${e.source}-${e.target}-${i}`,
           source: e.source,
           target: e.target,
+          sourceHandle: e.source_handle || null,
+          targetHandle: e.target_handle || null,
           ...defaultEdgeOptions,
         }));
 
@@ -117,10 +217,26 @@ export default function PipelineEditorPage() {
     })();
   }, [pipelineId, navigate, setNodes, setEdges]);
 
+  // Save initial state for undo after load
+  const initialSaved = useRef(false);
+  useEffect(() => {
+    if (nodes.length > 0 && !initialSaved.current) {
+      pushState();
+      initialSaved.current = true;
+    }
+  }, [nodes, pushState]);
+
   const onConnect = useCallback(
     (params) => {
-      setEdges((eds) => addEdge({ ...params, ...defaultEdgeOptions }, eds));
-      // Update input_from on target node
+      setEdges((eds) =>
+        addEdge(
+          {
+            ...params,
+            ...defaultEdgeOptions,
+          },
+          eds
+        )
+      );
       setNodes((nds) =>
         nds.map((n) => {
           if (n.id === params.target) {
@@ -135,8 +251,9 @@ export default function PipelineEditorPage() {
           return n;
         })
       );
+      setTimeout(pushState, 50);
     },
-    [setEdges, setNodes]
+    [setEdges, setNodes, pushState]
   );
 
   const onNodeClick = useCallback((_, node) => {
@@ -154,7 +271,7 @@ export default function PipelineEditorPage() {
       const newNode = {
         id: nodeId,
         type: 'pipelineNode',
-        position: { x: 250, y: (nodes.length + 1) * 120 },
+        position: { x: (nodes.length % 4) * 280 + 50, y: Math.floor(nodes.length / 4) * 140 + 50 },
         data: {
           node_id: nodeId,
           node_type: nodeType,
@@ -164,14 +281,16 @@ export default function PipelineEditorPage() {
           reasoning_effort: nodeType === 'ai_prompt' ? 'high' : null,
           batch_size: nodeType === 'batch_loop' ? 3 : null,
           template_text: nodeType === 'template' ? '' : null,
+          script: nodeType === 'parse_list' ? null : null,
           input_from: [],
-          position_x: 250,
-          position_y: (nodes.length + 1) * 120,
+          position_x: (nodes.length % 4) * 280 + 50,
+          position_y: Math.floor(nodes.length / 4) * 140 + 50,
         },
       };
       setNodes((nds) => [...nds, newNode]);
+      setTimeout(pushState, 50);
     },
-    [nodes, setNodes]
+    [nodes, setNodes, pushState]
   );
 
   const updateNodeData = useCallback(
@@ -191,8 +310,9 @@ export default function PipelineEditorPage() {
       setNodes((nds) => nds.filter((n) => n.id !== nodeId));
       setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
       setSelectedNode(null);
+      setTimeout(pushState, 50);
     },
-    [setNodes, setEdges]
+    [setNodes, setEdges, pushState]
   );
 
   const handleSave = async () => {
@@ -226,6 +346,8 @@ export default function PipelineEditorPage() {
       const pipelineEdges = edges.map((e) => ({
         source: e.source,
         target: e.target,
+        source_handle: e.sourceHandle || null,
+        target_handle: e.targetHandle || null,
       }));
 
       const payload = {
@@ -262,7 +384,7 @@ export default function PipelineEditorPage() {
   return (
     <div className="h-screen flex flex-col bg-slate-50">
       {/* Header */}
-      <header className="bg-white border-b px-4 py-2.5 flex items-center justify-between shrink-0 z-20">
+      <header className="bg-white border-b px-4 py-2 flex items-center justify-between shrink-0 z-20">
         <div className="flex items-center gap-3">
           <Link to="/pipelines">
             <Button variant="ghost" size="icon" className="h-8 w-8" data-testid="back-to-pipelines">
@@ -281,7 +403,33 @@ export default function PipelineEditorPage() {
           </button>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
+          {/* Undo / Redo */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={undo}
+            disabled={!canUndo}
+            title="Отменить (Ctrl+Z)"
+            data-testid="undo-btn"
+          >
+            <Undo2 className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={redo}
+            disabled={!canRedo}
+            title="Повторить (Ctrl+Y)"
+            data-testid="redo-btn"
+          >
+            <Redo2 className="w-4 h-4" />
+          </Button>
+
+          <div className="w-px h-6 bg-slate-200 mx-1" />
+
           {/* Add Node */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -328,12 +476,12 @@ export default function PipelineEditorPage() {
 
       {/* Canvas + Config Panel */}
       <div className="flex-1 flex overflow-hidden">
-        <div className="flex-1" ref={reactFlowWrapper}>
+        <div className="flex-1">
           <ReactFlow
             nodes={nodes}
             edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
+            onNodesChange={onNodesChangeWrapped}
+            onEdgesChange={onEdgesChangeWrapped}
             onConnect={onConnect}
             onNodeClick={onNodeClick}
             onPaneClick={onPaneClick}
@@ -342,6 +490,7 @@ export default function PipelineEditorPage() {
             fitView
             fitViewOptions={{ padding: 0.3 }}
             deleteKeyCode={['Backspace', 'Delete']}
+            connectionMode="loose"
           >
             <Background color="#e2e8f0" gap={20} size={1} />
             <Controls position="bottom-left" />
@@ -365,7 +514,6 @@ export default function PipelineEditorPage() {
           </ReactFlow>
         </div>
 
-        {/* Config Panel */}
         {selectedNode && (
           <NodeConfigPanel
             node={selectedNode}
