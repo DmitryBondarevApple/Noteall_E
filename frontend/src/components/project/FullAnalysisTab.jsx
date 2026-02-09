@@ -245,6 +245,9 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
   const [isSaving, setIsSaving] = useState(false);
   // Pause-stage result display
   const [pauseResult, setPauseResult] = useState('');
+  
+  // Track if wizard has meaningful results (to warn on reset)
+  const hasResults = currentStageIdx > 0 || reviewContent.length > 0;
 
   // Computed pipeline structure
   const [stages, setStages] = useState([]);
