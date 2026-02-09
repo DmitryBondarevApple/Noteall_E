@@ -77,6 +77,8 @@ export const chatApi = {
   analyzeRaw: (projectId, data) => axios.post(`${API}/projects/${projectId}/analyze-raw`, data),
   saveFullAnalysis: (projectId, data) => axios.post(`${API}/projects/${projectId}/save-full-analysis`, data),
   history: (projectId) => axios.get(`${API}/projects/${projectId}/chat-history`),
+  analysisResults: (projectId) => axios.get(`${API}/projects/${projectId}/analysis-results`),
+  deleteChat: (projectId, chatId) => axios.delete(`${API}/projects/${projectId}/chat-history/${chatId}`),
   updateResponse: (projectId, chatId, responseText) =>
     axios.put(`${API}/projects/${projectId}/chat-history/${chatId}`, { response_text: responseText }),
   generateScript: (data) => axios.post(`${API}/ai/generate-script`, data)
