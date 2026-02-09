@@ -1,0 +1,102 @@
+{
+  "summary": "Results Tab feature testing complete. All backend API endpoints pass. All frontend features verified including tab order, result cards, detail view, export buttons, select all, action bar, and delete confirmation AlertDialog.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "POST /api/projects/:id/save-full-analysis",
+        "issue": "ChatRequestResponse model missing pipeline_id and pipeline_name fields - data is saved to DB but not returned in response",
+        "priority": "LOW",
+        "fix_location": "/app/backend/app/models/chat.py - add Optional[str] fields for pipeline_id and pipeline_name"
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "features_tested": {
+    "backend": {
+      "GET /api/projects/:id/analysis-results": {
+        "status": "PASS",
+        "notes": "Returns only full-analysis and result-analysis prompt_id results"
+      },
+      "DELETE /api/projects/:id/chat-history/:id": {
+        "status": "PASS",
+        "notes": "Successfully deletes results with proper 404 for non-existent entries"
+      },
+      "POST /api/projects/:id/save-full-analysis": {
+        "status": "PASS",
+        "notes": "Accepts pipeline_id and pipeline_name - data saved to DB (verified via GET), but response model doesn't include these fields"
+      }
+    },
+    "frontend": {
+      "tab_order": {
+        "status": "PASS",
+        "order": ["Транскрипт", "Обработанный", "Проверка", "Анализ", "Мастер", "Результаты"],
+        "notes": "Результаты tab is correctly at the end (rightmost)"
+      },
+      "results_tab_exists": {
+        "status": "PASS",
+        "notes": "Tab has Archive icon and data-testid='results-tab'"
+      },
+      "empty_state": {
+        "status": "N/A",
+        "notes": "Project has 1 result, so empty state text 'Пока нет результатов анализа' not shown (verified in code)"
+      },
+      "result_cards": {
+        "status": "PASS",
+        "notes": "Cards show checkbox, title, preview, date, 'Мастер' badge, copy/delete buttons"
+      },
+      "detail_view": {
+        "status": "PASS",
+        "notes": "Clicking card opens detail view with Markdown rendering in .prose class"
+      },
+      "detail_buttons": {
+        "status": "PASS",
+        "notes": "Edit (Редактировать), Copy (Копировать), .md, Word, PDF export buttons present"
+      },
+      "delete_alertdialog": {
+        "status": "PASS",
+        "notes": "AlertDialog shows 'Удалить результат?' with Отмена/Удалить buttons"
+      },
+      "select_all_checkbox": {
+        "status": "PASS",
+        "notes": "'Выбрать все' checkbox works correctly"
+      },
+      "action_bar": {
+        "status": "PASS",
+        "notes": "Shows 'Выбрано: N' badge and 'Анализ по промпту' button with Sparkles icon when items selected"
+      }
+    }
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_results_tab.py",
+    "/app/test_reports/pytest/pytest_results_tab.xml"
+  ],
+  "action_items": [
+    "LOW: Add pipeline_id and pipeline_name fields to ChatRequestResponse model in /app/backend/app/models/chat.py for complete API response"
+  ],
+  "critical_code_review_comments": [
+    "Tab order correctly implemented in ProjectPage.js lines 196-224",
+    "ResultsTab.jsx properly handles empty state, result cards, detail view, and delete confirmation",
+    "chatApi methods in api.js correctly implemented (analysisResults, deleteChat)",
+    "Backend endpoints in chat.py correctly filter by prompt_id for analysis-results"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_results_tab.py"
+  ],
+  "success_rate": {
+    "backend": "100% (10/10 tests passed)",
+    "frontend": "100% (all features verified)"
+  },
+  "test_credentials": {
+    "email": "admin@voiceworkspace.com",
+    "password": "admin123"
+  },
+  "seed_data_creation": "None - used existing project 'Тест 30' with ready status",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Results Tab feature fully tested. Tab order verified correct (Результаты last). Project 'Тест 30' (id: 72a2abcd-c16b-44a3-81ce-52f000b0d204) has 1 analysis result for testing. Route is /projects/:id (with 's'). Minor issue: ChatRequestResponse model missing pipeline_id/pipeline_name fields."
+}
