@@ -45,6 +45,7 @@ import Markdown from 'react-markdown';
 import { formatDistanceToNow } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { chatApi, exportApi, promptsApi, pipelinesApi } from '../../lib/api';
+import { AttachmentsPanel } from './AttachmentsPanel';
 
 export function ResultsTab({ projectId, selectedReasoningEffort }) {
   const [results, setResults] = useState([]);
