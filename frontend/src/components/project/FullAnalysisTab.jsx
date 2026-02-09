@@ -589,7 +589,23 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
 
     if (type === 'user_review') {
       const input = getNodeInput(stage.primaryNode.id, outputs);
-      setReviewContent(typeof input === 'string' ? input : JSON.stringify(input, null, 2));
+      let content = '';
+      if (typeof input === 'string') {
+        content = input;
+      } else if (input && typeof input === 'object') {
+        // Multiple data sources — build document from all inputs
+        // Look for summary and detailed analysis
+        const depIds = dataDeps[stage.primaryNode.id] || [];
+        const parts = depIds.map((id) => outputs[id]).filter(Boolean);
+        if (parts.length >= 2) {
+          // Convention: last dep is summary source, earlier is detailed analysis
+          const subject = outputs['meeting_subject'] || outputs['subject'] || 'Анализ';
+          content = `# Резюме встречи: ${subject}\n\n## Краткое саммари\n\n${parts[parts.length - 1]}\n\n---\n\n## Подробный анализ по темам\n\n${parts.slice(0, -1).join('\n\n')}`;
+        } else {
+          content = parts.join('\n\n');
+        }
+      }
+      setReviewContent(content);
       setIsEditingReview(false);
     }
 
