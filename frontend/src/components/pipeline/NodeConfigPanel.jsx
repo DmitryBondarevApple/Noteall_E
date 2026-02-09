@@ -332,6 +332,171 @@ export function NodeConfigPanel({ node, allNodes, edges, onUpdate, onDelete, onC
           </div>
         )}
 
+        {/* ===== WIZARD DISPLAY SETTINGS ===== */}
+        <div className="border-t pt-3">
+          <button
+            onClick={() => setWizardOpen(!wizardOpen)}
+            className="flex items-center justify-between w-full text-left"
+            data-testid="wizard-settings-toggle"
+          >
+            <Label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5 cursor-pointer">
+              <Settings2 className="w-3.5 h-3.5" />
+              Настройки визарда
+            </Label>
+            {wizardOpen ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+          </button>
+
+          {wizardOpen && (
+            <div className="mt-3 space-y-3">
+              {/* Step title */}
+              <div className="space-y-1">
+                <Label className="text-xs">Заголовок шага</Label>
+                <div className="relative">
+                  <Input
+                    value={nodeData.step_title || ''}
+                    onChange={(e) => handleChange('step_title', e.target.value.slice(0, 40))}
+                    placeholder={nodeData.label}
+                    maxLength={40}
+                    data-testid="wizard-step-title"
+                  />
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
+                    {(nodeData.step_title || '').length}/40
+                  </span>
+                </div>
+              </div>
+
+              {/* Step description */}
+              <div className="space-y-1">
+                <Label className="text-xs">Описание шага</Label>
+                <div className="relative">
+                  <Textarea
+                    value={nodeData.step_description || ''}
+                    onChange={(e) => handleChange('step_description', e.target.value.slice(0, 200))}
+                    placeholder="Инструкция для пользователя..."
+                    rows={2}
+                    maxLength={200}
+                    data-testid="wizard-step-description"
+                  />
+                  <span className="absolute right-2 bottom-1.5 text-[10px] text-muted-foreground">
+                    {(nodeData.step_description || '').length}/200
+                  </span>
+                </div>
+              </div>
+
+              {/* Continue button label */}
+              <div className="space-y-1">
+                <Label className="text-xs">Текст кнопки</Label>
+                <div className="relative">
+                  <Input
+                    value={nodeData.continue_button_label || ''}
+                    onChange={(e) => handleChange('continue_button_label', e.target.value.slice(0, 25))}
+                    placeholder="Далее"
+                    maxLength={25}
+                    data-testid="wizard-button-label"
+                  />
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
+                    {(nodeData.continue_button_label || '').length}/25
+                  </span>
+                </div>
+              </div>
+
+              {/* Pause after execution */}
+              {!['template', 'user_edit_list', 'user_review'].includes(nodeType) && (
+                <div className="flex items-center justify-between py-1">
+                  <Label className="text-xs">Остановка после выполнения</Label>
+                  <Switch
+                    checked={!!nodeData.pause_after}
+                    onCheckedChange={(v) => handleChange('pause_after', v)}
+                    data-testid="wizard-pause-after"
+                  />
+                </div>
+              )}
+
+              {/* user_edit_list specific options */}
+              {nodeType === 'user_edit_list' && (
+                <div className="space-y-2 bg-pink-50 rounded-lg p-3 border border-pink-200">
+                  <p className="text-[10px] font-semibold text-pink-700 uppercase tracking-wide">Опции списка</p>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Добавление элементов</Label>
+                    <Switch
+                      checked={nodeData.allow_add !== false}
+                      onCheckedChange={(v) => handleChange('allow_add', v)}
+                      data-testid="wizard-allow-add"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Редактирование</Label>
+                    <Switch
+                      checked={nodeData.allow_edit !== false}
+                      onCheckedChange={(v) => handleChange('allow_edit', v)}
+                      data-testid="wizard-allow-edit"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Удаление</Label>
+                    <Switch
+                      checked={nodeData.allow_delete !== false}
+                      onCheckedChange={(v) => handleChange('allow_delete', v)}
+                      data-testid="wizard-allow-delete"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Мин. выбранных</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={nodeData.min_selected ?? 1}
+                      onChange={(e) => handleChange('min_selected', parseInt(e.target.value) || 0)}
+                      className="w-20"
+                      data-testid="wizard-min-selected"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* user_review specific options */}
+              {nodeType === 'user_review' && (
+                <div className="space-y-2 bg-teal-50 rounded-lg p-3 border border-teal-200">
+                  <p className="text-[10px] font-semibold text-teal-700 uppercase tracking-wide">Опции просмотра</p>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Редактирование результата</Label>
+                    <Switch
+                      checked={nodeData.allow_review_edit !== false}
+                      onCheckedChange={(v) => handleChange('allow_review_edit', v)}
+                      data-testid="wizard-allow-review-edit"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Кнопки экспорта</Label>
+                    <Switch
+                      checked={nodeData.show_export !== false}
+                      onCheckedChange={(v) => handleChange('show_export', v)}
+                      data-testid="wizard-show-export"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Кнопка "Сохранить"</Label>
+                    <Switch
+                      checked={nodeData.show_save !== false}
+                      onCheckedChange={(v) => handleChange('show_save', v)}
+                      data-testid="wizard-show-save"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* template variable config */}
+              {nodeType === 'template' && (
+                <TemplateVarConfig
+                  templateText={nodeData.template_text || ''}
+                  variableConfig={nodeData.variable_config || {}}
+                  onChange={(cfg) => handleChange('variable_config', cfg)}
+                />
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Flow connections */}
         {flowSources.length > 0 && (
           <div className="space-y-1.5">
