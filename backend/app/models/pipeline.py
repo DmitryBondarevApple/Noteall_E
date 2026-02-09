@@ -31,6 +31,22 @@ class PipelineNodeConfig(BaseModel):
     # Visual position on canvas
     position_x: Optional[float] = 0
     position_y: Optional[float] = 0
+    # --- Wizard display settings ---
+    step_title: Optional[str] = None          # max 40 chars
+    step_description: Optional[str] = None    # max 200 chars
+    continue_button_label: Optional[str] = None  # max 25 chars
+    pause_after: Optional[bool] = False
+    # user_edit_list options
+    allow_add: Optional[bool] = True
+    allow_edit: Optional[bool] = True
+    allow_delete: Optional[bool] = True
+    min_selected: Optional[int] = 1
+    # user_review options
+    allow_review_edit: Optional[bool] = True
+    show_export: Optional[bool] = True
+    show_save: Optional[bool] = True
+    # template variable config: { var_name: { label, placeholder, input_type, required } }
+    variable_config: Optional[Any] = None
 
 
 class PipelineEdge(BaseModel):
