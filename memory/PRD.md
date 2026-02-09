@@ -1,52 +1,32 @@
-# VoiceWorkspace PRD
+# Voice Workspace — PRD
 
 ## Original Problem Statement
-Build a sophisticated web application for transcribing and analyzing audio files. Features include a "Full Analysis Wizard," speaker identification, and various UX/UI improvements. The user actively provides feedback, reports bugs, and requests new features.
+Приложение для транскрибации аудио/видео встреч с AI-обработкой и разметкой спикеров.
 
 ## Core Requirements
-- **Full Analysis Wizard:** Multi-step process for comprehensive transcript analysis (topic extraction, summaries, combined document)
-- **Export Functionality:** Export analysis results to Markdown, Word (.docx), and PDF formats
-- **Speaker Identification:** Clickable speaker badges in transcript with inline editing
-- **Contextual Editing:** Edit text surrounding problematic words to fix split-word issues
-- **Mobile Responsiveness:** Usable on mobile devices
+1. Автоматическая транскрибация (Deepgram)
+2. AI-анализ встреч (резюме, задачи, риски) через OpenAI GPT
+3. Разметка спикеров: кликабельные теги в транскрипте, редактирование имён
+4. Справочник спикеров с поддержкой формата "Имя Фамилия (Компания)"
+5. Управление спикерами — только на вкладке "Транскрипт" (вкладка "Спикеры" удалена)
 
-## Tech Stack
-- **Frontend:** React, Tailwind CSS, Shadcn/UI, Axios
-- **Backend:** FastAPI, Motor (async MongoDB), Pydantic
-- **AI/LLM:** Deepgram (Transcription), OpenAI GPT-4o (Analysis) via Emergent LLM Key
-- **Export:** python-docx (Word), reportlab (PDF)
+## Architecture
+- **Backend:** FastAPI + MongoDB (motor) + Pydantic
+- **Frontend:** React + Tailwind + Shadcn/UI
+- **AI:** OpenAI GPT через Emergent LLM Key
+- **Transcription:** Deepgram
 
 ## What's Been Implemented
-- Full Analysis Wizard ("Мастер полного анализа встречи")
-- Export to Word (.docx) and PDF with Cyrillic support
-- Context editing in Review tab to fix split words
-- Support for .m4a and other audio formats (iOS fix)
-- Mobile responsiveness overhaul
-- Deepgram v5 SDK compatibility patch
-- SpeakerCombobox multi-click fix
-- Project status update logic fix
-- Admin panel /api/admin/prompts endpoint
-- **[2025-12-08] Fixed: speaker_hints field missing from ProjectResponse**
-- **[2025-12-08] Major refactor: Speaker editing moved to Transcript tab**
-  - Removed "Speakers" tab entirely
-  - Speaker labels are now clickable colored badges in the transcript
-  - Click opens edit dialog with combobox
-  - Support for "Имя Фамилия (Компания)" format with auto-parsing into first_name, last_name, company
-  - Removed AI speaker analysis feature (cost optimization)
-  - All badges update instantly after rename
+- [x] Удалена вкладка "Спикеры", всё управление — на вкладке "Транскрипт"
+- [x] Кликабельные теги спикеров в транскрипте
+- [x] Диалог редактирования с парсингом "Имя (Компания)"
+- [x] Список спикеров в шапке карточки транскрипта
+- [x] Подсказка для пользователя о редактировании
+- [x] AI-обработка с подстановкой полных имён спикеров
+- [x] Исправление бага транскрибации (asyncio import)
+- [x] Исправление regex-бага в поиске спикеров
+- [x] Исправление шрифтов на вкладке "Обзор"
+- [x] Уменьшена ширина линейки спикеров, перенос на несколько строк (Dec 2025)
 
-## Speaker Data Model
-- `speaker_maps` collection: `{id, project_id, speaker_label, speaker_name, first_name?, last_name?, company?}`
-- Input format: "Антон Петров (Яндекс)" → first_name: "Антон", last_name: "Петров", company: "Яндекс"
-
-- **[2025-12-08] Fixed: cosmetic bug** — words in Review tab appeared with spaces between letters due to JetBrains Mono (monospace) font on `<code>` elements. Replaced with `<span>` using proportional body font.
-
-## Upcoming Tasks (P1)
-- Tags for Speaker Directory — tagging system for better speaker organization
-
-## Future/Backlog (P2)
-- Import/Export — import speakers from CSV, export transcripts
-
-## Credentials
-- User: admin@voiceworkspace.com / admin123
-- DB: test_database on mongodb://localhost:27017
+## Prioritized Backlog
+Нет запланированных задач. Ожидаем новых запросов от пользователя.
