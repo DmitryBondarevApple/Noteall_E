@@ -26,7 +26,8 @@ import {
   Save,
   RotateCcw,
   FileType,
-  File
+  File,
+  Workflow
 } from 'lucide-react';
 import { toast } from 'sonner';
 import Markdown from 'react-markdown';
