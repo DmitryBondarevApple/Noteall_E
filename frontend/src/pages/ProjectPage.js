@@ -323,7 +323,7 @@ export default function ProjectPage() {
               />
             </TabsContent>
 
-            {/* Analysis Tab */}
+            {/* Analysis Tab (legacy — chat with AI) */}
             <TabsContent value="analysis">
               <AnalysisTab
                 prompts={prompts}
@@ -344,6 +344,14 @@ export default function ProjectPage() {
                   loadData(); // Reload chat history after saving
                   toast.success('Полный анализ сохранён в историю');
                 }}
+              />
+            </TabsContent>
+
+            {/* Results Tab */}
+            <TabsContent value="results">
+              <ResultsTab
+                projectId={projectId}
+                selectedReasoningEffort={selectedReasoningEffort}
               />
             </TabsContent>
           </Tabs>
