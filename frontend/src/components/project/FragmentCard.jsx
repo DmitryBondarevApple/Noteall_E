@@ -153,7 +153,7 @@ export function FragmentCard({
             <div className="flex items-center gap-2 px-3 py-2 bg-green-100/60 rounded-lg text-sm text-green-800">
               <Check className="w-4 h-4 shrink-0" />
               <span>
-                Исправлено: <code className="bg-red-200/60 px-1.5 py-0.5 rounded text-red-900 line-through">{fragment.original_text}</code> → <code className="bg-green-200/60 px-1.5 py-0.5 rounded text-green-900 font-medium">{fragment.corrected_text}</code>
+                Исправлено: <span className="bg-red-200/60 px-1.5 py-0.5 rounded text-red-900 line-through">{fragment.original_text}</span> → <span className="bg-green-200/60 px-1.5 py-0.5 rounded text-green-900 font-medium">{fragment.corrected_text}</span>
               </span>
             </div>
           )}
@@ -164,9 +164,9 @@ export function FragmentCard({
               <Sparkles className="w-4 h-4 shrink-0" />
               <span>
                 {fragment.corrected_text ? (
-                  <>AI уже исправил <code className="bg-blue-200/60 px-1.5 py-0.5 rounded text-blue-900">{fragment.original_text}</code> на <code className="bg-green-200/60 px-1.5 py-0.5 rounded text-green-900 font-medium">{fragment.corrected_text}</code> в тексте</>
+                  <>AI уже исправил <span className="bg-blue-200/60 px-1.5 py-0.5 rounded text-blue-900">{fragment.original_text}</span> на <span className="bg-green-200/60 px-1.5 py-0.5 rounded text-green-900 font-medium">{fragment.corrected_text}</span> в тексте</>
                 ) : (
-                  <>AI уже исправил <code className="bg-blue-200/60 px-1.5 py-0.5 rounded text-blue-900">{fragment.original_text}</code> в тексте — проверьте контекст ниже</>
+                  <>AI уже исправил <span className="bg-blue-200/60 px-1.5 py-0.5 rounded text-blue-900">{fragment.original_text}</span> в тексте — проверьте контекст ниже</>
                 )}
               </span>
             </div>
@@ -195,9 +195,9 @@ export function FragmentCard({
           {fragment.status === 'pending' && (
             <div className="flex items-center gap-3 text-sm">
               <span className="text-muted-foreground">Сомнительное слово:</span>
-              <code className="bg-orange-100 text-orange-800 px-2 py-1 rounded font-medium">
+              <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded font-medium">
                 {fragment.original_text}
-              </code>
+              </span>
             </div>
           )}
         </div>
