@@ -64,7 +64,8 @@ async def list_speaker_directory(
     query = {"user_id": user["id"]}
     
     if q:
-        query["name"] = {"$regex": q, "$options": "i"}
+        import re
+        query["name"] = {"$regex": re.escape(q), "$options": "i"}
     
     speakers = await db.speaker_directory.find(query, {"_id": 0}).sort("name", 1).to_list(500)
     return [SpeakerDirectoryResponse(**s) for s in speakers]
