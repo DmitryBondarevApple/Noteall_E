@@ -54,6 +54,26 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
   
   // Step 1: Setup
   const [meetingSubject, setMeetingSubject] = useState('');
+  const [pipelines, setPipelines] = useState([]);
+  const [selectedPipelineId, setSelectedPipelineId] = useState('');
+  const [loadingPipelines, setLoadingPipelines] = useState(true);
+
+  // Load available pipelines
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await pipelinesApi.list();
+        setPipelines(res.data);
+        if (res.data.length > 0) {
+          setSelectedPipelineId(res.data[0].id);
+        }
+      } catch (err) {
+        console.error('Failed to load pipelines:', err);
+      } finally {
+        setLoadingPipelines(false);
+      }
+    })();
+  }, []);
   
   // Step 2: Topics
   const [topics, setTopics] = useState([]);
