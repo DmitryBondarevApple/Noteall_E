@@ -198,10 +198,13 @@ export function ResultsTab({ projectId, selectedReasoningEffort }) {
         const prompt = prompts.find((p) => p.id === selectedPromptId);
         const promptText = prompt?.content || prompt?.prompt_text || '';
 
+        const userMessage = `${promptText}\n\n---\n\nТекст для анализа:\n\n${sourceText}`;
+
         const response = await chatApi.analyzeRaw(projectId, {
           system_message: 'Ты — ассистент для анализа документов. Отвечай подробно и по существу.',
-          user_message: `${promptText}\n\n---\n\nТекст для анализа:\n\n${sourceText}`,
+          user_message: userMessage,
           reasoning_effort: selectedReasoningEffort || 'high',
+          attachment_ids: selectedAttachmentIds.size > 0 ? [...selectedAttachmentIds] : undefined,
         });
 
         await chatApi.saveFullAnalysis(projectId, {
