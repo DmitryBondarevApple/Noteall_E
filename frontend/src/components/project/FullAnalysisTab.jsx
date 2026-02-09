@@ -30,7 +30,14 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import Markdown from 'react-markdown';
-import { chatApi, exportApi } from '../../lib/api';
+import { chatApi, exportApi, pipelinesApi } from '../../lib/api';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select';
 
 const STEPS = [
   { id: 'setup', title: 'Настройка', icon: Sparkles },
