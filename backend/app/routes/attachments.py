@@ -1,0 +1,315 @@
+import uuid
+import os
+import base64
+import zipfile
+import io
+from datetime import datetime, timezone
+from typing import Optional, List
+from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
+from app.core.config import db
+from app.routes.auth import get_current_user
+
+router = APIRouter()
+
+UPLOAD_DIR = "/app/backend/uploads/attachments"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB
+
+# File types that the LLM can accept as binary (via Files API / base64)
+BINARY_TYPES = {".pdf", ".png", ".jpg", ".jpeg", ".webp", ".gif"}
+# File types where we extract text
+TEXT_TYPES = {".txt", ".csv", ".md", ".docx"}
+# Archives
+ARCHIVE_TYPES = {".zip"}
+
+ALLOWED_EXTENSIONS = BINARY_TYPES | TEXT_TYPES | ARCHIVE_TYPES
+
+
+class AttachmentResponse(BaseModel):
+    id: str
+    project_id: str
+    name: str
+    file_type: str  # "pdf", "image", "text", "url", "zip"
+    content_type: Optional[str] = None
+    size: Optional[int] = None
+    source_url: Optional[str] = None
+    extracted_text: Optional[str] = None
+    file_path: Optional[str] = None
+    created_at: str
+
+
+class AddUrlRequest(BaseModel):
+    url: str
+    name: Optional[str] = None
+
+
+def get_file_type(ext: str) -> str:
+    if ext == ".pdf":
+        return "pdf"
+    if ext in {".png", ".jpg", ".jpeg", ".webp", ".gif"}:
+        return "image"
+    if ext in {".txt", ".csv", ".md", ".docx"}:
+        return "text"
+    if ext == ".zip":
+        return "zip"
+    return "unknown"
+
+
+def extract_text_from_file(file_path: str, ext: str) -> Optional[str]:
+    """Extract text content from text-based files."""
+    try:
+        if ext in {".txt", ".csv", ".md"}:
+            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+                return f.read()
+        if ext == ".docx":
+            from docx import Document
+            doc = Document(file_path)
+            return "\n".join(p.text for p in doc.paragraphs)
+    except Exception as e:
+        return f"[Ошибка извлечения текста: {e}]"
+    return None
+
+
+def process_zip(file_path: str) -> list:
+    """Extract files from ZIP and process each one. Returns list of attachment dicts."""
+    results = []
+    try:
+        with zipfile.ZipFile(file_path, "r") as zf:
+            for info in zf.infolist():
+                if info.is_dir():
+                    continue
+                ext = os.path.splitext(info.filename)[1].lower()
+                if ext not in (BINARY_TYPES | TEXT_TYPES):
+                    continue
+
+                inner_path = os.path.join(UPLOAD_DIR, f"{uuid.uuid4().hex}_{os.path.basename(info.filename)}")
+                with zf.open(info) as src, open(inner_path, "wb") as dst:
+                    dst.write(src.read())
+
+                extracted = None
+                if ext in TEXT_TYPES:
+                    extracted = extract_text_from_file(inner_path, ext)
+
+                results.append({
+                    "name": info.filename,
+                    "ext": ext,
+                    "file_path": inner_path,
+                    "file_type": get_file_type(ext),
+                    "size": info.file_size,
+                    "extracted_text": extracted,
+                })
+    except Exception as e:
+        results.append({
+            "name": os.path.basename(file_path),
+            "ext": ".zip",
+            "file_path": file_path,
+            "file_type": "zip",
+            "size": 0,
+            "extracted_text": f"[Ошибка распаковки ZIP: {e}]",
+        })
+    return results
+
+
+@router.post("/projects/{project_id}/attachments", response_model=List[AttachmentResponse])
+async def upload_attachment(
+    project_id: str,
+    file: UploadFile = File(...),
+    user=Depends(get_current_user)
+):
+    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    ext = os.path.splitext(file.filename)[1].lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Формат {ext} не поддерживается. Поддерживаются: {', '.join(sorted(ALLOWED_EXTENSIONS))}"
+        )
+
+    # Save file
+    file_id = uuid.uuid4().hex
+    safe_name = f"{file_id}_{file.filename}"
+    file_path = os.path.join(UPLOAD_DIR, safe_name)
+
+    content = await file.read()
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail="Файл превышает 100MB")
+
+    with open(file_path, "wb") as f:
+        f.write(content)
+
+    now = datetime.now(timezone.utc).isoformat()
+    created_attachments = []
+
+    if ext in ARCHIVE_TYPES:
+        # Process ZIP — create attachment per inner file
+        inner_files = process_zip(file_path)
+        for inner in inner_files:
+            att_id = str(uuid.uuid4())
+            doc = {
+                "id": att_id,
+                "project_id": project_id,
+                "name": inner["name"],
+                "file_type": inner["file_type"],
+                "content_type": None,
+                "size": inner["size"],
+                "source_url": None,
+                "extracted_text": inner.get("extracted_text"),
+                "file_path": inner["file_path"],
+                "created_at": now,
+            }
+            await db.attachments.insert_one(doc)
+            created_attachments.append(AttachmentResponse(**doc))
+    else:
+        # Single file
+        extracted = None
+        if ext in TEXT_TYPES:
+            extracted = extract_text_from_file(file_path, ext)
+
+        att_id = str(uuid.uuid4())
+        doc = {
+            "id": att_id,
+            "project_id": project_id,
+            "name": file.filename,
+            "file_type": get_file_type(ext),
+            "content_type": file.content_type,
+            "size": len(content),
+            "source_url": None,
+            "extracted_text": extracted,
+            "file_path": file_path,
+            "created_at": now,
+        }
+        await db.attachments.insert_one(doc)
+        created_attachments.append(AttachmentResponse(**doc))
+
+    return created_attachments
+
+
+@router.post("/projects/{project_id}/attachments/url", response_model=AttachmentResponse)
+async def add_url_attachment(
+    project_id: str,
+    data: AddUrlRequest,
+    user=Depends(get_current_user)
+):
+    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    att_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+
+    name = data.name or data.url[:80]
+    doc = {
+        "id": att_id,
+        "project_id": project_id,
+        "name": name,
+        "file_type": "url",
+        "content_type": None,
+        "size": None,
+        "source_url": data.url,
+        "extracted_text": None,
+        "file_path": None,
+        "created_at": now,
+    }
+    await db.attachments.insert_one(doc)
+    return AttachmentResponse(**doc)
+
+
+@router.get("/projects/{project_id}/attachments", response_model=List[AttachmentResponse])
+async def list_attachments(
+    project_id: str,
+    user=Depends(get_current_user)
+):
+    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    items = await db.attachments.find(
+        {"project_id": project_id}, {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+
+    return [AttachmentResponse(**a) for a in items]
+
+
+@router.delete("/projects/{project_id}/attachments/{attachment_id}")
+async def delete_attachment(
+    project_id: str,
+    attachment_id: str,
+    user=Depends(get_current_user)
+):
+    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    att = await db.attachments.find_one({"id": attachment_id, "project_id": project_id}, {"_id": 0})
+    if not att:
+        raise HTTPException(status_code=404, detail="Attachment not found")
+
+    # Delete file from disk
+    if att.get("file_path") and os.path.exists(att["file_path"]):
+        os.remove(att["file_path"])
+
+    await db.attachments.delete_one({"id": attachment_id})
+    return {"message": "Deleted"}
+
+
+# ====== Helper: build LLM content parts from attachments ======
+
+async def build_attachment_context(attachment_ids: List[str], project_id: str):
+    """
+    Build additional content for LLM messages from selected attachments.
+    Returns:
+      - text_parts: list of strings to append to user_message
+      - file_parts: list of content parts for multimodal messages (images, PDFs)
+    """
+    if not attachment_ids:
+        return [], []
+
+    attachments = await db.attachments.find(
+        {"id": {"$in": attachment_ids}, "project_id": project_id},
+        {"_id": 0}
+    ).to_list(100)
+
+    text_parts = []
+    file_parts = []
+
+    for att in attachments:
+        ft = att.get("file_type", "")
+
+        if ft == "url":
+            # URL — inject as text instruction
+            text_parts.append(f"Также изучи информацию по ссылке: {att['source_url']}")
+
+        elif ft == "text":
+            # Text-based file — inject extracted text
+            if att.get("extracted_text"):
+                text_parts.append(f"--- Файл: {att['name']} ---\n{att['extracted_text']}")
+
+        elif ft == "pdf" and att.get("file_path") and os.path.exists(att["file_path"]):
+            # PDF — send as base64 file content part
+            with open(att["file_path"], "rb") as f:
+                b64 = base64.b64encode(f.read()).decode("utf-8")
+            file_parts.append({
+                "type": "file",
+                "file": {
+                    "file_data": f"data:application/pdf;base64,{b64}",
+                    "filename": att["name"],
+                }
+            })
+
+        elif ft == "image" and att.get("file_path") and os.path.exists(att["file_path"]):
+            # Image — send as base64 image_url
+            content_type = att.get("content_type", "image/png")
+            with open(att["file_path"], "rb") as f:
+                b64 = base64.b64encode(f.read()).decode("utf-8")
+            file_parts.append({
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:{content_type};base64,{b64}",
+                }
+            })
+
+    return text_parts, file_parts
