@@ -38,6 +38,7 @@ export function AnalysisTab({
   const [editChatText, setEditChatText] = useState('');
   const [savingChat, setSavingChat] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
+  const [selectedAttachmentIds, setSelectedAttachmentIds] = useState(new Set());
   const autosaveTimerRef = useRef(null);
 
   const chatDraftKey = `${DRAFT_KEY_PREFIX}chat_${projectId}`;
