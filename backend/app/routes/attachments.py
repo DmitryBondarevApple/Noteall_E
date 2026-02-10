@@ -149,21 +149,23 @@ async def upload_attachment(
     # Save file
     file_id = uuid.uuid4().hex
     safe_name = f"{file_id}_{file.filename}"
-    file_path = os.path.join(UPLOAD_DIR, safe_name)
 
     content = await file.read()
     if len(content) > MAX_FILE_SIZE:
         raise HTTPException(status_code=400, detail="Файл превышает 100MB")
 
-    with open(file_path, "wb") as f:
-        f.write(content)
-
     now = datetime.now(timezone.utc).isoformat()
     created_attachments = []
 
     if ext in ARCHIVE_TYPES:
-        # Process ZIP — create attachment per inner file
-        inner_files = process_zip(file_path)
+        # Save ZIP locally temporarily for extraction
+        tmp_path = os.path.join(UPLOAD_DIR, safe_name)
+        with open(tmp_path, "wb") as f:
+            f.write(content)
+        inner_files = process_zip(tmp_path)
+        # Remove temp ZIP
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
         for inner in inner_files:
             att_id = str(uuid.uuid4())
             doc = {
@@ -175,16 +177,30 @@ async def upload_attachment(
                 "size": inner["size"],
                 "source_url": None,
                 "extracted_text": inner.get("extracted_text"),
-                "file_path": inner["file_path"],
+                "file_path": inner.get("file_path"),
+                "s3_key": inner.get("s3_key"),
                 "created_at": now,
             }
             await db.attachments.insert_one(doc)
-            created_attachments.append(AttachmentResponse(**doc))
+            created_attachments.append(AttachmentResponse(**{k: v for k, v in doc.items() if k != "s3_key"}))
     else:
         # Single file
+        s3_key = None
+        file_path = None
+        if s3_enabled():
+            s3_key = f"attachments/{safe_name}"
+            upload_bytes(s3_key, content, file.content_type or "application/octet-stream")
+        else:
+            file_path = os.path.join(UPLOAD_DIR, safe_name)
+            with open(file_path, "wb") as f:
+                f.write(content)
+
         extracted = None
         if ext in TEXT_TYPES:
-            extracted = extract_text_from_file(file_path, ext)
+            if s3_enabled():
+                extracted = content.decode("utf-8", errors="replace")
+            else:
+                extracted = extract_text_from_file(file_path, ext)
 
         att_id = str(uuid.uuid4())
         doc = {
@@ -197,10 +213,11 @@ async def upload_attachment(
             "source_url": None,
             "extracted_text": extracted,
             "file_path": file_path,
+            "s3_key": s3_key,
             "created_at": now,
         }
         await db.attachments.insert_one(doc)
-        created_attachments.append(AttachmentResponse(**doc))
+        created_attachments.append(AttachmentResponse(**{k: v for k, v in doc.items() if k != "s3_key"}))
 
     return created_attachments
 
