@@ -177,6 +177,7 @@ export const docTemplatesApi = {
   create: (data) => axios.post(`${API}/doc/templates`, data),
   update: (id, data) => axios.put(`${API}/doc/templates/${id}`, data),
   delete: (id) => axios.delete(`${API}/doc/templates/${id}`),
+  seed: () => axios.post(`${API}/doc/seed-templates`),
 };
 
 // Seed
