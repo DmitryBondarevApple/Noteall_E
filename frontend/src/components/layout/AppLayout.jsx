@@ -12,24 +12,18 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/
 import {
   Mic,
   FileText,
-  BookOpen,
-  Users,
-  Workflow,
+  Blocks,
   Shield,
   LogOut,
-  ChevronLeft,
-  ChevronRight,
   PanelLeftClose,
   PanelLeft,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 const navItems = [
-  { path: '/dashboard', label: 'Проекты', icon: Mic, section: 'voice' },
-  { path: '/documents', label: 'Документы', icon: FileText, section: 'doc' },
-  { path: '/prompts', label: 'Промпты', icon: BookOpen, section: 'tools' },
-  { path: '/speakers', label: 'Спикеры', icon: Users, section: 'tools' },
-  { path: '/pipelines', label: 'Сценарии', icon: Workflow, section: 'tools' },
+  { path: '/meetings', label: 'Встречи', icon: Mic },
+  { path: '/documents', label: 'Документы', icon: FileText },
+  { path: '/constructor', label: 'Конструктор', icon: Blocks },
 ];
 
 export default function AppLayout({ children }) {
