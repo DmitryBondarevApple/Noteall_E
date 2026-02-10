@@ -46,6 +46,7 @@ export default function MeetingsPage() {
 
   const [folderDialog, setFolderDialog] = useState({ open: false, parentId: null, editId: null, name: '', description: '' });
   const [projectDialog, setProjectDialog] = useState({ open: false, folderId: null, name: '', description: '' });
+  const [moveDialog, setMoveDialog] = useState({ open: false, projectId: null, projectName: '' });
   const [saving, setSaving] = useState(false);
 
   const loadData = useCallback(async () => {
