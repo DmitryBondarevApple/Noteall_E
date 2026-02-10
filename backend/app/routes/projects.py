@@ -4,7 +4,7 @@ import asyncio
 import logging
 from pathlib import Path
 from datetime import datetime, timezone
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, BackgroundTasks
 from app.core.database import db
 from app.core.security import get_current_user
