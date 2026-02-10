@@ -35,16 +35,11 @@ import {
   Loader2,
   Search,
   Mic,
-  LogOut,
-  Settings,
-  BookOpen,
-  Shield,
-  Users,
-  Workflow
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import AppLayout from '../components/layout/AppLayout';
 
 const statusConfig = {
   new: { label: 'Новый', color: 'bg-slate-100 text-slate-700', icon: FolderOpen },
