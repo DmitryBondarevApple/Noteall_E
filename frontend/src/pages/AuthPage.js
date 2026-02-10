@@ -63,7 +63,7 @@ export default function AuthPage() {
         
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-2">
-            <img src="/logo-noteall.png" alt="Noteall" className="h-8" />
+            <img src="/logo-noteall.png" alt="Noteall" className="h-10" />
           </div>
           <p className="text-slate-400 text-lg">AI-платформа для анализа встреч и документов</p>
         </div>
