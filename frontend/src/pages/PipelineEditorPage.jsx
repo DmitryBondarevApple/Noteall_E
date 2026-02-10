@@ -763,5 +763,6 @@ export default function PipelineEditorPage() {
         </DialogContent>
       </Dialog>
     </div>
+    </AppLayout>
   );
 }
