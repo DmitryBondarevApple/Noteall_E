@@ -80,6 +80,7 @@ export default function MeetingsPage() {
     setExpandedFolders(prev => {
       const next = new Set(prev);
       next.has(folderId) ? next.delete(folderId) : next.add(folderId);
+      localStorage.setItem('meetings_expanded', JSON.stringify([...next]));
       return next;
     });
   };
