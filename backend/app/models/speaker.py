@@ -36,6 +36,7 @@ class SpeakerDirectoryCreate(BaseModel):
     whatsapp: Optional[str] = None
     photo_url: Optional[str] = None
     comment: Optional[str] = None
+    tags: Optional[list] = None
 
 
 class SpeakerDirectoryUpdate(BaseModel):
@@ -48,6 +49,7 @@ class SpeakerDirectoryUpdate(BaseModel):
     whatsapp: Optional[str] = None
     photo_url: Optional[str] = None
     comment: Optional[str] = None
+    tags: Optional[list] = None
 
 
 class SpeakerDirectoryResponse(BaseModel):
@@ -62,5 +64,6 @@ class SpeakerDirectoryResponse(BaseModel):
     whatsapp: Optional[str] = None
     photo_url: Optional[str] = None
     comment: Optional[str] = None
+    tags: Optional[list] = None
     created_at: str
     updated_at: str
