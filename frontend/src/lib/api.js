@@ -162,6 +162,15 @@ export const docStreamsApi = {
   sendMessage: (projectId, streamId, content) => axios.post(`${API}/doc/projects/${projectId}/streams/${streamId}/messages`, { content }),
 };
 
+// Document Agent - Pins (Final Document)
+export const docPinsApi = {
+  list: (projectId) => axios.get(`${API}/doc/projects/${projectId}/pins`),
+  create: (projectId, data) => axios.post(`${API}/doc/projects/${projectId}/pins`, data),
+  update: (projectId, pinId, data) => axios.put(`${API}/doc/projects/${projectId}/pins/${pinId}`, data),
+  delete: (projectId, pinId) => axios.delete(`${API}/doc/projects/${projectId}/pins/${pinId}`),
+  reorder: (projectId, pinIds) => axios.put(`${API}/doc/projects/${projectId}/pins/reorder`, { pin_ids: pinIds }),
+};
+
 // Document Agent - Templates
 export const docTemplatesApi = {
   list: () => axios.get(`${API}/doc/templates`),
