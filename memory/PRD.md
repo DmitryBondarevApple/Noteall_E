@@ -5,6 +5,7 @@
 - **Frontend**: React + Tailwind CSS + shadcn/ui + React Flow
 - **AI**: OpenAI GPT-5.2 via Emergent LLM Key
 - **Auth**: JWT-based
+- **Storage**: Timeweb S3 (s3.twcstorage.ru, bucket 63dffe5a-920b-4901-a340-056793b978fa, region ru-1)
 
 ## Navigation
 - **Встречи** (`/meetings`) — transcript projects in tree folders + Speakers (`/meetings/speakers`)
@@ -39,6 +40,18 @@
 - ConstructorPage with Сценарии/Промпты tabs
 - Full-width left-aligned tree layouts
 - Old routes redirect correctly
+
+### S3 Storage Integration (Feb 2026)
+- All file uploads (doc attachments, meeting attachments, audio) go to Timeweb S3
+- Presigned URL download endpoints for secure file access
+- Automatic fallback to local storage if S3 not configured
+- S3 delete on attachment/project removal
+- Service module: /app/backend/app/services/s3.py
+
+### Deployment
+- Docker Compose setup guide created (DEPLOY_GUIDE.md)
+- Instructions for: MongoDB install, Docker setup, Nginx proxy, HTTPS
+- Target VPS: 185.246.220.121
 
 ## Backlog
 - PDF content parsing for AI context
