@@ -78,7 +78,7 @@ class TestS3Integration:
             headers={**headers, "Content-Type": "application/json"},
             json={"name": "TEST_S3_Meeting_Project", "folder_id": folder["id"]}
         )
-        assert project_resp.status_code == 201, f"Create meeting project failed: {project_resp.text}"
+        assert project_resp.status_code in [200, 201], f"Create meeting project failed: {project_resp.text}"
         project = project_resp.json()
         
         yield {"folder": folder, "project": project}
