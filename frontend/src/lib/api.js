@@ -168,7 +168,7 @@ export const docPinsApi = {
   create: (projectId, data) => axios.post(`${API}/doc/projects/${projectId}/pins`, data),
   update: (projectId, pinId, data) => axios.put(`${API}/doc/projects/${projectId}/pins/${pinId}`, data),
   delete: (projectId, pinId) => axios.delete(`${API}/doc/projects/${projectId}/pins/${pinId}`),
-  reorder: (projectId, pinIds) => axios.put(`${API}/doc/projects/${projectId}/pins/reorder`, { pin_ids: pinIds }),
+  reorder: (projectId, pinIds) => axios.post(`${API}/doc/projects/${projectId}/pins/reorder`, { pin_ids: pinIds }),
 };
 
 // Document Agent - Templates
