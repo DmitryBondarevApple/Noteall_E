@@ -197,10 +197,6 @@ export default function ProjectPage() {
                       <FileText className="w-4 h-4" />
                       <span className="hidden sm:inline">Транскрипт</span>
                     </TabsTrigger>
-                    <TabsTrigger value="processed" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3" data-testid="processed-tab">
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span className="hidden sm:inline">Обработанный</span>
-                    </TabsTrigger>
                     <TabsTrigger value="review" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3" data-testid="review-tab">
                       <AlertCircle className="w-4 h-4" />
                       <span className="hidden sm:inline">Проверка</span>
@@ -210,13 +206,13 @@ export default function ProjectPage() {
                         </Badge>
                       )}
                     </TabsTrigger>
-                    <TabsTrigger value="analysis" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3" data-testid="analysis-tab">
-                      <Sparkles className="w-4 h-4" />
-                      <span className="hidden sm:inline">Анализ</span>
+                    <TabsTrigger value="processed" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3" data-testid="processed-tab">
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span className="hidden sm:inline">Обработанный</span>
                     </TabsTrigger>
                     <TabsTrigger value="full-analysis" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3" data-testid="full-analysis-tab">
                       <Wand2 className="w-4 h-4" />
-                      <span className="hidden sm:inline">Мастер</span>
+                      <span className="hidden sm:inline">Анализ</span>
                     </TabsTrigger>
                     <TabsTrigger value="results" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3" data-testid="results-tab">
                       <Archive className="w-4 h-4" />
