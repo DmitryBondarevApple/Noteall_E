@@ -656,6 +656,29 @@ export default function PipelineEditorPage() {
                   <span className="text-orange-600">Источник данных</span>
                 </div>
               </div>
+
+              {/* Selected edge actions */}
+              {selectedEdgeId && (
+                <div
+                  className="absolute top-3 right-3 bg-white border border-red-200 rounded-lg shadow-lg px-3 py-2 z-20 flex items-center gap-2"
+                  data-testid="edge-actions-panel"
+                >
+                  <span className="text-xs text-muted-foreground">Стрелка выбрана</span>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    className="h-7 gap-1.5 text-xs"
+                    onClick={deleteSelectedEdge}
+                    data-testid="delete-edge-btn"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Удалить
+                  </Button>
+                  <span className="text-[10px] text-muted-foreground">
+                    или перетащите конец для переподключения
+                  </span>
+                </div>
+              )}
             </div>
 
             {selectedNode && (
