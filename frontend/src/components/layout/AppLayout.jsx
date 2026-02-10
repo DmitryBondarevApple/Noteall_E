@@ -38,9 +38,9 @@ export default function AppLayout({ children }) {
   };
 
   const isActive = (path) => {
-    if (path === '/dashboard') return location.pathname === '/dashboard' || location.pathname.startsWith('/projects/');
+    if (path === '/meetings') return location.pathname === '/meetings' || location.pathname.startsWith('/projects/') || location.pathname.startsWith('/meetings/');
     if (path === '/documents') return location.pathname === '/documents' || location.pathname.startsWith('/documents/');
-    if (path === '/pipelines') return location.pathname.startsWith('/pipelines');
+    if (path === '/constructor') return location.pathname.startsWith('/constructor') || location.pathname.startsWith('/pipelines');
     return location.pathname === path;
   };
 
