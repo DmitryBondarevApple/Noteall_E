@@ -19,7 +19,7 @@ import { ScrollArea } from '../components/ui/scroll-area';
 import {
   Plus, FolderOpen, FolderClosed, Mic, MoreHorizontal, Trash2, Edit2,
   ChevronRight, ChevronDown, Search, FolderPlus, FilePlus, Loader2,
-  Users, Clock,
+  Users, Clock, FolderInput,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
