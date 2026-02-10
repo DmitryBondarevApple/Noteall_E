@@ -98,17 +98,9 @@ export function PromptsContent() {
   const filteredPrompts = filterPrompts(activeTab);
 
   return (
-    <AppLayout>
-    <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-slate-900 flex items-center justify-center">
-                <BookOpen className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold tracking-tight">Библиотека промптов</span>
-          </div>
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div />
           
           <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
             <DialogTrigger asChild>
@@ -140,10 +132,8 @@ export function PromptsContent() {
               />
             </DialogContent>
           </Dialog>
-        </div>
-      </header>
+      </div>
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="bg-white border p-1 mb-6">
             <TabsTrigger value="all" data-testid="tab-all">Все</TabsTrigger>
