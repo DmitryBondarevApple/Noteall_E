@@ -233,7 +233,6 @@ export function PromptsContent() {
             )}
           </TabsContent>
         </Tabs>
-      </main>
 
       {/* Edit Dialog */}
       <Dialog open={!!editingPrompt} onOpenChange={() => setEditingPrompt(null)}>
