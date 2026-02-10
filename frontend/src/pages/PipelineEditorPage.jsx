@@ -51,6 +51,7 @@ import {
   Play,
   PenTool,
   Trash2,
+  Download,
 } from 'lucide-react';
 
 const NODE_TYPE_OPTIONS = [
