@@ -5,7 +5,7 @@ const API = `${BACKEND_URL}/api`;
 
 // Projects
 export const projectsApi = {
-  list: () => axios.get(`${API}/projects`),
+  list: (folderId) => axios.get(`${API}/projects`, { params: folderId ? { folder_id: folderId } : {} }),
   get: (id) => axios.get(`${API}/projects/${id}`),
   create: (data) => axios.post(`${API}/projects`, data),
   update: (id, data) => axios.put(`${API}/projects/${id}`, data),
@@ -19,6 +19,14 @@ export const projectsApi = {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
   }
+};
+
+// Meeting Folders
+export const meetingFoldersApi = {
+  list: () => axios.get(`${API}/meeting-folders`),
+  create: (data) => axios.post(`${API}/meeting-folders`, data),
+  update: (id, data) => axios.put(`${API}/meeting-folders/${id}`, data),
+  delete: (id) => axios.delete(`${API}/meeting-folders/${id}`),
 };
 
 // Transcripts
