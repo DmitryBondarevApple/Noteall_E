@@ -16,11 +16,12 @@ import {
   LogOut,
   PanelLeftClose,
   PanelLeft,
+  CalendarDays,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 const navItems = [
-  { path: '/meetings', label: 'Встречи', icon: Mic },
+  { path: '/meetings', label: 'Встречи', icon: CalendarDays },
   { path: '/documents', label: 'Документы', icon: FileText },
   { path: '/constructor', label: 'Конструктор', icon: Blocks },
 ];
