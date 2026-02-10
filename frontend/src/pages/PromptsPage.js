@@ -274,7 +274,9 @@ export default function PromptsPage() {
     </div>
     </AppLayout>
   );
-}({ initialData, onSave, onCancel, isAdmin, isEditing }) {
+}
+
+function PromptForm({ initialData, onSave, onCancel, isAdmin, isEditing }) {
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
     content: initialData?.content || '',
