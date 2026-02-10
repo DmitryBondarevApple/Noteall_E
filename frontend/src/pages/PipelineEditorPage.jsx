@@ -394,6 +394,20 @@ export default function PipelineEditorPage() {
     [setEdges, setNodes, pushState]
   );
 
+  // Delete selected edge on Delete/Backspace key
+  useEffect(() => {
+    const handler = (e) => {
+      if (!selectedEdgeId) return;
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        e.preventDefault();
+        deleteSelectedEdge();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [selectedEdgeId, deleteSelectedEdge]);
+
   const addNode = useCallback(
     (nodeType) => {
       const nodeId = generateNodeId();
