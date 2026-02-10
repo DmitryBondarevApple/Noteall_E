@@ -608,13 +608,22 @@ export default function PipelineEditorPage() {
             <div className="flex-1 relative">
               <ReactFlow
                 nodes={nodes}
-                edges={edges}
+                edges={edges.map((e) => ({
+                  ...e,
+                  selected: e.id === selectedEdgeId,
+                  style: e.id === selectedEdgeId
+                    ? { ...e.style, stroke: '#ef4444', strokeWidth: 3 }
+                    : e.style,
+                }))}
                 onNodesChange={onNodesChangeWrapped}
                 onEdgesChange={onEdgesChangeWrapped}
                 onConnect={onConnect}
                 onNodeClick={onNodeClick}
+                onEdgeClick={onEdgeClick}
                 onPaneClick={onPaneClick}
+                onReconnect={onReconnect}
                 nodeTypes={nodeTypes}
+                edgesReconnectable
                 fitView
                 fitViewOptions={{ padding: 0.3 }}
                 deleteKeyCode={['Backspace', 'Delete']}
