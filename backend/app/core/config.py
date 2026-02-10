@@ -18,3 +18,10 @@ OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
 # File storage
 UPLOAD_DIR = "/tmp/voice_workspace_uploads"
+
+# S3 (Timeweb)
+S3_ACCESS_KEY = os.environ.get("S3_ACCESS_KEY")
+S3_SECRET_KEY = os.environ.get("S3_SECRET_KEY")
+S3_ENDPOINT = os.environ.get("S3_ENDPOINT")
+S3_BUCKET = os.environ.get("S3_BUCKET")
+S3_REGION = os.environ.get("S3_REGION")
