@@ -7,38 +7,40 @@
 - **Auth**: JWT-based
 
 ## Navigation
-- **Встречи** (`/meetings`) — transcript projects in tree folders + Speakers button
+- **Встречи** (`/meetings`) — transcript projects in tree folders + Speakers (`/meetings/speakers`)
 - **Документы** (`/documents`) — Document Agent: automated pipeline analysis
-- **Конструктор** (`/constructor`) — Tabs: Сценарии (pipelines) | Промпты
-- **Админ** (`/admin`) — Admin panel
+- **Конструктор** (`/constructor`) — Tabs: Сценарии | Промпты
+- **Админ** (`/admin`)
 
-## What's Implemented
+## Implemented Features
 
-### Meeting Analysis (Complete)
+### Meeting Analysis
 - Hierarchical folder structure (meeting_folders API)
 - Audio upload, transcription, speaker identification
 - Pipeline constructor (React Flow), dynamic wizard, results
 - File/link attachments with multimodal AI, export
 
-### Document Agent — Automated Pipeline (Complete - Feb 10, 2026)
-- Hierarchical folder/project structure with CRUD
-- Source material upload (files + URLs)
-- **Server-side pipeline runner**: executes pipeline nodes in topological order
-- Supports: ai_prompt, template, parse_list, batch_loop, aggregate nodes
-- Fan-out/fan-in: one node can feed many parallel branches, aggregate merges them
-- Source materials injected as AI context automatically
-- Results displayed as expandable cards per node step
-- Copy full results or individual steps to clipboard
-- Multiple runs per project with history
+### Speaker Directory (Redesigned - Feb 10, 2026)
+- Compact table view (replaces card layout)
+- Tags support (multi-tag per speaker, comma-separated input)
+- Filters: search, company dropdown, tag dropdown
+- Sortable columns: name, company, role
+- Back navigation to /meetings
 
-### Navigation (Complete - Feb 10, 2026)
-- Sidebar: Встречи, Документы, Конструктор, Админ
-- MeetingsPage with tree folders (replaces flat DashboardPage)
+### Document Agent — Automated Pipeline
+- Hierarchical folder/project structure
+- Source material upload (files + URLs)
+- Server-side pipeline runner with topological sort
+- Fan-out/fan-in support (parallel branches + aggregate merge)
+- Results displayed as expandable node cards
+- Copy full results or individual steps
+
+### Navigation
+- 4-item sidebar: Встречи, Документы, Конструктор, Админ
 - ConstructorPage with Сценарии/Промпты tabs
-- Old routes redirect to new locations
+- Old routes redirect correctly
 
 ## Backlog
 - PDF content parsing for AI context
-- Drag-and-drop for tree navigation
 - Export results to Word/PDF
-- Refactor `usePipelineRunner` hook
+- Real-time pipeline execution progress
