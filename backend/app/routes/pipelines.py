@@ -125,3 +125,65 @@ async def duplicate_pipeline(pipeline_id: str, user=Depends(get_current_user)):
 
     await db.pipelines.insert_one(new_doc)
     return PipelineResponse(**new_doc)
+
+
+@router.get("/{pipeline_id}/export")
+async def export_pipeline(pipeline_id: str, user=Depends(get_current_user)):
+    """Export pipeline as JSON"""
+    pipeline = await db.pipelines.find_one(
+        {"id": pipeline_id, "$or": [{"user_id": user["id"]}, {"is_public": True}]},
+        {"_id": 0}
+    )
+    if not pipeline:
+        raise HTTPException(status_code=404, detail="Pipeline not found")
+
+    export_data = {
+        "noteall_pipeline_version": 1,
+        "name": pipeline["name"],
+        "description": pipeline.get("description", ""),
+        "nodes": pipeline.get("nodes", []),
+        "edges": pipeline.get("edges", []),
+    }
+    return export_data
+
+
+@router.post("/import/json", response_model=PipelineResponse, status_code=201)
+async def import_pipeline(file: UploadFile = File(...), user=Depends(get_current_user)):
+    """Import pipeline from JSON file"""
+    import json
+
+    content = await file.read()
+    if len(content) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Файл превышает 5MB")
+
+    try:
+        data = json.loads(content.decode("utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        raise HTTPException(status_code=400, detail="Некорректный JSON файл")
+
+    if not isinstance(data, dict) or "nodes" not in data:
+        raise HTTPException(status_code=400, detail="Неверный формат сценария")
+
+    name = data.get("name", "Импортированный сценарий")
+
+    existing = await db.pipelines.find_one({"name": name, "user_id": user["id"]})
+    if existing:
+        name = f"{name} (импорт)"
+
+    pipeline_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+
+    pipeline_doc = {
+        "id": pipeline_id,
+        "name": name,
+        "description": data.get("description", ""),
+        "nodes": data.get("nodes", []),
+        "edges": data.get("edges", []),
+        "user_id": user["id"],
+        "is_public": False,
+        "created_at": now,
+        "updated_at": now,
+    }
+
+    await db.pipelines.insert_one(pipeline_doc)
+    return PipelineResponse(**pipeline_doc)
