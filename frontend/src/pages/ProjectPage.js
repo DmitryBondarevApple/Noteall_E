@@ -38,7 +38,6 @@ import {
   TranscriptTab,
   ProcessedTab,
   ReviewTab,
-  AnalysisTab,
   FullAnalysisTab,
   ResultsTab,
   statusConfig,
