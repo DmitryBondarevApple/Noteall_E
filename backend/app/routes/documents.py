@@ -281,6 +281,144 @@ async def delete_doc_attachment(
     return {"message": "Deleted"}
 
 
+# ==================== ANALYSIS STREAMS ====================
+
+@router.get("/doc/projects/{project_id}/streams")
+async def list_streams(project_id: str, user=Depends(get_current_user)):
+    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    streams = await db.doc_streams.find(
+        {"project_id": project_id}, {"_id": 0}
+    ).sort("created_at", 1).to_list(50)
+    return streams
+
+@router.post("/doc/projects/{project_id}/streams", status_code=201)
+async def create_stream(project_id: str, data: StreamCreate, user=Depends(get_current_user)):
+    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    now = datetime.now(timezone.utc).isoformat()
+    stream = {
+        "id": str(uuid.uuid4()),
+        "project_id": project_id,
+        "name": data.name,
+        "system_prompt": data.system_prompt,
+        "messages": [],
+        "created_at": now,
+        "updated_at": now,
+    }
+    await db.doc_streams.insert_one(stream)
+    return {k: v for k, v in stream.items() if k != "_id"}
+
+@router.put("/doc/projects/{project_id}/streams/{stream_id}")
+async def update_stream(project_id: str, stream_id: str, data: StreamUpdate, user=Depends(get_current_user)):
+    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    stream = await db.doc_streams.find_one({"id": stream_id, "project_id": project_id})
+    if not stream:
+        raise HTTPException(status_code=404, detail="Stream not found")
+
+    updates = {k: v for k, v in data.dict(exclude_unset=True).items()}
+    updates["updated_at"] = datetime.now(timezone.utc).isoformat()
+    await db.doc_streams.update_one({"id": stream_id}, {"$set": updates})
+
+    updated = await db.doc_streams.find_one({"id": stream_id}, {"_id": 0})
+    return updated
+
+@router.delete("/doc/projects/{project_id}/streams/{stream_id}")
+async def delete_stream(project_id: str, stream_id: str, user=Depends(get_current_user)):
+    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    stream = await db.doc_streams.find_one({"id": stream_id, "project_id": project_id})
+    if not stream:
+        raise HTTPException(status_code=404, detail="Stream not found")
+
+    await db.doc_streams.delete_one({"id": stream_id})
+    return {"message": "Deleted"}
+
+@router.post("/doc/projects/{project_id}/streams/{stream_id}/messages")
+async def send_stream_message(
+    project_id: str, stream_id: str, data: StreamMessage, user=Depends(get_current_user)
+):
+    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    stream = await db.doc_streams.find_one({"id": stream_id, "project_id": project_id})
+    if not stream:
+        raise HTTPException(status_code=404, detail="Stream not found")
+
+    # Build context from source materials
+    attachments = await db.doc_attachments.find(
+        {"project_id": project_id}, {"_id": 0}
+    ).to_list(100)
+
+    context_parts = []
+    for att in attachments:
+        if att.get("file_path") and os.path.exists(att["file_path"]):
+            try:
+                ext = os.path.splitext(att["file_path"])[1].lower()
+                if ext in {".txt", ".md", ".csv"}:
+                    with open(att["file_path"], "r", encoding="utf-8", errors="replace") as f:
+                        text = f.read()[:50000]
+                    context_parts.append(f"--- Документ: {att['name']} ---\n{text}")
+            except Exception as e:
+                logger.warning(f"Failed to read attachment {att['name']}: {e}")
+        elif att.get("source_url"):
+            context_parts.append(f"--- Ссылка: {att['name']} ({att['source_url']}) ---")
+
+    source_context = "\n\n".join(context_parts) if context_parts else ""
+
+    # Build system prompt
+    base_system = stream.get("system_prompt") or project.get("system_instruction") or ""
+    system_message = "Ты — AI-ассистент для анализа документов. Отвечай на русском языке. Будь точен и структурирован."
+    if base_system:
+        system_message += f"\n\nИнструкция пользователя:\n{base_system}"
+    if source_context:
+        system_message += f"\n\nИсходные материалы проекта:\n{source_context}"
+
+    # Build messages history for multi-turn
+    history = stream.get("messages", [])
+    openai_messages = []
+    for msg in history:
+        openai_messages.append({"role": msg["role"], "content": msg["content"]})
+    openai_messages.append({"role": "user", "content": data.content})
+
+    # Add user message to DB first
+    now = datetime.now(timezone.utc).isoformat()
+    user_msg = {"role": "user", "content": data.content, "timestamp": now}
+
+    try:
+        ai_response = await call_gpt52(
+            system_message=system_message,
+            messages=openai_messages,
+            reasoning_effort="high"
+        )
+    except Exception as e:
+        logger.error(f"AI stream error: {e}")
+        ai_response = f"Ошибка AI: {str(e)}"
+
+    assistant_msg = {"role": "assistant", "content": ai_response, "timestamp": datetime.now(timezone.utc).isoformat()}
+
+    # Save both messages
+    await db.doc_streams.update_one(
+        {"id": stream_id},
+        {
+            "$push": {"messages": {"$each": [user_msg, assistant_msg]}},
+            "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}
+        }
+    )
+
+    return {"user_message": user_msg, "assistant_message": assistant_msg}
+
+
 # ==================== TEMPLATES ====================
 
 @router.get("/doc/templates")
