@@ -767,9 +767,16 @@ async def send_stream_message(
 
     context_parts = []
     for att in attachments:
-        if att.get("file_path") and os.path.exists(att["file_path"]):
+        ext = os.path.splitext(att.get("name", ""))[1].lower()
+        if att.get("s3_key") and ext in {".txt", ".md", ".csv"}:
             try:
-                ext = os.path.splitext(att["file_path"])[1].lower()
+                data_bytes = download_bytes(att["s3_key"])
+                text = data_bytes.decode("utf-8", errors="replace")[:50000]
+                context_parts.append(f"--- Документ: {att['name']} ---\n{text}")
+            except Exception as e:
+                logger.warning(f"Failed to read S3 attachment {att['name']}: {e}")
+        elif att.get("file_path") and os.path.exists(att["file_path"]):
+            try:
                 if ext in {".txt", ".md", ".csv"}:
                     with open(att["file_path"], "r", encoding="utf-8", errors="replace") as f:
                         text = f.read()[:50000]
