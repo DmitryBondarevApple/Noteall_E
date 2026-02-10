@@ -311,6 +311,29 @@ async def delete_doc_attachment(
     return {"message": "Deleted"}
 
 
+@router.get("/doc/projects/{project_id}/attachments/{attachment_id}/download")
+async def download_doc_attachment(
+    project_id: str, attachment_id: str, user=Depends(get_current_user)
+):
+    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    att = await db.doc_attachments.find_one({"id": attachment_id, "project_id": project_id}, {"_id": 0})
+    if not att:
+        raise HTTPException(status_code=404, detail="Attachment not found")
+
+    if att.get("s3_key"):
+        url = presigned_url(att["s3_key"], expires=3600)
+        return RedirectResponse(url=url)
+
+    if att.get("file_path") and os.path.exists(att["file_path"]):
+        from fastapi.responses import FileResponse
+        return FileResponse(att["file_path"], filename=att.get("name", "file"))
+
+    raise HTTPException(status_code=404, detail="File not found")
+
+
 # ==================== PIPELINE RUNNER ====================
 
 import re
