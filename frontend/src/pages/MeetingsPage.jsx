@@ -62,9 +62,6 @@ export default function MeetingsPage() {
       ]);
       setFolders(foldersRes.data);
       setProjects(projectsRes.data);
-      if (foldersRes.data.length > 0 && expandedFolders.size === 0) {
-        setExpandedFolders(new Set(foldersRes.data.map(f => f.id)));
-      }
     } catch {
       toast.error('Ошибка загрузки');
     } finally {
