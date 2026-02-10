@@ -293,19 +293,6 @@ export default function ProjectPage() {
               />
             </TabsContent>
 
-            {/* Processed Tab */}
-            <TabsContent value="processed">
-              <ProcessedTab
-                transcript={getTranscript('processed')}
-                speakers={speakers}
-                projectId={projectId}
-                processing={processing}
-                hasRawTranscript={!!getTranscript('raw')}
-                onProcess={handleProcessWithGPT}
-                onUpdate={handleTranscriptUpdate}
-              />
-            </TabsContent>
-
             {/* Review Tab */}
             <TabsContent value="review">
               <ReviewTab
@@ -319,26 +306,27 @@ export default function ProjectPage() {
               />
             </TabsContent>
 
-            {/* Analysis Tab (legacy — chat with AI) */}
-            <TabsContent value="analysis">
-              <AnalysisTab
-                prompts={prompts}
-                chatHistory={chatHistory}
+            {/* Processed Tab */}
+            <TabsContent value="processed">
+              <ProcessedTab
+                transcript={getTranscript('processed')}
+                speakers={speakers}
                 projectId={projectId}
-                projectStatus={project?.status}
-                selectedReasoningEffort={selectedReasoningEffort}
-                onChatHistoryUpdate={setChatHistory}
+                processing={processing}
+                hasRawTranscript={!!getTranscript('raw')}
+                onProcess={handleProcessWithGPT}
+                onUpdate={handleTranscriptUpdate}
               />
             </TabsContent>
 
-            {/* Full Analysis Wizard Tab */}
+            {/* Analysis (Wizard) Tab */}
             <TabsContent value="full-analysis" forceMount className="data-[state=inactive]:hidden">
               <FullAnalysisTab
                 projectId={projectId}
                 processedTranscript={getTranscript('processed')}
                 onSaveResult={(result) => {
-                  loadData(); // Reload chat history after saving
-                  toast.success('Полный анализ сохранён в историю');
+                  loadData();
+                  toast.success('Анализ сохранён в результаты');
                 }}
               />
             </TabsContent>
