@@ -1,158 +1,162 @@
-<analysis>**original_problem_statement:** The user's primary goal is to build a sophisticated web application for transcribing and analyzing audio files. The latest major feature request is to automate a complex, multi-step analysis workflow.
+<analysis>An analysis of the user's request and the agent's actions has been done. Here is the summary of the work:
+
+**original_problem_statement:**
+The user wants to build a new major section of the application called the Document Agent. This section is intended for complex document processing workflows.
 
 **PRODUCT REQUIREMENTS:**
-The user has defined a detailed workflow for a new feature called **Мастер полного анализа встречи (Full Analysis Wizard)**:
-1.  **Start:** The user provides the key subject of discussion for a transcript.
-2.  **Extract Topics:** An AI prompt generates a list of discussed topics from the transcript. The user must be able to review and edit this list.
-3.  **Detailed Analysis:** The AI generates a detailed summary for each topic. This process runs in batches (e.g., 3 topics at a time), with the batch size being configurable by the user.
-4.  **Combine:** All the detailed topic summaries are scripted together into a single large document.
-5.  **Final Summary:** The AI generates a final, short summary (including agreements and action items) based on the combined document from the previous step.
-6.  **Final Document:** The output is presented in a new tab, with the short summary at the top, followed by the detailed topic-by-topic analysis. The entire result is saved as a single analysis entry.
+- The new section should be accessible via a new top-level navigation item.
+- It needs a hierarchical (tree-like) structure to organize work: e.g., .
+- Within an Analysis Project, the user should be able to:
+    - Upload a set of source documents and materials (text files, PDFs, images, etc.).
+    - Define a target document structure using a template.
+    - Run analysis in multiple parallel streams (like separate chat threads), where each stream focuses on a specific part of the target document.
+    - The AI in each stream should use the source materials as context.
+    - The AI should be able to generate clarification questions based on missing information.
+    - The user can then combine the results from all streams to assemble the final document.
+- The overall site navigation should be moved from a horizontal top bar to a vertical sidebar on the left.
+- The system should support reusable prompt/scenario templates.
+- Uploaded files must be stored persistently and associated with their respective projects.
 
-Additionally, the user previously requested and received features for a global speaker directory, autosaving drafts, and the ability to undo confirmed corrections.
-
-**User's preferred language**: The user communicates in **Russian**. The next agent MUST respond in Russian.
+**User's preferred language**:
+The user's primary language is **Russian (Русский)**. The next agent MUST respond in Russian.
 
 **what currently exists?**
-The application consists of a React frontend and a modular FastAPI backend using MongoDB. It supports audio transcription (Deepgram), AI-powered text processing (GPT-4o), and analysis.
+The application has a Projects section for analyzing meeting transcripts. This section includes a pipeline constructor for creating analysis scenarios, a dynamic wizard to run these scenarios, and a tabbed interface to view transcripts, review results, and manage saved analyses.
 
-Key features implemented:
--   **Core:** Asynchronous processing of long AI tasks with frontend polling.
--   **Frontend Refactoring:** The main  has been successfully refactored into smaller, logical components located in .
--   **Backend Refactoring:** The monolithic  has been completely modularized into a standard FastAPI structure (, , , ).
--   **Speaker Directory:** A global, editable directory for speakers with CRUD functionality and an autocomplete combobox for easy assignment in projects. Speaker profiles include fields for photo, contact details, and comments. The directory page allows grouping speakers by company.
--   **UX Improvements:** Autosave for drafts in edit-mode and the ability to revert a confirmed correction in the Review tab.
--   **Prompt Engineering:** The master prompt for text processing has been iteratively refined based on detailed user feedback to ensure it corrects text while also flagging uncertain words for review.
+The agent has just begun implementing the new Document Agent feature by creating the initial backend models and API endpoints for the hierarchical project structure.
 
 **Last working item**:
--   **Last item agent was working:** The agent began implementing the **Мастер полного анализа встречи (Full Analysis Wizard)** feature. The initial scaffolding is in place:
-    1.  A new frontend component was created: .
-    2.  A new backend endpoint was added:  in . This endpoint performs a raw AI call without saving the result to the chat history, intended for use in the intermediate steps of the wizard.
--   **Status:** IN PROGRESS
--   **Agent Testing Done:** N
--   **Which testing method agent to use?** frontend testing agent. This is a complex multi-step UI wizard that will require thorough testing of the entire flow once the implementation is complete.
--   **User Testing Done:** N
+- **Last item agent was working:** Starting the implementation of the new Document Agent section. Specifically, the agent created the database models (, ) and the basic API router () to manage the hierarchical project structure.
+- **Status:** IN PROGRESS
+- **Agent Testing Done:** N
+- **Which testing method agent to use?** backend testing agent
+- **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-There are no outstanding bugs. The focus is on completing the new feature.
+There are no pending bugs or issues. All previously reported issues were resolved.
 
 **In progress Task List**:
--   **Task 1: Implement the Мастер полного анализа встречи (Full Analysis Wizard) (P0)**
-    -   **Where to resume:** The basic component  and the helper backend endpoint  are created. The next step is to build out the full wizard logic inside .
-        -   **UI/State:** Implement the multi-step UI (Step 1: Setup, Step 2: Topic Review, Step 3: Progress, Step 4: Final Document) and manage the state transitions.
-        -   **API Calls:** Use the  endpoint to get the topic list and the summary for each batch of topics.
-        -   **Logic:** Implement the logic to allow topic editing, configurable batch processing, and scripting the final document together.
-        -   **Save:** Use the existing  endpoint to save the final generated document.
-        -   **Integration:** Add the  to the tabbed interface in .
-    -   **What will be achieved with this?** It will deliver a key user-requested feature, automating a complex and time-consuming analysis workflow.
-    -   **Status:** IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?** Both
-    -   **Blocked on something:** None
+- **Task 1: Implement the Document Agent feature (P0)**
+  - **Where to resume:** The backend models and router have been created in  and . The next logical step is to test these new backend endpoints and then begin the frontend implementation, starting with the vertical sidebar navigation.
+  - **What will be achieved with this?** This will build out the foundational structure for the entire new document processing feature as requested by the user.
+  - **Status:** IN PROGRESS
+  - **Should Test frontend/backend/both after fix?** Both
+  - **Blocked on something:** No
 
 **Upcoming and Future Tasks**
--   **Tags for Speaker Directory (P1):** Add a tagging system to the speaker directory to allow for better filtering and organization.
--   **Import/Export (P2):**
-    -   Implement a feature to import speakers from a CSV file.
-    -   Implement a feature to export transcripts.
+This major feature will be implemented in phases:
+
+**Phase 1: Foundation & Navigation (P0)**
+- **Task 1:** Test the newly created backend endpoints for .
+- **Task 2:** Refactor the main application layout to use a vertical left-hand sidebar for navigation.
+- **Task 3:** Create a new top-level page for Documents ().
+- **Task 4:** On the Documents page, build the UI to display and manage the hierarchical tree of document projects (create, rename, delete folders and projects).
+
+**Phase 2: Project Workspace (P1)**
+- **Task 5:** Build the Project Workspace view, which opens when a user selects a specific analysis project from the tree.
+- **Task 6:** This workspace should include panels for:
+    - **Source Materials:** Implement file/link upload and management, scoped to the current document project.
+    - **Analysis Streams:** A multi-chat interface where each chat is an independent analysis thread.
+    - **Final Document:** A viewer/editor to assemble the final output.
+
+**Phase 3: AI Integration & Finalization (P2)**
+- **Task 7:** Integrate LLM calls into the Analysis Streams, ensuring the AI context includes all source materials.
+- **Task 8:** Implement a system for managing and using reusable prompt templates to initiate analysis streams.
+- **Task 9:** Enhance the Final Document panel to easily bring in content from the various analysis streams.
 
 **Completed work in this session**
--   **Bug Fix:** Confirmed the fix for speaker names not appearing correctly in the Review tab.
--   **Major Backend Refactoring:** Successfully modularized the entire  file into a structured application under .
--   **Major Frontend Refactoring:** Decomposed the large  into smaller, reusable components.
--   **Feature: Speaker Directory:** Implemented a full-featured global speaker directory with a management UI, CRUD APIs, autocomplete search, and extended profile fields (photo, contacts).
--   **Feature: Group Speakers by Company:** Added a view toggle on the speaker directory page to group speakers by their company.
--   **Feature: Autosave Drafts:** Implemented -based autosaving for text being edited.
--   **Feature: Undo Confirmation:** Added the ability to revert a confirmed word correction in the Review tab.
--   **Prompt Engineering:** Iteratively updated the master prompt based on detailed user feedback to achieve the desired AI behavior.
+- **Dynamic Wizard Engine:** The Мастер tab was converted into a dynamic wizard () driven by configurations set in the pipeline editor. (DONE)
+- **Persistent Wizard Results:** Implemented  and an Are you sure? confirmation dialog to prevent accidental loss of analysis results. (DONE)
+- **Results Tab Refactor:** Created a  to store multiple analysis results and added functionality to run new analyses (prompt or scenario-based) on them. (DONE)
+- **File/Link Attachments:** Implemented a full-stack feature allowing users to attach files (including images) and links to analysis runs. This involved creating an , backend storage, and updating the LLM service for multimodal input. (DONE)
+- **Edge Editing in Pipeline Editor:** Added the ability to delete and reconnect arrows (edges) in the pipeline constructor UI. (DONE)
+- **UI/UX Refinements:**
+    - Fixed a bug causing oversized text blocks in the Проверка (Review) tab. (DONE)
+    - Reordered and renamed the main project tabs as per user request. (DONE)
+    - Added the attachments panel to all relevant analysis screens. (DONE)
+- **Document Agent Foundation:** Created initial backend models and API router for the new feature. (IN PROGRESS)
 
 **Earlier issues found/mentioned but not fixed**
--   None. All previously mentioned issues have been addressed.
+None.
 
 **Known issue recurrence from previous fork**
--   Not applicable.
+N/A
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Frontend:** React, Tailwind CSS, Shadcn/UI.
--   **Backend:** FastAPI (modular architecture), Python, Motor (async MongoDB driver).
--   **Database:** MongoDB.
--   **AI/LLM:** Deepgram (transcription), OpenAI GPT-4o (text processing/analysis).
--   **Architecture:** Asynchronous backend with background tasks and frontend polling. A complex multi-step wizard pattern is being implemented on the frontend.
+- **Backend:** FastAPI, PostgreSQL, SQLAlchemy
+- **Frontend:** React, Vite, Tailwind CSS, shadcn/ui, React Flow
+- **AI Integration:** OpenAI API (GPT-4 family with vision capabilities)
+- **Architecture:** Monolithic repository with separate  and  applications communicating via a REST API.
 
 **key DB schema**
--   **projects:** Stores project metadata, transcripts, and analysis results.
--   **chat_history:** Stores conversation history for the analysis tab.
--   **speaker_directory:** (New) Stores global speaker profiles.
-    -   uid=0(root) gid=0(root) groups=0(root): (string, uuid)
-    -   : (string)
-    -   : (string, optional)
-    -   : (string, optional)
-    -   : (string, optional)
-    -   : (string, optional)
-    -   : (string, optional)
-    -   : (string, optional)
+- , , : Defines the structure and behavior of analysis scenarios.
+- : Manages transcript-based analysis projects.
+- : Stores saved analysis results from various tabs.
+- : Stores metadata for uploaded files and links, associated with a project.
+- ** (NEW):** A self-referencing table for the hierarchical structure (uid=0(root) gid=0(root) groups=0(root), , , ).
+- ** (NEW):** Represents files linked to a .
 
 **changes in tech stack**
--   None.
+None.
 
 **All files of reference**
--   **New Feature Files:**
-    -   : (In Progress) The main component for the new Analysis Wizard.
-    -   : Modified to add the  endpoint.
--   **Refactoring & Speaker Directory Files (Completed):**
-    -   All files under  (core, models, routes, services, main.py).
-    -   All new components under .
-    -   
-    -   
+- ****: (New) Defines the SQLAlchemy models for the new document agent feature.
+- ****: (New) Defines the FastAPI endpoints for managing the document project hierarchy.
+- ****: (Modified) Updated to include the new  router.
+- ****: (Modified) Main project tabs were reordered, renamed, and one was removed.
+- ****: (Modified) Updated to support edge deletion and reconnection.
+- ****: (Modified) Updated to pass attachment IDs to pipeline runs.
+- ****: (Modified) Updated to include the  for the raw transcript.
 
 **Areas that need refactoring**:
--   None. The agent has proactively refactored both the frontend () and backend (), addressing the major sources of technical debt.
+- The pipeline execution logic (topological sort, node running) is duplicated in  and . This could be extracted into a reusable custom hook (e.g., ) to improve maintainability.
 
 **key api endpoints**
--   **Speaker Directory:**
-    -   : List all or create a new speaker.
-    -   : Update or delete a speaker.
-    -   : Upload a photo for a speaker.
--   **Analysis Wizard Helper:**
-    -   : Perform a raw AI query without saving it to the history.
--   **Fragments:**
-    -   : Revert a confirmed fragment back to pending.
+- : Manage the document project tree.
+- : Update/delete specific document projects.
+- : Upload files.
+- : Save pipeline changes, including modified edges.
+- : Run analysis on existing results.
 
 **Critical Info for New Agent**
--   **Backend Refactoring:** The backend logic is no longer in . It has been completely moved to a modular structure inside the  directory. Refer to the new file structure for any backend changes.
--   **Analysis Wizard:** The new Full Analysis Wizard feature requires using the special  endpoint for all intermediate steps (like fetching topics or summarizing batches) to avoid cluttering the main analysis chat history. The final combined result should be saved using the standard analysis endpoint.
+- The highest priority is to continue the implementation of the new **Document Agent** feature. The user has approved a multi-phase plan, and you should follow it.
+- Your immediate next step is to test the new backend endpoints for  and then start building the new frontend layout with a **vertical sidebar navigation**.
+- The user is very detail-oriented. Pay close attention to their feedback, especially regarding how the AI model should handle attachments (it should receive them directly, without backend pre-processing).
+- The rest of the application is in a stable state; all recent bug fixes and features were completed and tested.
 
 **documents and test reports created in this job**
--    (updated multiple times).
+-  (updated multiple times)
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User (Chat 338):** Provided a detailed, 5-step workflow for a Full Analysis feature.
-    -   *Status: IN PROGRESS. This is the current main task.*
-2.  **Agent (Chat 339):** Proposed a plan to implement the workflow as a multi-step wizard.
-    -   *Status: PLAN PROPOSED.*
-3.  **User (Chat 340):** Approved the wizard plan with specific clarifications: use intermediate stops, allow user to set batch size for topics, allow topic editing, show results in a new tab, and save as one final result.
-    -   *Status: REQUIREMENTS FINALIZED. Implementation started.*
-4.  **Agent (Chat 341-346):** Started implementation by creating the frontend component  and the backend endpoint .
-    -   *Status: IN PROGRESS. This is where the last session left off.*
+1. **User Request (LATEST):** Kick-off for a major new Document Agent feature with a detailed example workflow. (PENDING)
+2. **User Feedback:** Refined the plan to include a vertical sidebar and a hierarchical project structure. (ADDRESSED in new plan)
+3. **Agent Proposal:** Outlined a detailed, multi-phase plan to build the new feature. (ACCEPTED)
+4. **User Request:** Reorder, rename, and remove main project tabs. (RESOLVED)
+5. **User Request:** Allow deleting and reconnecting arrows in the pipeline editor. (RESOLVED)
+6. **User Bug Report:** Review tab showed huge blocks of text. (RESOLVED)
+7. **User Request:** Add attachment capability to the Master-analysis screen. (RESOLVED)
+8. **User Request:** Move the attachment panel inside the transcript card for better UX. (RESOLVED)
+9. **User Feedback:** Noted attachment capability was missing in another location. (RESOLVED)
+10. **User Feedback:** Asked to change how the application handles analysis results to prevent accidental loss. (RESOLVED)
 
 **Project Health Check:**
--   **Broken:** None
--   **Mocked:** None
+- **Broken:** None
+- **Mocked:** None
 
 **3rd Party Integrations**
--   **Deepgram:** Used for audio-to-text transcription. Requires a User API Key.
--   **OpenAI GPT-4o:** Used for all AI-based text processing and analysis. Uses the Emergent LLM Key.
+- **OpenAI GPT-4o**: Uses the Emergent LLM Key for all AI analysis, including multimodal capabilities (text and images).
 
 **Testing status**
--   **Testing agent used after significant changes:** NO
--   **Troubleshoot agent used after agent stuck in loop:** NO
--   **Test files created:** None.
--   **Known regressions:** None.
+- **Testing agent used after significant changes:** YES
+- **Troubleshoot agent used after agent stuck in loop:** NO
+- **Test files created:** None
+- **Known regressions:** None
 
 **Credentials to test flow:**
--   No specific user credentials are required.
+N/A (Standard user registration is sufficient)
 
 **What agent forgot to execute**
--   The agent was in the middle of implementing the Full Analysis Wizard feature. The work is not forgotten, just incomplete, and is the highest priority for the next session.</analysis>
+- The agent created new backend models and API routes for the  feature but did not run any tests to validate them. This should be done before proceeding.</analysis>
