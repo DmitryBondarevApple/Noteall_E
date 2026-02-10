@@ -234,9 +234,16 @@ async def upload_doc_attachment(
 
     file_id = uuid.uuid4().hex
     safe_name = f"{file_id}_{file.filename}"
-    file_path = os.path.join(UPLOAD_DIR, safe_name)
-    with open(file_path, "wb") as f:
-        f.write(content)
+
+    s3_key = None
+    file_path = None
+    if s3_enabled():
+        s3_key = f"doc_attachments/{safe_name}"
+        upload_bytes(s3_key, content, file.content_type or "application/octet-stream")
+    else:
+        file_path = os.path.join(UPLOAD_DIR, safe_name)
+        with open(file_path, "wb") as f:
+            f.write(content)
 
     ext = os.path.splitext(file.filename)[1].lower()
     file_type = "pdf" if ext == ".pdf" else "image" if ext in {".png", ".jpg", ".jpeg", ".webp", ".gif"} else "text" if ext in {".txt", ".csv", ".md", ".docx"} else "other"
@@ -250,6 +257,7 @@ async def upload_doc_attachment(
         "content_type": file.content_type,
         "size": len(content),
         "file_path": file_path,
+        "s3_key": s3_key,
         "created_at": now,
     }
     await db.doc_attachments.insert_one(doc)
