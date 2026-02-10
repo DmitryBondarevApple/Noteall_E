@@ -119,71 +119,8 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-slate-900 flex items-center justify-center shrink-0">
-              <Mic className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-            </div>
-            <span className="text-base sm:text-xl font-bold tracking-tight hidden xs:inline">Voice Workspace</span>
-          </div>
-          
-          <div className="flex items-center gap-1 sm:gap-4">
-            <Link to="/prompts">
-              <Button variant="ghost" size="sm" className="gap-1 sm:gap-2 px-2 sm:px-3" data-testid="prompts-nav-btn">
-                <BookOpen className="w-4 h-4" />
-                <span className="hidden sm:inline">Промпты</span>
-              </Button>
-            </Link>
-            
-            <Link to="/speakers">
-              <Button variant="ghost" size="sm" className="gap-1 sm:gap-2 px-2 sm:px-3" data-testid="speakers-nav-btn">
-                <Users className="w-4 h-4" />
-                <span className="hidden sm:inline">Спикеры</span>
-              </Button>
-            </Link>
-            
-            <Link to="/pipelines">
-              <Button variant="ghost" size="sm" className="gap-1 sm:gap-2 px-2 sm:px-3" data-testid="pipelines-nav-btn">
-                <Workflow className="w-4 h-4" />
-                <span className="hidden sm:inline">Сценарии</span>
-              </Button>
-            </Link>
-            
-            {isAdmin() && (
-              <Link to="/admin">
-                <Button variant="ghost" size="sm" className="gap-1 sm:gap-2 px-2 sm:px-3" data-testid="admin-nav-btn">
-                  <Shield className="w-4 h-4" />
-                  <span className="hidden sm:inline">Админ</span>
-                </Button>
-              </Link>
-            )}
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="gap-1 sm:gap-2 px-2 sm:px-3" data-testid="user-menu-btn">
-                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-200 flex items-center justify-center">
-                    <span className="text-xs sm:text-sm font-medium">{user?.name?.[0]?.toUpperCase()}</span>
-                  </div>
-                  <span className="hidden md:inline">{user?.name}</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem className="text-muted-foreground">
-                  {user?.email}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleLogout} data-testid="logout-btn">
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Выйти
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </header>
-
+    <AppLayout>
+      <div className="min-h-screen bg-slate-50">
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
         {/* Page Header */}
