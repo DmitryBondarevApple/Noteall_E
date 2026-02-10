@@ -478,3 +478,158 @@ async def delete_template(template_id: str, user=Depends(get_current_user)):
 
     await db.doc_templates.delete_one({"id": template_id})
     return {"message": "Deleted"}
+
+
+# ==================== PINS (Final Document Assembly) ====================
+
+@router.get("/doc/projects/{project_id}/pins")
+async def list_pins(project_id: str, user=Depends(get_current_user)):
+    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    pins = await db.doc_pins.find(
+        {"project_id": project_id}, {"_id": 0}
+    ).sort("order", 1).to_list(200)
+    return pins
+
+@router.post("/doc/projects/{project_id}/pins", status_code=201)
+async def create_pin(project_id: str, data: PinCreate, user=Depends(get_current_user)):
+    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # Get max order
+    last_pin = await db.doc_pins.find_one(
+        {"project_id": project_id}, sort=[("order", -1)]
+    )
+    next_order = (last_pin["order"] + 1) if last_pin else 0
+
+    now = datetime.now(timezone.utc).isoformat()
+    pin = {
+        "id": str(uuid.uuid4()),
+        "project_id": project_id,
+        "stream_id": data.stream_id,
+        "message_index": data.message_index,
+        "content": data.content,
+        "order": next_order,
+        "created_at": now,
+    }
+    await db.doc_pins.insert_one(pin)
+    return {k: v for k, v in pin.items() if k != "_id"}
+
+@router.put("/doc/projects/{project_id}/pins/{pin_id}")
+async def update_pin(project_id: str, pin_id: str, data: PinUpdate, user=Depends(get_current_user)):
+    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    pin = await db.doc_pins.find_one({"id": pin_id, "project_id": project_id})
+    if not pin:
+        raise HTTPException(status_code=404, detail="Pin not found")
+
+    updates = {k: v for k, v in data.dict(exclude_unset=True).items()}
+    await db.doc_pins.update_one({"id": pin_id}, {"$set": updates})
+
+    updated = await db.doc_pins.find_one({"id": pin_id}, {"_id": 0})
+    return updated
+
+@router.delete("/doc/projects/{project_id}/pins/{pin_id}")
+async def delete_pin(project_id: str, pin_id: str, user=Depends(get_current_user)):
+    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    pin = await db.doc_pins.find_one({"id": pin_id, "project_id": project_id})
+    if not pin:
+        raise HTTPException(status_code=404, detail="Pin not found")
+
+    await db.doc_pins.delete_one({"id": pin_id})
+    return {"message": "Deleted"}
+
+@router.put("/doc/projects/{project_id}/pins/reorder")
+async def reorder_pins(project_id: str, data: PinReorder, user=Depends(get_current_user)):
+    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    for i, pin_id in enumerate(data.pin_ids):
+        await db.doc_pins.update_one(
+            {"id": pin_id, "project_id": project_id},
+            {"$set": {"order": i}}
+        )
+    return {"message": "Reordered"}
+
+
+# ==================== SEED TEMPLATES ====================
+
+@router.post("/doc/seed-templates")
+async def seed_default_templates(user=Depends(get_current_user)):
+    """Seed default analysis templates if none exist for the user"""
+    existing = await db.doc_templates.count_documents(
+        {"$or": [{"user_id": user["id"]}, {"is_public": True}]}
+    )
+    if existing > 0:
+        return {"message": "Templates already exist", "count": existing}
+
+    now = datetime.now(timezone.utc).isoformat()
+    templates = [
+        {
+            "id": str(uuid.uuid4()),
+            "user_id": user["id"],
+            "name": "Резюме документа",
+            "description": "Краткое резюме ключевых пунктов",
+            "sections": [],
+            "is_public": True,
+            "system_prompt": "Создай структурированное резюме документа. Выдели ключевые пункты, основные выводы и рекомендации. Используй маркированные списки.",
+            "created_at": now,
+            "updated_at": now,
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "user_id": user["id"],
+            "name": "Анализ рисков",
+            "description": "Выявление рисков и проблемных зон",
+            "sections": [],
+            "is_public": True,
+            "system_prompt": "Проанализируй документ на предмет рисков, неоднозначных формулировок, потенциальных проблем и 'серых зон'. Для каждого риска укажи: описание, уровень критичности (высокий/средний/низкий), рекомендацию.",
+            "created_at": now,
+            "updated_at": now,
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "user_id": user["id"],
+            "name": "Извлечение фактов",
+            "description": "Даты, суммы, обязательства, участники",
+            "sections": [],
+            "is_public": True,
+            "system_prompt": "Извлеки из документа все конкретные факты: даты, суммы, сроки, имена участников, обязательства сторон, условия. Представь в виде структурированной таблицы.",
+            "created_at": now,
+            "updated_at": now,
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "user_id": user["id"],
+            "name": "Вопросы на уточнение",
+            "description": "Генерация вопросов по недостающей информации",
+            "sections": [],
+            "is_public": True,
+            "system_prompt": "Проанализируй документ и сформулируй список вопросов на уточнение. Что неясно? Какая информация отсутствует? Какие пункты требуют дополнительного разъяснения? Сгруппируй вопросы по темам.",
+            "created_at": now,
+            "updated_at": now,
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "user_id": user["id"],
+            "name": "Сравнение версий",
+            "description": "Сравнение двух документов или версий",
+            "sections": [],
+            "is_public": True,
+            "system_prompt": "Сравни предоставленные документы или версии. Выдели: что добавлено, что убрано, что изменено. Оцени существенность каждого изменения.",
+            "created_at": now,
+            "updated_at": now,
+        },
+    ]
+
+    await db.doc_templates.insert_many(templates)
+    return {"message": "Seeded", "count": len(templates)}
