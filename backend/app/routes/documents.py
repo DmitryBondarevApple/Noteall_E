@@ -62,6 +62,18 @@ class StreamUpdate(BaseModel):
 class StreamMessage(BaseModel):
     content: str
 
+class PinCreate(BaseModel):
+    stream_id: str
+    message_index: int
+    content: str
+
+class PinUpdate(BaseModel):
+    content: Optional[str] = None
+    order: Optional[int] = None
+
+class PinReorder(BaseModel):
+    pin_ids: List[str]
+
 
 # ==================== FOLDERS (tree structure) ====================
 
