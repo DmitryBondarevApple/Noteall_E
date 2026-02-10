@@ -48,6 +48,17 @@ class DocTemplateUpdate(BaseModel):
     description: Optional[str] = None
     sections: Optional[list] = None
 
+class StreamCreate(BaseModel):
+    name: str
+    system_prompt: Optional[str] = None
+
+class StreamUpdate(BaseModel):
+    name: Optional[str] = None
+    system_prompt: Optional[str] = None
+
+class StreamMessage(BaseModel):
+    content: str
+
 
 # ==================== FOLDERS (tree structure) ====================
 
