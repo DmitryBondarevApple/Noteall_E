@@ -40,6 +40,7 @@ class DocProjectUpdate(BaseModel):
     system_instruction: Optional[str] = None
     template_id: Optional[str] = None
     status: Optional[str] = None
+    folder_id: Optional[str] = None
 
 class DocTemplateCreate(BaseModel):
     name: str
