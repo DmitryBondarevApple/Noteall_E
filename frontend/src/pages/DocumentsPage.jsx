@@ -346,11 +346,10 @@ export default function DocumentsPage() {
         </header>
 
         {/* Content */}
-        <div className="flex-1 flex overflow-hidden">
-          {/* Tree panel */}
-          <div className="w-full max-w-2xl mx-auto p-6">
+        <div className="flex-1 overflow-hidden">
+          <div className="h-full flex flex-col px-6 py-4">
             {/* Search */}
-            <div className="relative mb-4">
+            <div className="relative mb-3 max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder="Поиск папок и проектов..."
@@ -366,8 +365,8 @@ export default function DocumentsPage() {
                 {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-8 w-full" />)}
               </div>
             ) : folders.length === 0 ? (
-              <Card className="text-center py-16">
-                <CardContent>
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center">
                   <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
                     <FileText className="w-8 h-8 text-slate-400" />
                   </div>
@@ -379,17 +378,15 @@ export default function DocumentsPage() {
                     <FolderPlus className="w-4 h-4" />
                     Создать папку
                   </Button>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             ) : (
-              <Card>
-                <ScrollArea className="max-h-[calc(100vh-220px)]">
-                  <div className="p-2">
-                    {getRootFolders().map(folder => renderFolder(folder))}
-                    {orphanProjects.map(project => renderProject(project))}
-                  </div>
-                </ScrollArea>
-              </Card>
+              <ScrollArea className="flex-1">
+                <div className="pr-4">
+                  {getRootFolders().map(folder => renderFolder(folder))}
+                  {orphanProjects.map(project => renderProject(project))}
+                </div>
+              </ScrollArea>
             )}
           </div>
         </div>
