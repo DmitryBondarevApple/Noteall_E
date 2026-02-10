@@ -202,6 +202,8 @@ async def upload_attachment(
                 extracted = content.decode("utf-8", errors="replace")
             else:
                 extracted = extract_text_from_file(file_path, ext)
+        elif ext == ".pdf":
+            extracted = extract_text_from_pdf(content)
 
         att_id = str(uuid.uuid4())
         doc = {
