@@ -60,7 +60,7 @@ export default function AppLayout({ children }) {
             {collapsed ? (
               <span className="font-semibold text-lg text-white">N<span className="text-cyan-400">*</span></span>
             ) : (
-              <span className="font-semibold text-xl text-white tracking-tight">note<span className="relative inline-block">a<span className="absolute -top-3 left-1/2 -translate-x-1/2 text-cyan-400 text-xs">&#10022;</span></span>ll</span>
+              <span className="font-semibold text-xl text-white tracking-tight">note<span className="relative inline-block">a<span className="absolute -top-1.5 left-1/2 -translate-x-1/2 text-cyan-400 text-xs">&#10022;</span></span>ll</span>
             )}
           </div>
 
