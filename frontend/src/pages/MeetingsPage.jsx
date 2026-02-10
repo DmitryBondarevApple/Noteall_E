@@ -41,7 +41,12 @@ export default function MeetingsPage() {
   const [folders, setFolders] = useState([]);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [expandedFolders, setExpandedFolders] = useState(new Set());
+  const [expandedFolders, setExpandedFolders] = useState(() => {
+    try {
+      const saved = localStorage.getItem('meetings_expanded');
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch { return new Set(); }
+  });
   const [searchQuery, setSearchQuery] = useState('');
 
   const [folderDialog, setFolderDialog] = useState({ open: false, parentId: null, editId: null, name: '', description: '' });
