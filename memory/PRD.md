@@ -32,24 +32,27 @@ New major feature: **Document Agent** — a section for complex document process
 - Backend: Full CRUD API for folders, projects, attachments, templates (`/api/doc/*`)
 - Frontend: Vertical sidebar navigation (AppLayout) replacing horizontal nav
 - Frontend: Documents page with hierarchical tree view
-- Frontend: DocProjectPage workspace with source materials panel
-- Testing: 24/24 backend tests pass, 10/10 frontend features verified
+- Testing: 24/24 backend, 10/10 frontend
 
 ### Phase 2: Analysis Streams (Complete - Feb 10, 2026)
 - Backend: CRUD for analysis streams + AI message endpoint
-- Backend: Source material context injection into AI prompts (reads text files)
-- Backend: Multi-turn conversation history preserved
-- Frontend: 3-column workspace layout (materials, chat, stream tabs)
-- Frontend: Stream creation with name + optional system prompt
+- Backend: Source material context injection into AI prompts
+- Frontend: 3-column workspace (materials, chat, stream tabs)
 - Frontend: Real-time chat with optimistic UI updates
-- Frontend: Stream switching with correct message history
-- Testing: 18/18 backend tests pass, 11/11 frontend features verified
+- Testing: 18/18 backend, 11/11 frontend
+
+### Phase 3: Templates & Final Document (Complete - Feb 10, 2026)
+- Backend: Pins CRUD + reorder for final document assembly
+- Backend: Seed 5 default templates (Резюме, Анализ рисков, Извлечение фактов, Вопросы, Сравнение)
+- Frontend: Template selection when creating streams
+- Frontend: Pin AI responses to Final Document panel
+- Frontend: Reorder/delete pins, copy-to-clipboard
+- Testing: 14/14 backend, 8/8 frontend
 
 ## Backlog
 
-### P1 - Phase 3: AI & Finalization  
-- Reusable prompt/scenario templates for streams
-- Final document assembly panel (combine results from streams)
-
-### P2 - Refactoring
+### P2 - Enhancements
+- PDF content parsing for AI context (currently only .txt/.md/.csv)
+- Drag-and-drop for project tree and pin reordering
+- Export final document to Word/PDF format
 - Extract pipeline execution logic into `usePipelineRunner` hook
