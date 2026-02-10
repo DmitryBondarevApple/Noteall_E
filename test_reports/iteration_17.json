@@ -1,0 +1,78 @@
+{
+  "summary": "Document Agent Pipeline Runner testing complete (Iteration 17). Backend: 12/12 tests passed (100%). Frontend: All pipeline runner features verified via Playwright including pipeline selector, run execution with loading state, expandable results, copy functionality, and materials panel.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "DialogContent components",
+        "issues": ["Console warning: Missing Description or aria-describedby for DialogContent - accessibility improvement recommended (existing issue from previous iterations)"]
+      }
+    ]
+  },
+  "features_tested": {
+    "backend": {
+      "GET /api/doc/projects/{id}/runs (empty)": {"status": "PASS", "notes": "Returns empty list for new project"},
+      "GET /api/doc/projects/{id}/runs (404)": {"status": "PASS", "notes": "Returns 404 for nonexistent project"},
+      "POST /api/doc/projects/{id}/run-pipeline (404 project)": {"status": "PASS", "notes": "Returns 404 for nonexistent project"},
+      "POST /api/doc/projects/{id}/run-pipeline (404 pipeline)": {"status": "PASS", "notes": "Returns 404 for nonexistent pipeline"},
+      "DELETE /api/doc/projects/{id}/runs/{rid} (404)": {"status": "PASS", "notes": "Returns 404 for nonexistent project"},
+      "DELETE /api/doc/projects/{id}/runs/{rid}": {"status": "PASS", "notes": "Deletes run successfully"},
+      "GET /api/doc/projects/{id}/runs (existing)": {"status": "PASS", "notes": "Lists runs with correct structure (id, project_id, pipeline_id, node_results, status, created_at)"},
+      "POST /api/doc/projects/{id}/run-pipeline": {"status": "PASS", "notes": "Runs pipeline with topological sort, returns node_results with status=completed"},
+      "GET /api/pipelines": {"status": "PASS", "notes": "Returns available pipelines list"},
+      "GET /api/doc/projects/{id}": {"status": "PASS", "notes": "Returns project with attachments for pipeline context"},
+      "POST /api/doc/projects/{id}/attachments": {"status": "PASS", "notes": "Uploads file for pipeline processing"},
+      "POST /api/doc/projects/{id}/attachments/url": {"status": "PASS", "notes": "Adds URL reference"}
+    },
+    "frontend": {
+      "Pipeline selector dropdown": {"status": "PASS", "notes": "Shows available pipelines with descriptions, data-testid='pipeline-select'"},
+      "Run button enabled with materials": {"status": "PASS", "notes": "Button shows 'Запустить' and is enabled when materials exist"},
+      "Run button loading state": {"status": "PASS", "notes": "Shows 'Выполнение...' with spinner during pipeline execution"},
+      "Loading indicator": {"status": "PASS", "notes": "Shows indigo loading card with 'Выполняется анализ...' message"},
+      "Results display as expandable cards": {"status": "PASS", "notes": "RunResultCard shows pipeline name, timestamp, node results"},
+      "Node type badges": {"status": "PASS", "notes": "Shows badges for node types: template, AI, parse_list, batch_loop, Сборка"},
+      "Expandable node results": {"status": "PASS", "notes": "Clicking node header expands to show output with character count"},
+      "Copy all results button": {"status": "PASS", "notes": "Button copies all results to clipboard, shows toast 'Результаты скопированы'"},
+      "Copy step button": {"status": "PASS", "notes": "'Копировать шаг' button visible inside expanded node"},
+      "Materials panel": {"status": "PASS", "notes": "Shows МАТЕРИАЛЫ header with file count, upload/URL buttons"},
+      "Upload file button": {"status": "PASS", "notes": "data-testid='upload-file-btn' present"},
+      "Add URL dialog": {"status": "PASS", "notes": "Opens dialog with URL input, name input, and disabled save button when empty"},
+      "Back to documents button": {"status": "PASS", "notes": "Navigates correctly to /documents"},
+      "Project title display": {"status": "PASS", "notes": "Shows project name in header"},
+      "Status badge": {"status": "PASS", "notes": "Shows 'Готов' status badge"}
+    }
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_pipeline_runner.py",
+    "/app/test_reports/pytest/pytest_pipeline_runner.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "documents.py: Pipeline runner correctly implements topological sort for node execution order",
+    "documents.py: Properly handles fan-out/fan-in with batch_loop consuming following AI node",
+    "documents.py: Source materials from attachments properly injected into AI system messages",
+    "DocProjectPage.jsx: Clean implementation with proper data-testid attributes for testing",
+    "DocProjectPage.jsx: Good use of Collapsible component for expandable node results",
+    "api.js: docRunsApi properly defined with list, run, delete methods"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_pipeline_runner.py"
+  ],
+  "success_rate": {
+    "backend": "100% (12/12 tests passed)",
+    "frontend": "100% (all 15 features verified)"
+  },
+  "test_credentials": {
+    "email": "test@example.com",
+    "password": "test123"
+  },
+  "seed_data_creation": "Created test documents and pipeline runs during backend testing (auto-cleaned)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Document Agent Pipeline Runner fully functional. Project 'Test Stream Project' has 2 materials (test_doc.txt, Test Document URL) and 2 pipeline runs with results. Pipeline 'Стандартный анализ встречи' has 6 nodes: template, ai_prompt, parse_list, batch_loop, aggregate, ai_prompt. Old streams/pins/chat interface code still exists in backend but not used by new pipeline-focused frontend. No more manual chat/stream interface."
+}
