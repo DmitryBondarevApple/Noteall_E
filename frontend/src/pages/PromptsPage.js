@@ -53,7 +53,7 @@ const promptTypeConfig = {
   project: { label: 'Проектный', icon: FolderOpen, color: 'bg-orange-100 text-orange-700' }
 };
 
-export default function PromptsPage() {
+export function PromptsContent() {
   const { user, isAdmin } = useAuth();
   const [prompts, setPrompts] = useState([]);
   const [loading, setLoading] = useState(true);
