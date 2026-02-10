@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { speakerDirectoryApi } from '../lib/api';
 import { Button } from '../components/ui/button';
+import AppLayout from '../components/layout/AppLayout';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
@@ -167,17 +168,12 @@ export default function SpeakerDirectoryPage() {
   }
 
   return (
+    <AppLayout>
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-50">
+      <header className="bg-white border-b sticky top-0 z-40">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link to="/dashboard">
-              <Button variant="ghost" size="icon" data-testid="back-to-dashboard">
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-            </Link>
-            <div>
+          <div>
               <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
                 <Users className="w-5 h-5" />
                 Справочник спикеров
@@ -188,7 +184,6 @@ export default function SpeakerDirectoryPage() {
                   <span> • {groupedSpeakers.length} {groupedSpeakers.length === 1 ? 'компания' : groupedSpeakers.length < 5 ? 'компании' : 'компаний'}</span>
                 )}
               </p>
-            </div>
           </div>
           <Button onClick={() => setIsAddDialogOpen(true)} className="gap-2" data-testid="add-speaker-btn">
             <Plus className="w-4 h-4" />
@@ -342,6 +337,7 @@ export default function SpeakerDirectoryPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </AppLayout>
   );
 }
 
