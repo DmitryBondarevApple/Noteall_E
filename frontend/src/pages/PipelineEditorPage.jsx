@@ -321,7 +321,77 @@ export default function PipelineEditorPage() {
 
   const onPaneClick = useCallback(() => {
     setSelectedNode(null);
+    setSelectedEdgeId(null);
   }, []);
+
+  const onEdgeClick = useCallback((event, edge) => {
+    event.stopPropagation();
+    setSelectedEdgeId(edge.id);
+    setSelectedNode(null);
+  }, []);
+
+  const deleteSelectedEdge = useCallback(() => {
+    if (!selectedEdgeId) return;
+    onEdgesChangeWrapped([{ type: 'remove', id: selectedEdgeId }]);
+    setSelectedEdgeId(null);
+    pushState();
+  }, [selectedEdgeId, onEdgesChangeWrapped, pushState]);
+
+  const onReconnect = useCallback(
+    (oldEdge, newConnection) => {
+      // Remove old edge, add new one
+      const edgeType = getEdgeType(newConnection.sourceHandle, newConnection.targetHandle);
+      const newEdgeStyle = makeEdgeStyle(edgeType);
+
+      setEdges((eds) => {
+        const filtered = eds.filter((e) => e.id !== oldEdge.id);
+        const newEdge = {
+          ...newConnection,
+          id: `e-${newConnection.source}-${newConnection.target}-${Date.now()}`,
+          ...newEdgeStyle,
+          data: { edgeType },
+        };
+        return [...filtered, newEdge];
+      });
+
+      // Update input_from if data edges changed
+      if (oldEdge.data?.edgeType === 'data') {
+        setNodes((nds) =>
+          nds.map((n) => {
+            if (n.id === oldEdge.target) {
+              return {
+                ...n,
+                data: {
+                  ...n.data,
+                  input_from: (n.data.input_from || []).filter((id) => id !== oldEdge.source),
+                },
+              };
+            }
+            return n;
+          })
+        );
+      }
+      if (getEdgeType(newConnection.sourceHandle, newConnection.targetHandle) === 'data') {
+        setNodes((nds) =>
+          nds.map((n) => {
+            if (n.id === newConnection.target) {
+              const currentInputs = n.data.input_from || [];
+              if (!currentInputs.includes(newConnection.source)) {
+                return {
+                  ...n,
+                  data: { ...n.data, input_from: [...currentInputs, newConnection.source] },
+                };
+              }
+            }
+            return n;
+          })
+        );
+      }
+
+      pushState();
+    },
+    [setEdges, setNodes, pushState]
+  );
 
   const addNode = useCallback(
     (nodeType) => {
