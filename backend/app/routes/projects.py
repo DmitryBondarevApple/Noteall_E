@@ -12,6 +12,7 @@ from app.core.config import UPLOAD_DIR, DEEPGRAM_API_KEY
 from app.models.project import ProjectCreate, ProjectUpdate, ProjectResponse
 from app.services.gpt import call_gpt52
 from app.services.text_parser import parse_uncertain_fragments
+from app.services.s3 import s3_enabled, upload_bytes, download_bytes, delete_object
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/projects", tags=["projects"])
