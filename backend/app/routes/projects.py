@@ -252,6 +252,16 @@ async def process_transcription(project_id: str, filename: str, language: str = 
         
         logger.info(f"[{project_id}] Starting Deepgram transcription for {filename}")
         
+        # Get audio data — from S3 or local
+        project_doc = await db.projects.find_one({"id": project_id}, {"_id": 0})
+        s3_key = project_doc.get("s3_key") if project_doc else None
+
+        if s3_key and s3_enabled():
+            audio_data = download_bytes(s3_key)
+        else:
+            with open(file_path, "rb") as audio_file:
+                audio_data = audio_file.read()
+        
         # Deepgram transcription - run in executor to not block event loop
         from deepgram import DeepgramClient
         import concurrent.futures
@@ -259,12 +269,8 @@ async def process_transcription(project_id: str, filename: str, language: str = 
         def run_deepgram():
             client = DeepgramClient(api_key=DEEPGRAM_API_KEY)
             
-            with open(file_path, "rb") as audio_file:
-                buffer_data = audio_file.read()
-            
-            # Use new SDK v5 API
             response = client.listen.v1.media.transcribe_file(
-                request=buffer_data,
+                request=audio_data,
                 model="nova-3",
                 language=language,
                 smart_format=True,
