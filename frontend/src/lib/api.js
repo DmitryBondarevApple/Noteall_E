@@ -153,6 +153,15 @@ export const docAttachmentsApi = {
   delete: (projectId, attachmentId) => axios.delete(`${API}/doc/projects/${projectId}/attachments/${attachmentId}`),
 };
 
+// Document Agent - Streams
+export const docStreamsApi = {
+  list: (projectId) => axios.get(`${API}/doc/projects/${projectId}/streams`),
+  create: (projectId, data) => axios.post(`${API}/doc/projects/${projectId}/streams`, data),
+  update: (projectId, streamId, data) => axios.put(`${API}/doc/projects/${projectId}/streams/${streamId}`, data),
+  delete: (projectId, streamId) => axios.delete(`${API}/doc/projects/${projectId}/streams/${streamId}`),
+  sendMessage: (projectId, streamId, content) => axios.post(`${API}/doc/projects/${projectId}/streams/${streamId}/messages`, { content }),
+};
+
 // Document Agent - Templates
 export const docTemplatesApi = {
   list: () => axios.get(`${API}/doc/templates`),
