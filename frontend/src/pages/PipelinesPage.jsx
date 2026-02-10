@@ -29,6 +29,8 @@ import {
   Variable,
   UserPen,
   Eye,
+  Download,
+  Upload,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
