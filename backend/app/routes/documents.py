@@ -74,6 +74,9 @@ class PinUpdate(BaseModel):
 class PinReorder(BaseModel):
     pin_ids: List[str]
 
+class RunPipelineRequest(BaseModel):
+    pipeline_id: str
+
 
 # ==================== FOLDERS (tree structure) ====================
 
