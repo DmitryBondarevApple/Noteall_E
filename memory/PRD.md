@@ -5,60 +5,46 @@
 - **Frontend**: React + Tailwind CSS + shadcn/ui + React Flow
 - **AI**: OpenAI GPT-5.2 via Emergent LLM Key
 - **Auth**: JWT-based
-- **Storage**: Timeweb S3 (s3.twcstorage.ru, bucket 63dffe5a-920b-4901-a340-056793b978fa, region ru-1)
+- **Storage**: Timeweb S3 (s3.twcstorage.ru)
 - **Deploy**: VPS 185.246.220.121, Docker Compose, MongoDB 8.0.19, HTTPS via Let's Encrypt
 - **Domain**: https://noteall.ru
-- **CI/CD**: GitHub Actions → SSH deploy on push to main
-
-## Navigation
-- **Встречи** (`/meetings`) — transcript projects in tree folders + Speakers (`/meetings/speakers`)
-- **Документы** (`/documents`) — Document Agent: automated pipeline analysis
-- **Конструктор** (`/constructor`) — Tabs: Сценарии | Промпты
-- **Админ** (`/admin`)
+- **CI/CD**: GitHub Actions auto-deploy on push to main
 
 ## Implemented Features
 
-### Meeting Analysis
-- Hierarchical folder structure with tree navigation (full-width)
-- "Move to folder" in project context menu
-- Audio upload, transcription, speaker identification
-- Pipeline constructor (React Flow), dynamic wizard, results
-- File/link attachments with multimodal AI, export
-
-### Speaker Directory
-- Compact table view with sortable columns
-- Tags support, filters (search, company, tag dropdowns)
-- Back navigation to /meetings
-
-### Document Agent — Automated Pipeline
-- Hierarchical folder/project structure (full-width tree)
-- "Move to folder" in project context menu
-- Source material upload (files + URLs)
-- Server-side pipeline runner with topological sort
-- Fan-out/fan-in support
-- Results as expandable node cards with copy
-
-### Navigation & Layout
-- 4-item sidebar: Встречи, Документы, Конструктор, Админ
-- ConstructorPage with Сценарии/Промпты tabs
-- Full-width left-aligned tree layouts
-- Old routes redirect correctly
+### Branding (Feb 2026)
+- Logo: "noteall" wordmark with teal sparkle over "a"
+- Favicon: teal 4-pointed star
+- Title: "Noteall"
+- Updated landing page texts for document/meeting analysis focus
+- Copyright: 2026 Noteall
 
 ### S3 Storage Integration (Feb 2026)
-- All file uploads (doc attachments, meeting attachments, audio) go to Timeweb S3
-- Presigned URL download endpoints for secure file access
-- Automatic fallback to local storage if S3 not configured
-- S3 delete on attachment/project removal
-- Service module: /app/backend/app/services/s3.py
+- All file uploads go to Timeweb S3
+- Presigned URL download endpoints
+- Fallback to local storage if S3 not configured
+
+### Pipeline Export/Import (Feb 2026)
+- Export pipeline as JSON from list dropdown menu + editor page
+- Import pipeline from JSON file via button on constructor page
+- Duplicate name detection with "(импорт)" suffix
 
 ### Deployment (Feb 2026)
-- Deployed to VPS 185.246.220.121 via Docker Compose
-- MongoDB 8.0.19 installed on host
-- Backend container (network_mode: host) for MongoDB access
-- Frontend container with Nginx proxy (ports 80, 443)
-- HTTPS with Let's Encrypt certificate for noteall.ru
-- Auto-renewal via Certbot scheduled task
-- GitHub Actions CI/CD: auto-deploy on push to main
+- Docker Compose on VPS with HTTPS
+- GitHub Actions CI/CD auto-deploy
+- Emergent badge removed from production
+
+### Meeting Analysis
+- Folder structure, audio upload, transcription, speaker identification
+- Pipeline constructor, results, file/link attachments
+
+### Document Agent — Automated Pipeline
+- Folder/project structure, source material upload
+- Server-side pipeline runner with fan-out/fan-in
+
+### Constructor
+- Tabbed interface: Сценарии | Промпты
+- Visual pipeline editor with React Flow
 
 ## Backlog
 - PDF content parsing for AI context
