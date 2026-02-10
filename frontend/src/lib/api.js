@@ -179,6 +179,13 @@ export const docPinsApi = {
   reorder: (projectId, pinIds) => axios.post(`${API}/doc/projects/${projectId}/pins/reorder`, { pin_ids: pinIds }),
 };
 
+// Document Agent - Pipeline Runs
+export const docRunsApi = {
+  list: (projectId) => axios.get(`${API}/doc/projects/${projectId}/runs`),
+  run: (projectId, pipelineId) => axios.post(`${API}/doc/projects/${projectId}/run-pipeline`, { pipeline_id: pipelineId }),
+  delete: (projectId, runId) => axios.delete(`${API}/doc/projects/${projectId}/runs/${runId}`),
+};
+
 // Document Agent - Templates
 export const docTemplatesApi = {
   list: () => axios.get(`${API}/doc/templates`),
