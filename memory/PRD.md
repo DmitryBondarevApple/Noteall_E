@@ -1,104 +1,51 @@
-# Voice Workspace — PRD
+# Voice Workspace + Document Agent — PRD
 
 ## Original Problem Statement
-Приложение для транскрибации аудио/видео встреч с AI-обработкой и разметкой спикеров.
+Web application for transcribing and analyzing meetings with AI. 
+New major feature: **Document Agent** — a section for complex document processing workflows with hierarchical project structure, multi-stream AI analysis, and document assembly.
 
 ## Core Requirements
-1. Автоматическая транскрибация (Deepgram)
-2. AI-анализ встреч через OpenAI GPT
-3. Разметка спикеров
-4. Справочник спикеров
-5. Конструктор сценариев анализа (визуальный, React Flow)
-6. Пошаговое исполнение сценариев — **динамический визард на основе пайплайна**
+1. Meeting transcript analysis with customizable analysis pipelines
+2. Speaker directory management
+3. Prompt library management
+4. **Document Agent**: hierarchical folder/project structure, source material management, AI analysis streams, final document assembly
 
 ## Architecture
-- **Backend:** FastAPI + MongoDB + Pydantic
-- **Frontend:** React + Tailwind + Shadcn/UI + React Flow (@xyflow/react)
-- **AI:** OpenAI GPT (Emergent LLM Key)
-- **Transcription:** Deepgram
+- **Backend**: FastAPI + MongoDB (motor async)
+- **Frontend**: React + Tailwind CSS + shadcn/ui + React Flow
+- **AI**: OpenAI GPT-4o via Emergent LLM Key
+- **Auth**: JWT-based
 
-## What's Been Implemented
+## What's Implemented
 
-### Транскрибация и спикеры
-- [x] Загрузка и транскрибация аудио/видео
-- [x] Разметка спикеров на вкладке Транскрипт
-- [x] Справочник спикеров с парсингом "Имя (Компания)"
-- [x] AI-обработка с подстановкой полных имён
+### Phase 0: Meeting Analysis (Complete)
+- Project creation and audio upload
+- Automatic transcription (Deepgram)
+- Speaker identification and directory
+- Analysis pipeline constructor (React Flow)
+- Dynamic wizard engine for running analysis scenarios
+- Results management with re-analysis capability
+- File/link attachments with multimodal AI support
+- Export to Word/PDF
 
-### Конструктор сценариев анализа (Dec 2025)
-- [x] CRUD API для пайплайнов
-- [x] Визуальный редактор на React Flow
-- [x] 7 типов узлов: ai_prompt, parse_list, batch_loop, aggregate, template, user_edit_list, user_review
-- [x] Два типа стрелок: порядок выполнения (серые) и источники данных (оранжевые пунктирные)
-- [x] Хэндлы на всех 4 сторонах блоков, скрыты при отсутствии наведения
-- [x] Ортогональная маршрутизация стрелок (smoothstep)
-- [x] Undo/Redo + горячие клавиши
-- [x] Скрипты для всех типов узлов-обработчиков
-- [x] AI-помощник для генерации скриптов
-- [x] Режим "Предпросмотр" — пошаговый визард из конструктора
-- [x] Дефолтный пайплайн "Стандартный анализ встречи"
+### Phase 1: Document Agent Foundation (Complete - Feb 10, 2026)
+- Backend: Full CRUD API for folders, projects, attachments, templates (`/api/doc/*`)
+- Frontend: Vertical sidebar navigation (AppLayout) replacing horizontal nav
+- Frontend: Documents page with hierarchical tree view
+- Frontend: DocProjectPage workspace with source materials panel
+- Testing: 24/24 backend tests pass, 10/10 frontend features verified
 
-### Динамический визард Мастер-анализа (Feb 2025)
-- [x] Движок исполнения пайплайна — `FullAnalysisTab.jsx` полностью рефакторён
-- [x] Настройки визарда в конструкторе (секция "Настройки визарда" в NodeConfigPanel):
-  - step_title (макс. 40 символов) + счётчик
-  - step_description (макс. 200 символов) + счётчик
-  - continue_button_label (макс. 25 символов) + счётчик
-  - pause_after (для автоматических узлов)
-- [x] Настройки template-узлов: variable_config (подпись, подсказка, тип поля, обязательность)
-- [x] Настройки user_edit_list: allow_add, allow_edit, allow_delete, min_selected
-- [x] Настройки user_review: allow_review_edit, show_export, show_save
-- [x] Топологическая сортировка + группировка узлов в стадии визарда
-- [x] Автоматическое выполнение AI-узлов и скриптов
-- [x] Батч-обработка с прогресс-баром и паузой
-- [x] Контекст выполнения — передача данных между узлами
-- [x] Дефолтный пайплайн обновлён с настройками визарда
+## Backlog
 
-### Сохранение результата визарда (Feb 2025)
-- [x] `forceMount` на TabsContent — результат визарда сохраняется при переключении вкладок
-- [x] Кнопка "Новый анализ" с AlertDialog подтверждения (предупреждение о потере результата)
-- [x] Текст предупреждения с рекомендацией сохранить/экспортировать перед сбросом
+### P0 - Phase 2: Project Workspace
+- Analysis streams (multi-chat interface)
+- AI integration in streams with source material context
+- Stream management (create, rename, delete)
 
-### Вкладка "Результаты" (Feb 2025)
-- [x] Вкладка "Анализ" → "Результаты", перемещена в конец таб-меню (после "Мастер")
-- [x] Список сохранённых результатов мастер-анализа с карточками
-- [x] Мультивыбор чекбоксами + "Выбрать все"
-- [x] Просмотр результата: Markdown-рендер, редактирование, экспорт (Copy, .md, Word, PDF)
-- [x] Удаление результата с AlertDialog подтверждением
-- [x] Панель действий при выборе: "Анализ по промпту" и "Анализ по сценарию"
-- [x] Анализ по промпту: выбор промпта → отправка выбранных результатов на LLM → сохранение
-- [x] Анализ по сценарию: выбор пайплайна → автоматическое исполнение узлов с текстом результатов → сохранение
-- [x] Бэкенд: GET /api/projects/:id/analysis-results, DELETE /api/projects/:id/chat-history/:id
-- [x] Метаданные pipeline_id/pipeline_name в сохранённых результатах
+### P1 - Phase 3: AI & Finalization  
+- LLM integration in analysis streams
+- Reusable prompt/scenario templates
+- Final document assembly from streams
 
-### Вложения (файлы и ссылки) (Feb 2025)
-- [x] Бэкенд: CRUD API для вложений (upload, addUrl, list, delete)
-- [x] Поддержка файлов: PDF, DOCX, TXT, CSV, MD, PNG, JPG, WEBP, GIF, ZIP (до 100MB)
-- [x] URL-ссылки: хранение, инжекция в промпт как "Также изучи информацию по ссылке: URL"
-- [x] Текстовые файлы: извлечение текста → инжекция в промпт
-- [x] PDF/картинки: base64 → multimodal content parts в LLM-запрос
-- [x] ZIP: распаковка + обработка каждого файла по типу
-- [x] Инжекция в промпт динамически (промпты в базе НЕ меняются)
-- [x] AttachmentsPanel на вкладках "Анализ" и "Результаты"
-- [x] Чекбоксы для выбора вложений, включаемых в контекст анализа
-
-## Key Files
-- `frontend/src/components/project/FullAnalysisTab.jsx` — динамический визард
-- `frontend/src/components/pipeline/NodeConfigPanel.jsx` — панель конфигурации с настройками визарда
-- `frontend/src/components/pipeline/PipelineStepPreview.jsx` — предпросмотр
-- `backend/app/models/pipeline.py` — модель PipelineNodeConfig с полями визарда
-- `backend/app/routes/pipelines.py` — API пайплайнов
-
-## Prioritized Backlog
-
-### P0
-- [ ] Полное end-to-end тестирование с реальным транскриптом (загрузка аудио → анализ через динамический визард)
-
-### P1
-- [ ] Интеграция с библиотекой промптов (prompt_id в узлах)
-- [ ] Создание промптов из конструктора
-
-### P2
-- [ ] condition (ветвление)
-- [ ] extract_json
-- [ ] merge (параллельные ветки)
+### P2 - Refactoring
+- Extract pipeline execution logic into `usePipelineRunner` hook
