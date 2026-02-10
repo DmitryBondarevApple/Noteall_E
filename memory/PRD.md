@@ -1,47 +1,44 @@
 # Voice Workspace + Document Agent — PRD
 
-## Original Problem Statement
-Web application for transcribing and analyzing meetings with AI. 
-New major feature: **Document Agent** — a section for complex document processing workflows with hierarchical project structure, multi-stream AI analysis, and document assembly.
-
 ## Architecture
 - **Backend**: FastAPI + MongoDB (motor async)
 - **Frontend**: React + Tailwind CSS + shadcn/ui + React Flow
 - **AI**: OpenAI GPT-5.2 via Emergent LLM Key
 - **Auth**: JWT-based
 
-## Navigation Structure
-- **Встречи** (`/meetings`) — transcript projects in tree folders + Speakers (button -> `/meetings/speakers`)
-- **Документы** (`/documents`) — Document Agent: folders, projects, AI streams, final document
+## Navigation
+- **Встречи** (`/meetings`) — transcript projects in tree folders + Speakers button
+- **Документы** (`/documents`) — Document Agent: automated pipeline analysis
 - **Конструктор** (`/constructor`) — Tabs: Сценарии (pipelines) | Промпты
-- **Админ** (`/admin`) — Admin panel (admin-only)
+- **Админ** (`/admin`) — Admin panel
 
 ## What's Implemented
 
 ### Meeting Analysis (Complete)
-- Hierarchical folder structure for meeting projects (meeting_folders API)
-- Project creation with folder_id association
-- Audio upload, transcription (Deepgram), speaker identification
-- Analysis pipeline constructor (React Flow)
-- Dynamic wizard, results management, re-analysis
-- File/link attachments with multimodal AI
-- Export to Word/PDF
-- Speaker directory at /meetings/speakers
+- Hierarchical folder structure (meeting_folders API)
+- Audio upload, transcription, speaker identification
+- Pipeline constructor (React Flow), dynamic wizard, results
+- File/link attachments with multimodal AI, export
 
-### Document Agent (Complete - Feb 10, 2026)
-- Phase 1: Hierarchical tree, vertical sidebar, CRUD for folders/projects/attachments
-- Phase 2: Analysis streams (multi-chat), AI with source material context
-- Phase 3: Templates (5 pre-seeded), pins for final document assembly, copy-to-clipboard
+### Document Agent — Automated Pipeline (Complete - Feb 10, 2026)
+- Hierarchical folder/project structure with CRUD
+- Source material upload (files + URLs)
+- **Server-side pipeline runner**: executes pipeline nodes in topological order
+- Supports: ai_prompt, template, parse_list, batch_loop, aggregate nodes
+- Fan-out/fan-in: one node can feed many parallel branches, aggregate merges them
+- Source materials injected as AI context automatically
+- Results displayed as expandable cards per node step
+- Copy full results or individual steps to clipboard
+- Multiple runs per project with history
 
-### Navigation Restructuring (Complete - Feb 10, 2026)
+### Navigation (Complete - Feb 10, 2026)
 - Sidebar: Встречи, Документы, Конструктор, Админ
-- MeetingsPage with tree folder structure (replaces old flat DashboardPage)
-- ConstructorPage with Сценарии/Промпты tabs (replaces separate pages)
+- MeetingsPage with tree folders (replaces flat DashboardPage)
+- ConstructorPage with Сценарии/Промпты tabs
 - Old routes redirect to new locations
-- Testing: 15/15 backend, 15/15 frontend
 
 ## Backlog
 - PDF content parsing for AI context
-- Drag-and-drop for trees and pins
-- Export final document to Word/PDF
-- Extract pipeline logic into `usePipelineRunner` hook
+- Drag-and-drop for tree navigation
+- Export results to Word/PDF
+- Refactor `usePipelineRunner` hook
