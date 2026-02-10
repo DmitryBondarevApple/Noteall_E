@@ -42,7 +42,7 @@ const NODE_ICON_MAP = {
   user_review: Eye,
 };
 
-export default function PipelinesPage() {
+export function PipelinesContent() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [pipelines, setPipelines] = useState([]);
@@ -85,30 +85,18 @@ export default function PipelinesPage() {
   };
 
   return (
-    <AppLayout>
-    <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-slate-900 flex items-center justify-center">
-                <Workflow className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold tracking-tight">Сценарии анализа</span>
-          </div>
-          <Button
-            className="gap-2 rounded-full"
-            onClick={() => navigate('/pipelines/new')}
-            data-testid="create-pipeline-btn"
-          >
-            <Plus className="w-4 h-4" />
-            Новый сценарий
-          </Button>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        {loading ? (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div />
+        <Button
+          className="gap-2 rounded-full"
+          onClick={() => navigate('/pipelines/new')}
+          data-testid="create-pipeline-btn"
+        >
+          <Plus className="w-4 h-4" />
+          Новый сценарий
+        </Button>
+      </div>
           <div className="flex justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
           </div>
