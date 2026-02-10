@@ -1,13 +1,16 @@
 import uuid
 import os
+import logging
 from datetime import datetime, timezone
 from typing import Optional, List
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from app.core.database import db
 from app.routes.auth import get_current_user
+from app.services.gpt import call_gpt52
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 UPLOAD_DIR = "/app/backend/uploads/doc_attachments"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
