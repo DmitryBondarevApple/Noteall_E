@@ -59,7 +59,12 @@ export default function DocumentsPage() {
   const [folders, setFolders] = useState([]);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [expandedFolders, setExpandedFolders] = useState(new Set());
+  const [expandedFolders, setExpandedFolders] = useState(() => {
+    try {
+      const saved = localStorage.getItem('documents_expanded');
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch { return new Set(); }
+  });
   const [searchQuery, setSearchQuery] = useState('');
 
   // Dialogs
