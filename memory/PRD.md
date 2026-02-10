@@ -13,7 +13,7 @@ New major feature: **Document Agent** — a section for complex document process
 ## Architecture
 - **Backend**: FastAPI + MongoDB (motor async)
 - **Frontend**: React + Tailwind CSS + shadcn/ui + React Flow
-- **AI**: OpenAI GPT-4o via Emergent LLM Key
+- **AI**: OpenAI GPT-5.2 via Emergent LLM Key
 - **Auth**: JWT-based
 
 ## What's Implemented
@@ -35,17 +35,21 @@ New major feature: **Document Agent** — a section for complex document process
 - Frontend: DocProjectPage workspace with source materials panel
 - Testing: 24/24 backend tests pass, 10/10 frontend features verified
 
+### Phase 2: Analysis Streams (Complete - Feb 10, 2026)
+- Backend: CRUD for analysis streams + AI message endpoint
+- Backend: Source material context injection into AI prompts (reads text files)
+- Backend: Multi-turn conversation history preserved
+- Frontend: 3-column workspace layout (materials, chat, stream tabs)
+- Frontend: Stream creation with name + optional system prompt
+- Frontend: Real-time chat with optimistic UI updates
+- Frontend: Stream switching with correct message history
+- Testing: 18/18 backend tests pass, 11/11 frontend features verified
+
 ## Backlog
 
-### P0 - Phase 2: Project Workspace
-- Analysis streams (multi-chat interface)
-- AI integration in streams with source material context
-- Stream management (create, rename, delete)
-
 ### P1 - Phase 3: AI & Finalization  
-- LLM integration in analysis streams
-- Reusable prompt/scenario templates
-- Final document assembly from streams
+- Reusable prompt/scenario templates for streams
+- Final document assembly panel (combine results from streams)
 
 ### P2 - Refactoring
 - Extract pipeline execution logic into `usePipelineRunner` hook
