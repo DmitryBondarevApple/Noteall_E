@@ -316,11 +316,16 @@ export default function DocumentsPage() {
               <MoreHorizontal className="w-3.5 h-3.5 text-slate-500" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-40">
+          <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/documents/${project.id}`); }}>
               <Edit2 className="w-4 h-4 mr-2" />
               Открыть
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setMoveDialog({ open: true, projectId: project.id, projectName: project.name }); }}>
+              <FolderInput className="w-4 h-4 mr-2" />
+              Перенести в папку
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); handleDeleteProject(project.id); }}>
               <Trash2 className="w-4 h-4 mr-2" />
               Удалить
