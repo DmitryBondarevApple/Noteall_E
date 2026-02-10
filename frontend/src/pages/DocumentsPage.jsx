@@ -40,6 +40,7 @@ import {
   FolderPlus,
   FilePlus,
   Loader2,
+  FolderInput,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
