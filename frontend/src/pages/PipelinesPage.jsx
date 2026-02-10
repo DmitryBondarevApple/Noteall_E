@@ -119,14 +119,35 @@ export function PipelinesContent() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div />
-        <Button
-          className="gap-2 rounded-full"
-          onClick={() => navigate('/pipelines/new')}
-          data-testid="create-pipeline-btn"
-        >
-          <Plus className="w-4 h-4" />
-          Новый сценарий
-        </Button>
+        <div className="flex items-center gap-2">
+          <label>
+            <input
+              type="file"
+              accept=".json"
+              className="hidden"
+              onChange={handleImport}
+              data-testid="import-pipeline-input"
+            />
+            <Button
+              variant="outline"
+              className="gap-2 rounded-full cursor-pointer"
+              asChild
+            >
+              <span>
+                <Upload className="w-4 h-4" />
+                Импорт
+              </span>
+            </Button>
+          </label>
+          <Button
+            className="gap-2 rounded-full"
+            onClick={() => navigate('/pipelines/new')}
+            data-testid="create-pipeline-btn"
+          >
+            <Plus className="w-4 h-4" />
+            Новый сценарий
+          </Button>
+        </div>
       </div>
       {loading ? (
           <div className="flex justify-center py-20">
