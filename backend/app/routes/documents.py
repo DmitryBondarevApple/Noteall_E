@@ -560,19 +560,6 @@ async def delete_pin(project_id: str, pin_id: str, user=Depends(get_current_user
     await db.doc_pins.delete_one({"id": pin_id})
     return {"message": "Deleted"}
 
-@router.put("/doc/projects/{project_id}/pins/reorder")
-async def reorder_pins(project_id: str, data: PinReorder, user=Depends(get_current_user)):
-    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]})
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
-
-    for i, pin_id in enumerate(data.pin_ids):
-        await db.doc_pins.update_one(
-            {"id": pin_id, "project_id": project_id},
-            {"$set": {"order": i}}
-        )
-    return {"message": "Reordered"}
-
 
 # ==================== SEED TEMPLATES ====================
 
