@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import AppLayout from '../components/layout/AppLayout';
 import {
   projectsApi,
   transcriptsApi,
@@ -156,9 +157,10 @@ export default function ProjectPage() {
   }
 
   return (
+    <AppLayout>
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-50">
+      <header className="bg-white border-b sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
             <Link to="/dashboard">
