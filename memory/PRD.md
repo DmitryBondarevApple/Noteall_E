@@ -15,29 +15,29 @@
 ## Implemented Features
 
 ### Meeting Analysis
-- Hierarchical folder structure (meeting_folders API)
+- Hierarchical folder structure with tree navigation (full-width)
+- "Move to folder" in project context menu
 - Audio upload, transcription, speaker identification
 - Pipeline constructor (React Flow), dynamic wizard, results
 - File/link attachments with multimodal AI, export
 
-### Speaker Directory (Redesigned - Feb 10, 2026)
-- Compact table view (replaces card layout)
-- Tags support (multi-tag per speaker, comma-separated input)
-- Filters: search, company dropdown, tag dropdown
-- Sortable columns: name, company, role
+### Speaker Directory
+- Compact table view with sortable columns
+- Tags support, filters (search, company, tag dropdowns)
 - Back navigation to /meetings
 
 ### Document Agent — Automated Pipeline
-- Hierarchical folder/project structure
+- Hierarchical folder/project structure (full-width tree)
+- "Move to folder" in project context menu
 - Source material upload (files + URLs)
 - Server-side pipeline runner with topological sort
-- Fan-out/fan-in support (parallel branches + aggregate merge)
-- Results displayed as expandable node cards
-- Copy full results or individual steps
+- Fan-out/fan-in support
+- Results as expandable node cards with copy
 
-### Navigation
+### Navigation & Layout
 - 4-item sidebar: Встречи, Документы, Конструктор, Админ
 - ConstructorPage with Сценарии/Промпты tabs
+- Full-width left-aligned tree layouts
 - Old routes redirect correctly
 
 ## Backlog
