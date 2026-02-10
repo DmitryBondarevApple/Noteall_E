@@ -89,7 +89,7 @@ export default function ProjectPage() {
       setChatHistory(chatRes.data);
     } catch (error) {
       toast.error('Ошибка загрузки проекта');
-      navigate('/dashboard');
+      navigate('/meetings');
     } finally {
       setLoading(false);
     }
@@ -163,7 +163,7 @@ export default function ProjectPage() {
       <header className="bg-white border-b sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-            <Link to="/dashboard">
+            <Link to="/meetings">
               <Button variant="ghost" size="icon" className="shrink-0" data-testid="back-to-dashboard">
                 <ArrowLeft className="w-5 h-5" />
               </Button>
