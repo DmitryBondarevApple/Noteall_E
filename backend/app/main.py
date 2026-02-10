@@ -14,7 +14,8 @@ from app.routes import (
     seed_router,
     export_router,
     pipelines_router,
-    attachments_router
+    attachments_router,
+    documents_router
 )
 from app.core.database import client
 
