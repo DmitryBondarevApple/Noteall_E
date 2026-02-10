@@ -98,6 +98,7 @@ async def create_speaker_directory_entry(
         "whatsapp": data.whatsapp,
         "photo_url": data.photo_url,
         "comment": data.comment,
+        "tags": data.tags or [],
         "created_at": now,
         "updated_at": now
     }
