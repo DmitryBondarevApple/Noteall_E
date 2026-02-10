@@ -15,7 +15,8 @@ from app.routes import (
     export_router,
     pipelines_router,
     attachments_router,
-    documents_router
+    documents_router,
+    meeting_folders_router
 )
 from app.core.database import client
 
@@ -53,6 +54,7 @@ app.include_router(export_router, prefix="/api")
 app.include_router(pipelines_router, prefix="/api")
 app.include_router(attachments_router, prefix="/api")
 app.include_router(documents_router, prefix="/api")
+app.include_router(meeting_folders_router, prefix="/api")
 
 
 @app.get("/api/health")

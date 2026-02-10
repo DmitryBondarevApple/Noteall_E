@@ -12,3 +12,4 @@ from app.routes.export import router as export_router
 from app.routes.pipelines import router as pipelines_router
 from app.routes.attachments import router as attachments_router
 from app.routes.documents import router as documents_router
+from app.routes.meeting_folders import router as meeting_folders_router
