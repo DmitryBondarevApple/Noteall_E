@@ -23,7 +23,7 @@ def setup_auth():
         "password": "test123"
     })
     assert response.status_code == 200, f"Login failed: {response.text}"
-    test_data["auth_token"] = response.json().get("token")
+    test_data["auth_token"] = response.json().get("access_token")
     print(f"✓ Authenticated successfully")
     yield
     # Cleanup at end
