@@ -1,0 +1,77 @@
+{
+  "summary": "Iteration 19: Move to folder feature + full-width tree layout. Backend: 4/4 tests passed (100%). Frontend: All features verified. Fixed 2 critical bugs in backend.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "features_tested": {
+    "layout_changes": {
+      "Meetings page tree left-aligned full-width": {"status": "PASS", "notes": "No max-w-2xl, tree starts from left"},
+      "Documents page tree left-aligned full-width": {"status": "PASS", "notes": "No max-w-2xl, tree starts from left"}
+    },
+    "meetings_move_to_folder": {
+      "Project dropdown has 'Перенести в папку' option": {"status": "PASS"},
+      "Clicking option opens move dialog": {"status": "PASS"},
+      "Move dialog shows 'Без папки (корень)' option": {"status": "PASS"},
+      "Move dialog shows all folders": {"status": "PASS"},
+      "Moving project to folder updates tree": {"status": "PASS", "notes": "Toast shows 'Проект перемещён'"}
+    },
+    "documents_move_to_folder": {
+      "Project dropdown has 'Перенести в папку' option": {"status": "PASS"},
+      "Move dialog shows only folders (no root option)": {"status": "PASS", "notes": "Documents projects must be in a folder"},
+      "Moving project between folders works": {"status": "PASS"}
+    },
+    "backend": {
+      "PUT /api/projects/{id} with folder_id": {"status": "PASS"},
+      "PUT /api/projects/{id} with folder_id: null (move to root)": {"status": "PASS", "notes": "Fixed by using exclude_unset=True"},
+      "PUT /api/doc/projects/{id} with folder_id": {"status": "PASS", "notes": "Fixed by adding folder_id to DocProjectUpdate model"}
+    },
+    "regression": {
+      "Speakers page back button navigates to /meetings": {"status": "PASS", "notes": "data-testid='back-to-meetings' works correctly"}
+    }
+  },
+  "bugs_fixed": [
+    {
+      "file": "/app/backend/app/routes/projects.py",
+      "issue": "PUT endpoint filtered out null values, preventing folder_id: null to move projects to root",
+      "fix": "Changed from 'if v is not None' filter to 'model_dump(exclude_unset=True)'"
+    },
+    {
+      "file": "/app/backend/app/routes/documents.py",
+      "issue": "DocProjectUpdate model was missing folder_id field, making move to folder impossible for documents",
+      "fix": "Added 'folder_id: Optional[str] = None' to DocProjectUpdate model"
+    }
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_move_to_folder.py",
+    "/app/test_reports/pytest/pytest_move_folder.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "MeetingsPage.jsx correctly implements moveDialog state and handleMoveProject function",
+    "DocumentsPage.jsx correctly implements move feature without root option (documents must be in folders)",
+    "Backend uses exclude_unset pattern allowing explicit null values where needed"
+  ],
+  "updated_files": [
+    "/app/backend/app/routes/projects.py",
+    "/app/backend/app/routes/documents.py",
+    "/app/backend/tests/test_move_to_folder.py"
+  ],
+  "success_rate": {
+    "backend": "100% (4/4 tests passed)",
+    "frontend": "100% (all features verified)"
+  },
+  "test_credentials": {
+    "email": "test@example.com",
+    "password": "test123"
+  },
+  "seed_data_creation": "Test folders created during testing (TEST_ prefix) cleaned up by tests",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Move to folder feature fully functional for both Meetings and Documents. Backend uses exclude_unset pattern. Meetings allows root (null folder_id), Documents requires folder."
+}
