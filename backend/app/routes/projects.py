@@ -43,8 +43,11 @@ async def create_project(data: ProjectCreate, user=Depends(get_current_user)):
 
 
 @router.get("", response_model=List[ProjectResponse])
-async def list_projects(user=Depends(get_current_user)):
-    projects = await db.projects.find({"user_id": user["id"]}, {"_id": 0}).to_list(1000)
+async def list_projects(folder_id: Optional[str] = None, user=Depends(get_current_user)):
+    query = {"user_id": user["id"]}
+    if folder_id is not None:
+        query["folder_id"] = folder_id
+    projects = await db.projects.find(query, {"_id": 0}).to_list(1000)
     return [ProjectResponse(**p) for p in projects]
 
 
