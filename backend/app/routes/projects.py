@@ -113,15 +113,22 @@ async def upload_file(
     file_id = str(uuid.uuid4())
     file_ext = Path(file.filename).suffix
     filename = f"{file_id}{file_ext}"
-    file_path = Path(UPLOAD_DIR) / filename
-    
-    with open(file_path, "wb") as f:
-        shutil.copyfileobj(file.file, f)
+
+    content = await file.read()
+    s3_key = None
+    if s3_enabled():
+        s3_key = f"uploads/{filename}"
+        upload_bytes(s3_key, content, file.content_type or "audio/mpeg")
+    else:
+        file_path = Path(UPLOAD_DIR) / filename
+        with open(file_path, "wb") as f:
+            f.write(content)
     
     await db.projects.update_one(
         {"id": project_id},
         {"$set": {
             "recording_filename": filename,
+            "s3_key": s3_key,
             "language": language,
             "reasoning_effort": reasoning_effort,
             "status": "transcribing",
