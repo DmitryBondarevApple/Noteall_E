@@ -57,10 +57,11 @@ export default function AppLayout({ children }) {
         >
           {/* Logo */}
           <div className={cn('flex items-center h-14 px-3 border-b border-slate-700/50', collapsed ? 'justify-center' : 'gap-2.5')}>
-            <div className="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center shrink-0">
-              <Mic className="w-4 h-4 text-white" />
-            </div>
-            {!collapsed && <span className="font-bold text-sm tracking-tight truncate">Workspace</span>}
+            {collapsed ? (
+              <span className="font-bold text-sm text-white">N</span>
+            ) : (
+              <img src="/logo-noteall.png" alt="Noteall" className="h-5" />
+            )}
           </div>
 
           {/* Nav */}
