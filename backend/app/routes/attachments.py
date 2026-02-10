@@ -282,8 +282,10 @@ async def delete_attachment(
     if not att:
         raise HTTPException(status_code=404, detail="Attachment not found")
 
-    # Delete file from disk
-    if att.get("file_path") and os.path.exists(att["file_path"]):
+    # Delete file from storage
+    if att.get("s3_key"):
+        delete_object(att["s3_key"])
+    elif att.get("file_path") and os.path.exists(att["file_path"]):
         os.remove(att["file_path"])
 
     await db.attachments.delete_one({"id": attachment_id})
