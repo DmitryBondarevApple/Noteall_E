@@ -1,49 +1,56 @@
-<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="13" skipped="0" tests="18" time="1.671" timestamp="2026-02-10T17:38:22.946624+00:00" hostname="agent-env-a7e19f18-7ff0-47c5-bf07-49e9cdc1032b"><testcase classname="backend.tests.test_meeting_folders.TestMeetingFoldersAPI" name="test_create_folder" time="0.364"><failure message="AssertionError: Create folder failed: {&quot;detail&quot;:&quot;Invalid token&quot;}&#10;assert 401 == 201&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_meeting_folders.py:44: in test_create_folder
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="14" skipped="0" tests="15" time="0.903" timestamp="2026-02-10T17:38:59.905504+00:00" hostname="agent-env-a7e19f18-7ff0-47c5-bf07-49e9cdc1032b"><testcase classname="backend.tests.test_meeting_folders" name="test_health_endpoint" time="0.380" /><testcase classname="backend.tests.test_meeting_folders" name="test_create_folder" time="0.042"><failure message="AssertionError: Create folder failed: {&quot;detail&quot;:&quot;Invalid token&quot;}&#10;assert 401 == 201&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_meeting_folders.py:64: in test_create_folder
     assert response.status_code == 201, f"Create folder failed: {response.text}"
 E   AssertionError: Create folder failed: {"detail":"Invalid token"}
 E   assert 401 == 201
-E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_meeting_folders.TestMeetingFoldersAPI" name="test_create_nested_folder" time="0.000"><failure message="IndexError: list index out of range">backend/tests/test_meeting_folders.py:55: in test_create_nested_folder
-    parent_id = self.__class__.created_folder_ids[0]
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   IndexError: list index out of range</failure></testcase><testcase classname="backend.tests.test_meeting_folders.TestMeetingFoldersAPI" name="test_create_folder_invalid_parent" time="0.042"><failure message="AssertionError: Should fail with 404: {&quot;detail&quot;:&quot;Invalid token&quot;}&#10;assert 401 == 404&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_meeting_folders.py:75: in test_create_folder_invalid_parent
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_meeting_folders" name="test_create_nested_folder" time="0.000"><failure message="AssertionError: No parent folder created&#10;assert 0 &gt; 0&#10; +  where 0 = len([])">backend/tests/test_meeting_folders.py:75: in test_create_nested_folder
+    assert len(test_data["folder_ids"]) &gt; 0, "No parent folder created"
+E   AssertionError: No parent folder created
+E   assert 0 &gt; 0
+E    +  where 0 = len([])</failure></testcase><testcase classname="backend.tests.test_meeting_folders" name="test_create_folder_invalid_parent" time="0.041"><failure message="AssertionError: Should fail with 404: {&quot;detail&quot;:&quot;Invalid token&quot;}&#10;assert 401 == 404&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_meeting_folders.py:96: in test_create_folder_invalid_parent
     assert response.status_code == 404, f"Should fail with 404: {response.text}"
 E   AssertionError: Should fail with 404: {"detail":"Invalid token"}
 E   assert 401 == 404
-E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_meeting_folders.TestMeetingFoldersAPI" name="test_list_folders" time="0.039"><failure message="AssertionError: List folders failed: {&quot;detail&quot;:&quot;Invalid token&quot;}&#10;assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_meeting_folders.py:84: in test_list_folders
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_meeting_folders" name="test_list_folders" time="0.045"><failure message="AssertionError: List folders failed: {&quot;detail&quot;:&quot;Invalid token&quot;}&#10;assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_meeting_folders.py:105: in test_list_folders
     assert response.status_code == 200, f"List folders failed: {response.text}"
 E   AssertionError: List folders failed: {"detail":"Invalid token"}
 E   assert 401 == 200
-E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_meeting_folders.TestMeetingFoldersAPI" name="test_update_folder" time="0.000"><failure message="IndexError: list index out of range">backend/tests/test_meeting_folders.py:94: in test_update_folder
-    folder_id = self.__class__.created_folder_ids[0]
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   IndexError: list index out of range</failure></testcase><testcase classname="backend.tests.test_meeting_folders.TestMeetingFoldersAPI" name="test_update_nonexistent_folder" time="0.041"><failure message="AssertionError: Should fail with 404: {&quot;detail&quot;:&quot;Invalid token&quot;}&#10;assert 401 == 404&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_meeting_folders.py:113: in test_update_nonexistent_folder
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_meeting_folders" name="test_update_folder" time="0.000"><failure message="AssertionError: No folder created&#10;assert 0 &gt; 0&#10; +  where 0 = len([])">backend/tests/test_meeting_folders.py:115: in test_update_folder
+    assert len(test_data["folder_ids"]) &gt; 0, "No folder created"
+E   AssertionError: No folder created
+E   assert 0 &gt; 0
+E    +  where 0 = len([])</failure></testcase><testcase classname="backend.tests.test_meeting_folders" name="test_update_nonexistent_folder" time="0.057"><failure message="AssertionError: Should fail with 404: {&quot;detail&quot;:&quot;Invalid token&quot;}&#10;assert 401 == 404&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_meeting_folders.py:135: in test_update_nonexistent_folder
     assert response.status_code == 404, f"Should fail with 404: {response.text}"
 E   AssertionError: Should fail with 404: {"detail":"Invalid token"}
 E   assert 401 == 404
-E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_meeting_folders.TestMeetingFoldersAPI" name="test_delete_folder_not_empty_nested" time="0.000"><failure message="IndexError: list index out of range">backend/tests/test_meeting_folders.py:119: in test_delete_folder_not_empty_nested
-    parent_id = self.__class__.created_folder_ids[0]
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   IndexError: list index out of range</failure></testcase><testcase classname="backend.tests.test_meeting_folders.TestProjectsWithFolder" name="test_create_project_in_folder" time="0.303"><failure message="assert 401 == 201&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_meeting_folders.py:143: in test_create_project_in_folder
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_meeting_folders" name="test_delete_folder_not_empty_nested" time="0.000"><failure message="AssertionError: No folder created&#10;assert 0 &gt; 0&#10; +  where 0 = len([])">backend/tests/test_meeting_folders.py:140: in test_delete_folder_not_empty_nested
+    assert len(test_data["folder_ids"]) &gt; 0, "No folder created"
+E   AssertionError: No folder created
+E   assert 0 &gt; 0
+E    +  where 0 = len([])</failure></testcase><testcase classname="backend.tests.test_meeting_folders" name="test_create_project_in_folder" time="0.041"><failure message="assert 401 == 201&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_meeting_folders.py:161: in test_create_project_in_folder
     assert folder_resp.status_code == 201
 E   assert 401 == 201
-E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_meeting_folders.TestProjectsWithFolder" name="test_list_projects_by_folder" time="0.035"><failure message="AssertionError: List projects failed: {&quot;detail&quot;:&quot;Invalid token&quot;}&#10;assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_meeting_folders.py:170: in test_list_projects_by_folder
-    assert response.status_code == 200, f"List projects failed: {response.text}"
-E   AssertionError: List projects failed: {"detail":"Invalid token"}
-E   assert 401 == 200
-E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_meeting_folders.TestProjectsWithFolder" name="test_delete_folder_not_empty_project" time="0.041"><failure message="AssertionError: Should fail with 400: {&quot;detail&quot;:&quot;Invalid token&quot;}&#10;assert 401 == 400&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_meeting_folders.py:187: in test_delete_folder_not_empty_project
-    assert response.status_code == 400, f"Should fail with 400: {response.text}"
-E   AssertionError: Should fail with 400: {"detail":"Invalid token"}
-E   assert 401 == 400
-E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_meeting_folders.TestProjectsWithFolder" name="test_cleanup_project" time="0.000" /><testcase classname="backend.tests.test_meeting_folders.TestProjectsWithFolder" name="test_cleanup_folder_now_empty" time="0.000" /><testcase classname="backend.tests.test_meeting_folders.TestCleanup" name="test_cleanup_nested_folder" time="0.266" /><testcase classname="backend.tests.test_meeting_folders.TestCleanup" name="test_cleanup_root_folder" time="0.000" /><testcase classname="backend.tests.test_meeting_folders.TestExistingAPIs" name="test_pipelines_api" time="0.293"><failure message="AssertionError: Pipelines API failed: {&quot;detail&quot;:&quot;Invalid token&quot;}&#10;assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_meeting_folders.py:247: in test_pipelines_api
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_meeting_folders" name="test_list_projects_by_folder" time="0.000"><failure message="AssertionError: Project folder not created&#10;assert 0 &gt; 2&#10; +  where 0 = len([])">backend/tests/test_meeting_folders.py:184: in test_list_projects_by_folder
+    assert len(test_data["folder_ids"]) &gt; 2, "Project folder not created"
+E   AssertionError: Project folder not created
+E   assert 0 &gt; 2
+E    +  where 0 = len([])</failure></testcase><testcase classname="backend.tests.test_meeting_folders" name="test_delete_folder_not_empty_project" time="0.000"><failure message="AssertionError: Project folder not created&#10;assert 0 &gt; 2&#10; +  where 0 = len([])">backend/tests/test_meeting_folders.py:205: in test_delete_folder_not_empty_project
+    assert len(test_data["folder_ids"]) &gt; 2, "Project folder not created"
+E   AssertionError: Project folder not created
+E   assert 0 &gt; 2
+E    +  where 0 = len([])</failure></testcase><testcase classname="backend.tests.test_meeting_folders" name="test_pipelines_api" time="0.050"><failure message="AssertionError: Pipelines API failed: {&quot;detail&quot;:&quot;Invalid token&quot;}&#10;assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_meeting_folders.py:225: in test_pipelines_api
     assert response.status_code == 200, f"Pipelines API failed: {response.text}"
 E   AssertionError: Pipelines API failed: {"detail":"Invalid token"}
 E   assert 401 == 200
-E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_meeting_folders.TestExistingAPIs" name="test_prompts_api" time="0.042"><failure message="AssertionError: Prompts API failed: {&quot;detail&quot;:&quot;Invalid token&quot;}&#10;assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_meeting_folders.py:256: in test_prompts_api
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_meeting_folders" name="test_prompts_api" time="0.038"><failure message="AssertionError: Prompts API failed: {&quot;detail&quot;:&quot;Invalid token&quot;}&#10;assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_meeting_folders.py:234: in test_prompts_api
     assert response.status_code == 200, f"Prompts API failed: {response.text}"
 E   AssertionError: Prompts API failed: {"detail":"Invalid token"}
 E   assert 401 == 200
-E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_meeting_folders.TestExistingAPIs" name="test_speaker_directory_api" time="0.038"><failure message="AssertionError: Speaker directory API failed: {&quot;detail&quot;:&quot;Invalid token&quot;}&#10;assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_meeting_folders.py:265: in test_speaker_directory_api
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_meeting_folders" name="test_speaker_directory_api" time="0.038"><failure message="AssertionError: Speaker directory API failed: {&quot;detail&quot;:&quot;Invalid token&quot;}&#10;assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_meeting_folders.py:243: in test_speaker_directory_api
     assert response.status_code == 200, f"Speaker directory API failed: {response.text}"
 E   AssertionError: Speaker directory API failed: {"detail":"Invalid token"}
 E   assert 401 == 200
-E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_meeting_folders.TestExistingAPIs" name="test_health_endpoint" time="0.036" /></testsuite></testsuites>
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_meeting_folders" name="test_projects_list_api" time="0.040"><failure message="AssertionError: Projects list API failed: {&quot;detail&quot;:&quot;Invalid token&quot;}&#10;assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_meeting_folders.py:252: in test_projects_list_api
+    assert response.status_code == 200, f"Projects list API failed: {response.text}"
+E   AssertionError: Projects list API failed: {"detail":"Invalid token"}
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase></testsuite></testsuites>
