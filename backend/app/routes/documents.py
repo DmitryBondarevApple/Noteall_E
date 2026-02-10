@@ -460,21 +460,29 @@ async def run_pipeline(project_id: str, data: RunPipelineRequest, user=Depends(g
     source_texts = []
     for att in attachments:
         ext = os.path.splitext(att.get("name", ""))[1].lower()
-        if att.get("s3_key") and ext in {".txt", ".md", ".csv"}:
+        raw_bytes = None
+
+        # Get file bytes
+        if att.get("s3_key"):
             try:
-                data_bytes = download_bytes(att["s3_key"])
-                text = data_bytes.decode("utf-8", errors="replace")[:50000]
-                source_texts.append(f"--- Документ: {att['name']} ---\n{text}")
+                raw_bytes = download_bytes(att["s3_key"])
             except Exception as e:
-                logger.warning(f"Failed to read S3 attachment {att['name']}: {e}")
+                logger.warning(f"Failed to download S3 attachment {att['name']}: {e}")
         elif att.get("file_path") and os.path.exists(att["file_path"]):
             try:
-                if ext in {".txt", ".md", ".csv"}:
-                    with open(att["file_path"], "r", encoding="utf-8", errors="replace") as f:
-                        text = f.read()[:50000]
-                    source_texts.append(f"--- Документ: {att['name']} ---\n{text}")
+                with open(att["file_path"], "rb") as f:
+                    raw_bytes = f.read()
             except Exception as e:
                 logger.warning(f"Failed to read attachment {att['name']}: {e}")
+
+        if raw_bytes:
+            if ext == ".pdf":
+                text = extract_text_from_pdf(raw_bytes, max_chars=50000)
+                if text:
+                    source_texts.append(f"--- Документ: {att['name']} ---\n{text}")
+            elif ext in {".txt", ".md", ".csv"}:
+                text = raw_bytes.decode("utf-8", errors="replace")[:50000]
+                source_texts.append(f"--- Документ: {att['name']} ---\n{text}")
         elif att.get("source_url"):
             source_texts.append(f"--- Ссылка: {att['name']} ({att['source_url']}) ---")
 
