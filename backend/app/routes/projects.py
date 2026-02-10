@@ -31,6 +31,7 @@ async def create_project(data: ProjectCreate, user=Depends(get_current_user)):
         "description": data.description or "",
         "user_id": user["id"],
         "status": "new",
+        "folder_id": data.folder_id,
         "created_at": now,
         "updated_at": now,
         "recording_filename": None,
