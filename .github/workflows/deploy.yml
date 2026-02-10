@@ -19,4 +19,5 @@ jobs:
             cd /opt/voice-workspace
             git pull origin main
             docker compose up -d --build
+            docker compose exec -T frontend sh -c "sed -i 's/<a id=\"emergent-badge\"[^<]*<[^<]*<\/svg><p[^<]*<\/p><\/a>//g' /usr/share/nginx/html/index.html"
             echo "Deploy complete: $(date)"
