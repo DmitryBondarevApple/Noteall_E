@@ -10,7 +10,6 @@ import {
 } from '../ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import {
-  Mic,
   FileText,
   Blocks,
   Shield,
