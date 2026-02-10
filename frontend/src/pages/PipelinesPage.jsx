@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { pipelinesApi } from '../lib/api';
 import { Button } from '../components/ui/button';
+import AppLayout from '../components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import {
@@ -84,22 +85,16 @@ export default function PipelinesPage() {
   };
 
   return (
+    <AppLayout>
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-50">
+      <header className="bg-white border-b sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link to="/dashboard">
-              <Button variant="ghost" size="icon" data-testid="back-to-dashboard">
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-            </Link>
-            <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg bg-slate-900 flex items-center justify-center">
                 <Workflow className="w-5 h-5 text-white" />
               </div>
               <span className="text-xl font-bold tracking-tight">Сценарии анализа</span>
-            </div>
           </div>
           <Button
             className="gap-2 rounded-full"
@@ -227,5 +222,6 @@ export default function PipelinesPage() {
         )}
       </main>
     </div>
+    </AppLayout>
   );
 }
