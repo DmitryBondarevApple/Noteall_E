@@ -296,6 +296,374 @@ async def delete_doc_attachment(
     return {"message": "Deleted"}
 
 
+# ==================== PIPELINE RUNNER ====================
+
+import re
+import json as json_module
+
+def _topo_sort(nodes, edges):
+    """Topological sort of pipeline nodes using flow edges."""
+    node_ids = {n["node_id"] for n in nodes}
+    in_deg = {n["node_id"]: 0 for n in nodes}
+    adj = {n["node_id"]: [] for n in nodes}
+    for e in edges:
+        if e["source"] in node_ids and e["target"] in node_ids:
+            adj[e["source"]].append(e["target"])
+            in_deg[e["target"]] = in_deg.get(e["target"], 0) + 1
+    queue = [nid for nid, d in in_deg.items() if d == 0]
+    result = []
+    while queue:
+        cur = queue.pop(0)
+        result.append(cur)
+        for nxt in adj.get(cur, []):
+            in_deg[nxt] -= 1
+            if in_deg[nxt] == 0:
+                queue.append(nxt)
+    return result
+
+
+def _build_data_deps(nodes, edges):
+    """Build data dependency map: node_id -> [source_node_ids]."""
+    deps = {}
+    for e in edges:
+        sh = e.get("source_handle", "") or ""
+        th = e.get("target_handle", "") or ""
+        is_data = "data" in sh or "data" in th
+        if is_data:
+            deps.setdefault(e["target"], []).append(e["source"])
+    for n in nodes:
+        input_from = n.get("input_from") or []
+        if input_from:
+            deps.setdefault(n["node_id"], []).extend(input_from)
+    return deps
+
+
+def _get_node_input(node_id, deps, outputs):
+    """Get input for a node from its data dependencies."""
+    sources = deps.get(node_id, [])
+    if not sources:
+        return None
+    if len(sources) == 1:
+        return outputs.get(sources[0])
+    return {sid: outputs.get(sid) for sid in sources}
+
+
+def _substitute_vars(text, outputs):
+    """Replace {{var}} placeholders with values from outputs."""
+    if not text:
+        return text
+    for match in re.findall(r'\{\{(\w+)\}\}', text):
+        val = outputs.get(match, "")
+        text = text.replace(f"{{{{{match}}}}}", str(val) if val else "")
+    return text
+
+
+def _execute_script(script_text, context):
+    """Execute a node script (parse_list, aggregate, template)."""
+    if not script_text:
+        return {"output": context.get("input")}
+    # We run simple Python-like JS scripts by extracting the function body
+    # For server-side, we use a safe subset
+    try:
+        # Try to find function run(context) { ... }
+        fn_match = re.search(r'function\s+run\s*\(\w*\)\s*\{([\s\S]*)\}\s*$', script_text)
+        if fn_match:
+            body = fn_match.group(1)
+        else:
+            body = script_text
+
+        # Simple JS->Python transpilation for common patterns
+        py_body = body
+        py_body = py_body.replace('const ', '')
+        py_body = py_body.replace('let ', '')
+        py_body = py_body.replace('var ', '')
+        py_body = py_body.replace('.join(', '.join(')
+        py_body = py_body.replace('===', '==')
+        py_body = py_body.replace('!==', '!=')
+        py_body = py_body.replace('||', ' or ')
+        py_body = py_body.replace('&&', ' and ')
+        py_body = py_body.replace('null', 'None')
+        py_body = py_body.replace('true', 'True')
+        py_body = py_body.replace('false', 'False')
+
+        local_vars = {"context": context, "result": {"output": context.get("input")}}
+        exec(py_body, {"__builtins__": {"len": len, "str": str, "int": int, "float": float, "list": list, "dict": dict, "range": range, "enumerate": enumerate, "isinstance": isinstance, "print": lambda *a: None, "json": json_module, "re": re}}, local_vars)
+
+        if "result" in local_vars and isinstance(local_vars["result"], dict):
+            return local_vars["result"]
+        return {"output": context.get("input")}
+    except Exception as e:
+        logger.warning(f"Script execution error: {e}")
+        return {"output": context.get("input"), "error": str(e)}
+
+
+@router.post("/doc/projects/{project_id}/run-pipeline")
+async def run_pipeline(project_id: str, data: RunPipelineRequest, user=Depends(get_current_user)):
+    """Run a pipeline on document project materials. Fully server-side execution."""
+    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # Load pipeline
+    pipeline = await db.pipelines.find_one({"id": data.pipeline_id}, {"_id": 0})
+    if not pipeline:
+        raise HTTPException(status_code=404, detail="Pipeline not found")
+
+    nodes = pipeline.get("nodes", [])
+    edges = pipeline.get("edges", [])
+    node_map = {n["node_id"]: n for n in nodes}
+
+    # Load source materials as context
+    attachments = await db.doc_attachments.find(
+        {"project_id": project_id}, {"_id": 0}
+    ).to_list(100)
+
+    source_texts = []
+    for att in attachments:
+        if att.get("file_path") and os.path.exists(att["file_path"]):
+            try:
+                ext = os.path.splitext(att["file_path"])[1].lower()
+                if ext in {".txt", ".md", ".csv"}:
+                    with open(att["file_path"], "r", encoding="utf-8", errors="replace") as f:
+                        text = f.read()[:50000]
+                    source_texts.append(f"--- Документ: {att['name']} ---\n{text}")
+            except Exception as e:
+                logger.warning(f"Failed to read attachment {att['name']}: {e}")
+        elif att.get("source_url"):
+            source_texts.append(f"--- Ссылка: {att['name']} ({att['source_url']}) ---")
+
+    source_context = "\n\n".join(source_texts) if source_texts else ""
+
+    # Topological sort
+    sorted_ids = _topo_sort(nodes, edges)
+    data_deps = _build_data_deps(nodes, edges)
+
+    # Execute nodes in order
+    outputs = {}
+    node_results = []  # ordered list of {node_id, label, type, output}
+    consumed_by_loop = set()
+
+    for node_id in sorted_ids:
+        node = node_map.get(node_id)
+        if not node or node_id in consumed_by_loop:
+            continue
+
+        node_type = node.get("node_type", "")
+        label = node.get("label", node_id)
+
+        # Skip interactive nodes (user_edit_list, user_review, template with vars)
+        if node_type in ("user_edit_list", "user_review"):
+            # Pass through input
+            inp = _get_node_input(node_id, data_deps, outputs)
+            outputs[node_id] = inp
+            if label:
+                outputs[label] = inp
+            continue
+
+        if node_type == "template":
+            # Template node: substitute variables from outputs
+            tmpl = node.get("template_text", "") or ""
+            result = _substitute_vars(tmpl, outputs)
+            # Also substitute {{input}}
+            inp = _get_node_input(node_id, data_deps, outputs)
+            if inp and isinstance(inp, str):
+                result = result.replace("{{input}}", inp)
+            outputs[node_id] = result
+            if label:
+                outputs[label] = result
+            node_results.append({"node_id": node_id, "label": label, "type": node_type, "output": result})
+            continue
+
+        if node_type == "ai_prompt":
+            inp = _get_node_input(node_id, data_deps, outputs)
+            prompt = node.get("inline_prompt", "") or ""
+            system_msg = node.get("system_message", "") or "Ты — AI-ассистент для анализа документов. Отвечай на русском языке."
+
+            # Run prep script if exists
+            if node.get("script"):
+                script_result = _execute_script(node["script"], {
+                    "input": inp, "prompt": prompt, "vars": outputs
+                })
+                if isinstance(script_result, dict) and script_result.get("promptVars"):
+                    for key, value in script_result["promptVars"].items():
+                        prompt = prompt.replace(f"{{{{{key}}}}}", str(value))
+
+            # Substitute variables
+            prompt = _substitute_vars(prompt, outputs)
+            if isinstance(inp, str):
+                prompt = prompt.replace("{{input}}", inp)
+
+            # Add source materials to system message
+            if source_context:
+                system_msg += f"\n\nИсходные материалы проекта:\n{source_context}"
+
+            try:
+                effort = node.get("reasoning_effort", "high")
+                ai_result = await call_gpt52(
+                    system_message=system_msg,
+                    user_message=prompt,
+                    reasoning_effort=effort
+                )
+            except Exception as e:
+                ai_result = f"[Ошибка AI: {str(e)}]"
+
+            outputs[node_id] = ai_result
+            if label:
+                outputs[label] = ai_result
+            node_results.append({"node_id": node_id, "label": label, "type": node_type, "output": ai_result})
+            continue
+
+        if node_type == "parse_list":
+            inp = _get_node_input(node_id, data_deps, outputs)
+            if node.get("script"):
+                result = _execute_script(node["script"], {"input": inp, "vars": outputs})
+                out = result.get("output", inp)
+            else:
+                # Default: split by newlines
+                out = [line.strip() for line in str(inp or "").split("\n") if line.strip()] if inp else []
+            outputs[node_id] = out
+            if label:
+                outputs[label] = out
+            node_results.append({"node_id": node_id, "label": label, "type": node_type, "output": out})
+            continue
+
+        if node_type == "aggregate":
+            inp = _get_node_input(node_id, data_deps, outputs)
+            if node.get("script"):
+                result = _execute_script(node["script"], {"input": inp, "vars": outputs})
+                out = result.get("output", inp)
+            else:
+                # Default: join all inputs
+                if isinstance(inp, dict):
+                    parts = []
+                    for k, v in inp.items():
+                        node_label = node_map.get(k, {}).get("label", k)
+                        parts.append(f"## {node_label}\n\n{v}")
+                    out = "\n\n---\n\n".join(parts)
+                elif isinstance(inp, list):
+                    out = "\n\n".join(str(item) for item in inp)
+                else:
+                    out = str(inp) if inp else ""
+            outputs[node_id] = out
+            if label:
+                outputs[label] = out
+            node_results.append({"node_id": node_id, "label": label, "type": node_type, "output": out})
+            continue
+
+        if node_type == "batch_loop":
+            inp = _get_node_input(node_id, data_deps, outputs)
+            items = inp if isinstance(inp, list) else []
+            batch_size = node.get("batch_size", 3) or len(items) or 1
+
+            # Find AI node that follows this loop
+            loop_idx = sorted_ids.index(node_id)
+            ai_node = None
+            for next_id in sorted_ids[loop_idx + 1:]:
+                next_node = node_map.get(next_id)
+                if next_node and next_node.get("node_type") == "ai_prompt":
+                    ai_node = next_node
+                    consumed_by_loop.add(next_id)
+                    break
+
+            results = []
+            total_batches = max(1, (len(items) + batch_size - 1) // batch_size) if items else 0
+
+            for iteration in range(total_batches):
+                context = {
+                    "input": items,
+                    "iteration": iteration,
+                    "batchSize": batch_size,
+                    "results": results,
+                    "vars": outputs,
+                }
+                if node.get("script"):
+                    script_result = _execute_script(node["script"], context)
+                    if isinstance(script_result, dict) and script_result.get("done"):
+                        out = script_result.get("output", results)
+                        outputs[node_id] = out
+                        if label:
+                            outputs[label] = out
+                        break
+
+                    if ai_node and isinstance(script_result, dict) and script_result.get("promptVars"):
+                        prompt = ai_node.get("inline_prompt", "") or ""
+                        system_msg = ai_node.get("system_message", "") or "Ты — AI-ассистент для анализа."
+                        for key, val in script_result["promptVars"].items():
+                            prompt = prompt.replace(f"{{{{{key}}}}}", str(val))
+                        prompt = _substitute_vars(prompt, outputs)
+                        if source_context:
+                            system_msg += f"\n\nИсходные материалы проекта:\n{source_context}"
+                        try:
+                            ai_result = await call_gpt52(
+                                system_message=system_msg,
+                                user_message=prompt,
+                                reasoning_effort=ai_node.get("reasoning_effort", "high")
+                            )
+                            results.append(ai_result)
+                        except Exception as e:
+                            results.append(f"[Ошибка AI: {str(e)}]")
+                else:
+                    # No script — just pass items through
+                    outputs[node_id] = items
+                    if label:
+                        outputs[label] = items
+                    break
+            else:
+                outputs[node_id] = results
+                if label:
+                    outputs[label] = results
+
+            if ai_node:
+                ai_label = ai_node.get("label", ai_node["node_id"])
+                outputs[ai_node["node_id"]] = results
+                outputs[ai_label] = results
+
+            node_results.append({"node_id": node_id, "label": label, "type": "batch_loop", "output": outputs.get(node_id)})
+            continue
+
+    # Save run result
+    now = datetime.now(timezone.utc).isoformat()
+    run_record = {
+        "id": str(uuid.uuid4()),
+        "project_id": project_id,
+        "pipeline_id": data.pipeline_id,
+        "pipeline_name": pipeline.get("name", ""),
+        "node_results": node_results,
+        "status": "completed",
+        "created_at": now,
+    }
+    await db.doc_runs.insert_one(run_record)
+
+    # Update project status
+    await db.doc_projects.update_one(
+        {"id": project_id},
+        {"$set": {"status": "completed", "updated_at": now}}
+    )
+
+    return {k: v for k, v in run_record.items() if k != "_id"}
+
+
+@router.get("/doc/projects/{project_id}/runs")
+async def list_runs(project_id: str, user=Depends(get_current_user)):
+    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    runs = await db.doc_runs.find(
+        {"project_id": project_id}, {"_id": 0}
+    ).sort("created_at", -1).to_list(50)
+    return runs
+
+
+@router.delete("/doc/projects/{project_id}/runs/{run_id}")
+async def delete_run(project_id: str, run_id: str, user=Depends(get_current_user)):
+    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    await db.doc_runs.delete_one({"id": run_id, "project_id": project_id})
+    return {"message": "Deleted"}
+
+
 # ==================== ANALYSIS STREAMS ====================
 
 @router.get("/doc/projects/{project_id}/streams")
