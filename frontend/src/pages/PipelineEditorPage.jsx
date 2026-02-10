@@ -612,6 +612,33 @@ export default function PipelineEditorPage() {
             </>
           )}
 
+          {pipelineId !== 'new' && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5"
+              data-testid="export-pipeline-btn"
+              onClick={async () => {
+                try {
+                  const res = await pipelinesApi.export(pipelineId);
+                  const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `${(pipeline?.name || 'scenario').replace(/[^a-zA-Zа-яА-Я0-9]/g, '_')}.json`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                  toast.success('Сценарий экспортирован');
+                } catch (err) {
+                  toast.error('Ошибка экспорта');
+                }
+              }}
+            >
+              <Download className="w-4 h-4" />
+              Экспорт
+            </Button>
+          )}
+
           <Button size="sm" className="gap-1.5" onClick={handleSave} disabled={saving} data-testid="save-pipeline-btn">
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             Сохранить
