@@ -99,6 +99,7 @@ export default function DocumentsPage() {
     setExpandedFolders(prev => {
       const next = new Set(prev);
       next.has(folderId) ? next.delete(folderId) : next.add(folderId);
+      localStorage.setItem('documents_expanded', JSON.stringify([...next]));
       return next;
     });
   };
