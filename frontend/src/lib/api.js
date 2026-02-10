@@ -112,7 +112,15 @@ export const pipelinesApi = {
   create: (data) => axios.post(`${API}/pipelines`, data),
   update: (id, data) => axios.put(`${API}/pipelines/${id}`, data),
   delete: (id) => axios.delete(`${API}/pipelines/${id}`),
-  duplicate: (id) => axios.post(`${API}/pipelines/${id}/duplicate`)
+  duplicate: (id) => axios.post(`${API}/pipelines/${id}/duplicate`),
+  export: (id) => axios.get(`${API}/pipelines/${id}/export`),
+  import: (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return axios.post(`${API}/pipelines/import/json`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  }
 };
 
 // Attachments
