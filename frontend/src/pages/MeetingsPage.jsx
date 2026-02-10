@@ -386,6 +386,38 @@ export default function MeetingsPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Move to Folder Dialog */}
+      <Dialog open={moveDialog.open} onOpenChange={(open) => !open && setMoveDialog({ open: false, projectId: null, projectName: '' })}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader><DialogTitle>Перенести в папку</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground mb-3">
+            Выберите папку для проекта <span className="font-medium text-slate-700">"{moveDialog.projectName}"</span>
+          </p>
+          <div className="space-y-1 max-h-[300px] overflow-y-auto">
+            <button
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-slate-100 transition-colors text-left"
+              onClick={() => handleMoveProject(null)}
+              data-testid="move-to-root"
+            >
+              <Mic className="w-4 h-4 text-slate-400" />
+              <span className="text-slate-500">Без папки (корень)</span>
+            </button>
+            {folders.map(f => (
+              <button
+                key={f.id}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-slate-100 transition-colors text-left"
+                style={{ paddingLeft: `${(f.parent_id ? 32 : 12)}px` }}
+                onClick={() => handleMoveProject(f.id)}
+                data-testid={`move-to-folder-${f.id}`}
+              >
+                <FolderClosed className="w-4 h-4 text-amber-500" />
+                <span>{f.name}</span>
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
