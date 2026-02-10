@@ -21,12 +21,46 @@ export function extractFullSentence(content, word) {
   const match = content.match(pattern);
   if (!match) return null;
   const pos = match.index;
+
   // Find sentence boundaries: newline or Speaker label
   let start = pos;
   while (start > 0 && content[start - 1] !== '\n') start--;
   let end = pos + match[0].length;
   while (end < content.length && content[end] !== '\n') end++;
-  return content.slice(start, end).trim();
+
+  const line = content.slice(start, end).trim();
+
+  // If the line is short enough, return as-is
+  if (line.length <= 400) return line;
+
+  // Line is too long — extract compact context around the word
+  const wordPosInLine = pos - start;
+  const CONTEXT_CHARS = 150;
+  let ctxStart = Math.max(0, wordPosInLine - CONTEXT_CHARS);
+  let ctxEnd = Math.min(line.length, wordPosInLine + match[0].length + CONTEXT_CHARS);
+
+  // Snap to word boundaries
+  if (ctxStart > 0) {
+    const spaceIdx = line.indexOf(' ', ctxStart);
+    if (spaceIdx !== -1 && spaceIdx < wordPosInLine) ctxStart = spaceIdx + 1;
+  }
+  if (ctxEnd < line.length) {
+    const spaceIdx = line.lastIndexOf(' ', ctxEnd);
+    if (spaceIdx > wordPosInLine + match[0].length) ctxEnd = spaceIdx;
+  }
+
+  // Extract speaker prefix if it's at the beginning of the line
+  let prefix = '';
+  if (ctxStart > 0) {
+    const speakerMatch = line.match(/^[^:]+:\s*/);
+    if (speakerMatch) {
+      prefix = speakerMatch[0];
+    }
+    prefix += '... ';
+  }
+
+  const suffix = ctxEnd < line.length ? ' ...' : '';
+  return prefix + line.slice(ctxStart, ctxEnd).trim() + suffix;
 }
 
 export function renderContextWithHighlight(context, word) {
