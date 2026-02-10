@@ -86,6 +86,35 @@ export function PipelinesContent() {
     }
   };
 
+  const handleExport = async (id, name) => {
+    try {
+      const res = await pipelinesApi.export(id);
+      const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${name.replace(/[^a-zA-Zа-яА-Я0-9]/g, '_')}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Сценарий экспортирован');
+    } catch (err) {
+      toast.error('Ошибка экспорта');
+    }
+  };
+
+  const handleImport = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const res = await pipelinesApi.import(file);
+      setPipelines((prev) => [res.data, ...prev]);
+      toast.success('Сценарий импортирован');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Ошибка импорта');
+    }
+    e.target.value = '';
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
