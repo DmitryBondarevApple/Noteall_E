@@ -110,10 +110,7 @@ export default function AuthPage() {
         <Card className="w-full max-w-md shadow-xl border-0">
           <CardHeader className="text-center pb-2">
             <div className="lg:hidden flex items-center justify-center gap-2 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center">
-                <Mic className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold tracking-tight">Voice Workspace</span>
+              <img src="/logo-noteall.png" alt="Noteall" className="h-6" />
             </div>
             <CardTitle className="text-2xl font-bold tracking-tight">Добро пожаловать</CardTitle>
             <CardDescription>Войдите или создайте аккаунт</CardDescription>
