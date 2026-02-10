@@ -316,36 +316,44 @@ async def build_attachment_context(attachment_ids: List[str], project_id: str):
         ft = att.get("file_type", "")
 
         if ft == "url":
-            # URL — inject as text instruction
             text_parts.append(f"Также изучи информацию по ссылке: {att['source_url']}")
 
         elif ft == "text":
-            # Text-based file — inject extracted text
             if att.get("extracted_text"):
                 text_parts.append(f"--- Файл: {att['name']} ---\n{att['extracted_text']}")
 
-        elif ft == "pdf" and att.get("file_path") and os.path.exists(att["file_path"]):
-            # PDF — send as base64 file content part
-            with open(att["file_path"], "rb") as f:
-                b64 = base64.b64encode(f.read()).decode("utf-8")
-            file_parts.append({
-                "type": "file",
-                "file": {
-                    "file_data": f"data:application/pdf;base64,{b64}",
-                    "filename": att["name"],
-                }
-            })
+        elif ft == "pdf":
+            raw = None
+            if att.get("s3_key"):
+                raw = download_bytes(att["s3_key"])
+            elif att.get("file_path") and os.path.exists(att["file_path"]):
+                with open(att["file_path"], "rb") as f:
+                    raw = f.read()
+            if raw:
+                b64 = base64.b64encode(raw).decode("utf-8")
+                file_parts.append({
+                    "type": "file",
+                    "file": {
+                        "file_data": f"data:application/pdf;base64,{b64}",
+                        "filename": att["name"],
+                    }
+                })
 
-        elif ft == "image" and att.get("file_path") and os.path.exists(att["file_path"]):
-            # Image — send as base64 image_url
-            content_type = att.get("content_type", "image/png")
-            with open(att["file_path"], "rb") as f:
-                b64 = base64.b64encode(f.read()).decode("utf-8")
-            file_parts.append({
-                "type": "image_url",
-                "image_url": {
-                    "url": f"data:{content_type};base64,{b64}",
-                }
-            })
+        elif ft == "image":
+            raw = None
+            if att.get("s3_key"):
+                raw = download_bytes(att["s3_key"])
+            elif att.get("file_path") and os.path.exists(att["file_path"]):
+                with open(att["file_path"], "rb") as f:
+                    raw = f.read()
+            if raw:
+                content_type = att.get("content_type", "image/png")
+                b64 = base64.b64encode(raw).decode("utf-8")
+                file_parts.append({
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:{content_type};base64,{b64}",
+                    }
+                })
 
     return text_parts, file_parts
