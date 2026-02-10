@@ -58,9 +58,9 @@ export default function AppLayout({ children }) {
           {/* Logo */}
           <div className={cn('flex items-center h-14 px-3 border-b border-slate-700/50', collapsed ? 'justify-center' : 'gap-2.5')}>
             {collapsed ? (
-              <span className="font-bold text-sm text-white">N</span>
+              <span className="font-semibold text-base text-white">N<span className="text-cyan-400">*</span></span>
             ) : (
-              <img src="/logo-noteall.png" alt="Noteall" className="h-5" />
+              <span className="font-semibold text-base text-white tracking-tight">note<span className="relative">a<span className="absolute -top-1.5 left-1/2 -translate-x-1/2 text-cyan-400 text-[10px]">&#10022;</span></span>ll</span>
             )}
           </div>
 
