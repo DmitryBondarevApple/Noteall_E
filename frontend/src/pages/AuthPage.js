@@ -6,7 +6,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Mic, Sparkles, FileText, Users } from 'lucide-react';
+import { Sparkles, FileText, Users, BrainCircuit } from 'lucide-react';
 import { toast } from 'sonner';
 import { seedData } from '../lib/api';
 
@@ -63,12 +63,9 @@ export default function AuthPage() {
         
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur flex items-center justify-center">
-              <Mic className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-2xl font-bold text-white tracking-tight">Voice Workspace</span>
+            <img src="/logo-noteall.png" alt="Noteall" className="h-8" />
           </div>
-          <p className="text-slate-400 text-lg">Превращайте записи встреч в структурированные данные</p>
+          <p className="text-slate-400 text-lg">AI-платформа для анализа встреч и документов</p>
         </div>
 
         <div className="relative z-10 space-y-8">
@@ -77,8 +74,8 @@ export default function AuthPage() {
               <FileText className="w-6 h-6 text-indigo-400" />
             </div>
             <div>
-              <h3 className="text-white font-semibold text-lg">Автоматическая транскрибация</h3>
-              <p className="text-slate-400">Загружайте аудио и видео — получайте точный текст</p>
+              <h3 className="text-white font-semibold text-lg">Умная работа с документами</h3>
+              <p className="text-slate-400">Загружайте материалы и запускайте AI-пайплайны анализа</p>
             </div>
           </div>
           
@@ -87,24 +84,24 @@ export default function AuthPage() {
               <Sparkles className="w-6 h-6 text-cyan-400" />
             </div>
             <div>
-              <h3 className="text-white font-semibold text-lg">AI-анализ встреч</h3>
-              <p className="text-slate-400">Резюме, задачи, риски — автоматически</p>
+              <h3 className="text-white font-semibold text-lg">Конструктор сценариев</h3>
+              <p className="text-slate-400">Собирайте цепочки промптов для автоматического анализа</p>
             </div>
           </div>
           
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur flex items-center justify-center shrink-0">
-              <Users className="w-6 h-6 text-emerald-400" />
+              <BrainCircuit className="w-6 h-6 text-emerald-400" />
             </div>
             <div>
-              <h3 className="text-white font-semibold text-lg">Разметка спикеров</h3>
-              <p className="text-slate-400">Назначайте имена участникам встречи</p>
+              <h3 className="text-white font-semibold text-lg">Транскрибация и анализ встреч</h3>
+              <p className="text-slate-400">Аудио в текст, резюме, задачи и риски — автоматически</p>
             </div>
           </div>
         </div>
 
         <div className="relative z-10 text-slate-500 text-sm">
-          © 2024 Voice Workspace. Все права защищены.
+          &copy; 2026 Noteall. Все права защищены.
         </div>
       </div>
 
