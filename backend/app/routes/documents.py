@@ -209,7 +209,9 @@ async def delete_doc_project(project_id: str, user=Depends(get_current_user)):
     # Delete attachments
     attachments = await db.doc_attachments.find({"project_id": project_id}, {"_id": 0}).to_list(500)
     for att in attachments:
-        if att.get("file_path") and os.path.exists(att["file_path"]):
+        if att.get("s3_key"):
+            delete_object(att["s3_key"])
+        elif att.get("file_path") and os.path.exists(att["file_path"]):
             os.remove(att["file_path"])
     await db.doc_attachments.delete_many({"project_id": project_id})
     await db.doc_projects.delete_one({"id": project_id})
