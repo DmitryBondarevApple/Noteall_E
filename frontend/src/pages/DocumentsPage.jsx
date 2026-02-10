@@ -186,6 +186,18 @@ export default function DocumentsPage() {
     }
   };
 
+  const handleMoveProject = async (targetFolderId) => {
+    if (!moveDialog.projectId) return;
+    try {
+      await docProjectsApi.update(moveDialog.projectId, { folder_id: targetFolderId || null });
+      toast.success('Проект перемещён');
+      setMoveDialog({ open: false, projectId: null, projectName: '' });
+      loadData();
+    } catch {
+      toast.error('Ошибка перемещения');
+    }
+  };
+
   // Filter
   const matchesSearch = (name) => name.toLowerCase().includes(searchQuery.toLowerCase());
   const folderHasMatch = (folderId) => {
