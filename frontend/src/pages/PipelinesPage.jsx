@@ -223,6 +223,10 @@ export function PipelinesContent() {
                             <Copy className="w-4 h-4 mr-2" />
                             Дублировать
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleExport(pipeline.id, pipeline.name)}>
+                            <Download className="w-4 h-4 mr-2" />
+                            Экспорт
+                          </DropdownMenuItem>
                           {canEdit && (
                             <DropdownMenuItem
                               className="text-destructive"
