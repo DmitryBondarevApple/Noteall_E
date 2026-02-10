@@ -158,6 +158,18 @@ export default function MeetingsPage() {
     }
   };
 
+  const handleMoveProject = async (targetFolderId) => {
+    if (!moveDialog.projectId) return;
+    try {
+      await projectsApi.update(moveDialog.projectId, { folder_id: targetFolderId || null });
+      toast.success('Проект перемещён');
+      setMoveDialog({ open: false, projectId: null, projectName: '' });
+      loadData();
+    } catch {
+      toast.error('Ошибка перемещения');
+    }
+  };
+
   // Search
   const matchesSearch = (name) => name.toLowerCase().includes(searchQuery.toLowerCase());
   const folderHasMatch = (folderId) => {
