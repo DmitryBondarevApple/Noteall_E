@@ -86,18 +86,32 @@ def process_zip(file_path: str) -> list:
                 if ext not in (BINARY_TYPES | TEXT_TYPES):
                     continue
 
-                inner_path = os.path.join(UPLOAD_DIR, f"{uuid.uuid4().hex}_{os.path.basename(info.filename)}")
-                with zf.open(info) as src, open(inner_path, "wb") as dst:
-                    dst.write(src.read())
+                inner_data = zf.read(info)
+                inner_id = uuid.uuid4().hex
+                inner_safe = f"{inner_id}_{os.path.basename(info.filename)}"
+
+                s3_key = None
+                inner_path = None
+                if s3_enabled():
+                    s3_key = f"attachments/{inner_safe}"
+                    upload_bytes(s3_key, inner_data)
+                else:
+                    inner_path = os.path.join(UPLOAD_DIR, inner_safe)
+                    with open(inner_path, "wb") as dst:
+                        dst.write(inner_data)
 
                 extracted = None
                 if ext in TEXT_TYPES:
-                    extracted = extract_text_from_file(inner_path, ext)
+                    if s3_enabled():
+                        extracted = inner_data.decode("utf-8", errors="replace")
+                    else:
+                        extracted = extract_text_from_file(inner_path, ext)
 
                 results.append({
                     "name": info.filename,
                     "ext": ext,
                     "file_path": inner_path,
+                    "s3_key": s3_key,
                     "file_type": get_file_type(ext),
                     "size": info.file_size,
                     "extracted_text": extracted,
@@ -107,6 +121,7 @@ def process_zip(file_path: str) -> list:
             "name": os.path.basename(file_path),
             "ext": ".zip",
             "file_path": file_path,
+            "s3_key": None,
             "file_type": "zip",
             "size": 0,
             "extracted_text": f"[Ошибка распаковки ZIP: {e}]",
