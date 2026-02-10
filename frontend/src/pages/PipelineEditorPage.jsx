@@ -526,6 +526,7 @@ export default function PipelineEditorPage() {
   }
 
   return (
+    <AppLayout>
     <div className="h-screen flex flex-col bg-slate-50">
       {/* Header */}
       <header className="bg-white border-b px-4 py-2 flex items-center justify-between shrink-0 z-20">
