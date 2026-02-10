@@ -71,6 +71,8 @@ async def list_speaker_directory(
         query["$or"] = [
             {"name": {"$regex": search_term, "$options": "i"}},
             {"company": {"$regex": search_term, "$options": "i"}},
+            {"role": {"$regex": search_term, "$options": "i"}},
+            {"tags": {"$regex": search_term, "$options": "i"}},
         ]
     
     speakers = await db.speaker_directory.find(query, {"_id": 0}).sort("name", 1).to_list(500)
