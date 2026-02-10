@@ -13,6 +13,8 @@ import AdminPage from "./pages/AdminPage";
 import SpeakerDirectoryPage from "./pages/SpeakerDirectoryPage";
 import PipelinesPage from "./pages/PipelinesPage";
 import PipelineEditorPage from "./pages/PipelineEditorPage";
+import DocumentsPage from "./pages/DocumentsPage";
+import DocProjectPage from "./pages/DocProjectPage";
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -76,6 +78,22 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <ProjectPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/documents"
+        element={
+          <ProtectedRoute>
+            <DocumentsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/documents/:projectId"
+        element={
+          <ProtectedRoute>
+            <DocProjectPage />
           </ProtectedRoute>
         }
       />
