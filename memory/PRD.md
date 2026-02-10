@@ -6,6 +6,7 @@
 - **AI**: OpenAI GPT-5.2 via Emergent LLM Key
 - **Auth**: JWT-based
 - **Storage**: Timeweb S3 (s3.twcstorage.ru, bucket 63dffe5a-920b-4901-a340-056793b978fa, region ru-1)
+- **Deploy**: VPS 185.246.220.121, Docker Compose, MongoDB 8.0.19
 
 ## Navigation
 - **Встречи** (`/meetings`) — transcript projects in tree folders + Speakers (`/meetings/speakers`)
@@ -48,12 +49,15 @@
 - S3 delete on attachment/project removal
 - Service module: /app/backend/app/services/s3.py
 
-### Deployment
-- Docker Compose setup guide created (DEPLOY_GUIDE.md)
-- Instructions for: MongoDB install, Docker setup, Nginx proxy, HTTPS
-- Target VPS: 185.246.220.121
+### Deployment (Feb 2026)
+- Deployed to VPS 185.246.220.121 via Docker Compose
+- MongoDB 8.0.19 installed on host
+- Backend container (network_mode: host) for MongoDB access
+- Frontend container with Nginx proxy (port 80)
+- Deployment guide: /app/DEPLOY_GUIDE.md
 
 ## Backlog
+- HTTPS + domain setup (Certbot)
 - PDF content parsing for AI context
 - Export results to Word/PDF
 - Real-time pipeline execution progress
