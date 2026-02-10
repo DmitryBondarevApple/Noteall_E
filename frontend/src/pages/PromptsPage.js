@@ -262,6 +262,17 @@ export function PromptsContent() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+export default function PromptsPage() {
+  return (
+    <AppLayout>
+      <div className="min-h-screen bg-slate-50">
+        <main className="max-w-7xl mx-auto px-6 py-8">
+          <PromptsContent />
+        </main>
+      </div>
     </AppLayout>
   );
 }
