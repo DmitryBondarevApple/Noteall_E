@@ -65,7 +65,8 @@ async def update_project(project_id: str, data: ProjectUpdate, user=Depends(get_
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     
-    update_data = {k: v for k, v in data.model_dump().items() if v is not None}
+    # Use exclude_unset to allow explicit null values (e.g., folder_id: null to move to root)
+    update_data = data.model_dump(exclude_unset=True)
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
     
     await db.projects.update_one({"id": project_id}, {"$set": update_data})
