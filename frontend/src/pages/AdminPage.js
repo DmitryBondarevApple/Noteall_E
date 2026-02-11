@@ -73,6 +73,11 @@ export default function AdminPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrgId, setSelectedOrgId] = useState(null);
 
+  // Invitations
+  const [invitations, setInvitations] = useState([]);
+  const [inviteNote, setInviteNote] = useState('');
+  const [creatingInvite, setCreatingInvite] = useState(false);
+
   useEffect(() => {
     if (!isAdmin()) return;
     loadData();
