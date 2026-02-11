@@ -1276,9 +1276,27 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
               </div>
             )}
 
+            {/* Pipeline validation results */}
+            {(validationResult.errors.length > 0 || validationResult.warnings.length > 0) && (
+              <div className="border-t pt-4 space-y-2">
+                {validationResult.errors.map((err, i) => (
+                  <div key={`e-${i}`} className="flex items-start gap-2 text-sm text-red-500 bg-red-500/10 rounded-md px-3 py-2">
+                    <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                    <span>{err}</span>
+                  </div>
+                ))}
+                {validationResult.warnings.map((warn, i) => (
+                  <div key={`w-${i}`} className="flex items-start gap-2 text-sm text-yellow-600 bg-yellow-500/10 rounded-md px-3 py-2">
+                    <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                    <span>{warn}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <Button
               onClick={startWizard}
-              disabled={!selectedPipelineId || stages.length === 0}
+              disabled={!selectedPipelineId || stages.length === 0 || validationResult.errors.length > 0}
               className="gap-2"
               data-testid="start-wizard-btn"
             >
