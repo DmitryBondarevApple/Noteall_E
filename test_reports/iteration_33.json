@@ -1,0 +1,76 @@
+{
+  "summary": "Completed testing of node type refactoring feature: split 'template' into user_input, format_template, batch_prompt_template. All backend tests (10/10) PASSED. Frontend tests verified new node types in dropdown, NodeConfigPanel shows correct settings, and wizard treats new types correctly. Backward compatibility with legacy 'template' type confirmed.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_node_type_refactoring.py",
+    "/app/test_reports/pytest/pytest_node_type_refactoring.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_node_type_refactoring.py"
+  ],
+  "success_rate": {
+    "backend": "100% (10/10 tests passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "admin_user": "admin@voiceworkspace.com / admin123"
+  },
+  "seed_data_creation": "Created and deleted test pipelines: TEST_UserInputPipeline, TEST_FormatTemplatePipeline, TEST_BatchPromptTemplatePipeline, TEST_LegacyTemplatePipeline, TEST_UpdateWithNewTypes, TEST_UserInputVarConfig, TEST_BatchLoopVars",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Node type refactoring fully tested. 3 new node types verified: user_input (displays as 'ВВОД ДАННЫХ'), format_template (displays as 'ФОРМАТИРОВАНИЕ'), batch_prompt_template (displays as 'БАТЧ-ШАБЛОН'). All appear in pipeline editor dropdown. NodeConfigPanel shows correct fields: user_input shows template_text + variable_config, format_template shows template_text only, batch_prompt_template shows template_text + loop_vars. Legacy 'template' type still works for backward compatibility. Pipeline validation works with new types. Wizard correctly treats user_input as interactive step.",
+  "features_verified": {
+    "new_node_types_in_dropdown": {
+      "status": "PASS",
+      "details": "All 3 new types appear in 'Add node' dropdown: 'Ввод данных' (user_input), 'Форматирование' (format_template), 'Батч-шаблон' (batch_prompt_template)"
+    },
+    "existing_pipelines_display": {
+      "status": "PASS",
+      "details": "Pipeline d756739d-a179-4e4d-9633-8d59e68cecd3 shows user_input node as 'ВВОД ДАННЫХ'. Pipeline 0190dd20-6883-4ac2-b038-9beeecc43926 shows batch_prompt_template node as 'БАТЧ-ШАБЛОН'"
+    },
+    "node_config_panel": {
+      "status": "PASS",
+      "details": "user_input shows template_text field and wizard settings toggle. Config panel correctly identifies node type label."
+    },
+    "pipeline_validation": {
+      "status": "PASS",
+      "details": "No validation errors displayed for pipelines with new node types"
+    },
+    "wizard_interactive_treatment": {
+      "status": "PASS",
+      "details": "FullAnalysisTab wizard correctly shows wizard steps for interactive nodes (user_input as step 3). Pipeline selector and 'Запустить сценарий' button work correctly."
+    },
+    "backend_api_accepts_new_types": {
+      "status": "PASS",
+      "details": "All CRUD operations (create, read, update, delete) work with user_input, format_template, batch_prompt_template node types. loop_vars and variable_config correctly saved."
+    },
+    "backward_compatibility": {
+      "status": "PASS",
+      "details": "Legacy 'template' node type still works - can create pipelines with template type, node_type is preserved in database"
+    }
+  },
+  "test_execution_summary": {
+    "backend_tests": {
+      "file": "/app/backend/tests/test_node_type_refactoring.py",
+      "total": 10,
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0
+    },
+    "frontend_tests": {
+      "pipeline_editor_dropdown": "PASS - All 9 node types visible including 3 new ones",
+      "node_config_panel": "PASS - Shows correct fields for user_input type",
+      "wizard_analysis_tab": "PASS - Pipeline selector and start button functional"
+    }
+  }
+}
