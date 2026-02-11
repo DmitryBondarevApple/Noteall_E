@@ -732,8 +732,8 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
         if (loopNode.data.label) outputs[loopNode.data.label] = results.join('\n\n');
       }
 
-      // Mark the AI node as done too (its output is the combined results)
-      if (aiNode) {
+      // Mark the AI node as done ONLY if we used it (no promptTemplate)
+      if (aiNode && !promptTemplate) {
         outputs[aiNode.id] = results.join('\n\n');
         if (aiNode.data.label) outputs[aiNode.data.label] = results.join('\n\n');
         nodesConsumedByLoop.current.add(aiNode.id);
