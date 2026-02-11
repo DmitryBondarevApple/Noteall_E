@@ -779,6 +779,15 @@ export default function PipelineEditorPage() {
                 onClose={() => setSelectedNode(null)}
               />
             )}
+
+            {aiChatOpen && (
+              <AiChatPanel
+                open={aiChatOpen}
+                onClose={() => setAiChatOpen(false)}
+                pipelineId={pipelineId}
+                onPipelineGenerated={handlePipelineFromChat}
+              />
+            )}
           </>
         ) : (
           <PipelineStepPreview nodes={nodes} edges={edges} />
