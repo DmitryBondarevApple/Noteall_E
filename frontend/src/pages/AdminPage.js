@@ -381,6 +381,120 @@ export default function AdminPage() {
                   </Card>
                 )}
 
+                {/* Magic Link Invitations */}
+                {isOrgAdmin() && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Link2 className="w-4 h-4" />
+                        Пригласить по ссылке
+                      </CardTitle>
+                      <CardDescription>
+                        Создайте одноразовую ссылку-приглашение. Сотрудник перейдёт по ней и зарегистрируется.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Заметка (необязательно)"
+                          value={inviteNote}
+                          onChange={e => setInviteNote(e.target.value)}
+                          data-testid="invite-note-input"
+                          className="max-w-sm"
+                        />
+                        <Button
+                          onClick={handleCreateInvite}
+                          disabled={creatingInvite}
+                          data-testid="create-invite-link-btn"
+                          className="gap-2"
+                        >
+                          {creatingInvite ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />}
+                          Создать ссылку
+                        </Button>
+                      </div>
+
+                      {invitations.length > 0 && (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Статус</TableHead>
+                              <TableHead>Заметка</TableHead>
+                              <TableHead>Создал</TableHead>
+                              <TableHead>Использовал</TableHead>
+                              <TableHead>Дата</TableHead>
+                              <TableHead>Действия</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {invitations.map(inv => (
+                              <TableRow key={inv.id} data-testid={`invitation-row-${inv.id}`}>
+                                <TableCell>
+                                  {inv.is_used ? (
+                                    <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 gap-1">
+                                      <CheckCircle2 className="w-3 h-3" />
+                                      Использовано
+                                    </Badge>
+                                  ) : inv.is_revoked ? (
+                                    <Badge className="bg-red-100 text-red-700 hover:bg-red-100 gap-1">
+                                      <Ban className="w-3 h-3" />
+                                      Отозвано
+                                    </Badge>
+                                  ) : (
+                                    <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 gap-1">
+                                      <Clock className="w-3 h-3" />
+                                      Активно
+                                    </Badge>
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-muted-foreground text-sm">
+                                  {inv.note || '—'}
+                                </TableCell>
+                                <TableCell className="text-sm">
+                                  {inv.created_by_name}
+                                </TableCell>
+                                <TableCell className="text-sm">
+                                  {inv.is_used ? inv.used_by_name : '—'}
+                                </TableCell>
+                                <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
+                                  {format(new Date(inv.created_at), 'dd.MM.yyyy HH:mm', { locale: ru })}
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-1">
+                                    {!inv.is_used && !inv.is_revoked && (
+                                      <>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-8 w-8"
+                                          onClick={() => handleCopyLink(inv.token)}
+                                          data-testid={`copy-invite-${inv.id}`}
+                                          title="Копировать ссылку"
+                                        >
+                                          <Copy className="w-4 h-4 text-slate-500" />
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-8 w-8"
+                                          onClick={() => handleRevokeInvite(inv.id)}
+                                          data-testid={`revoke-invite-${inv.id}`}
+                                          title="Отозвать"
+                                        >
+                                          <Ban className="w-4 h-4 text-red-500" />
+                                        </Button>
+                                      </>
+                                    )}
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+
                 {/* Org Users */}
                 <Card>
                   <CardHeader>
