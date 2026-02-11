@@ -66,7 +66,9 @@ const NODE_TYPE_OPTIONS = [
   { type: 'parse_list', label: 'Скрипт парсинга', icon: Code },
   { type: 'batch_loop', label: 'Батч-цикл', icon: Repeat },
   { type: 'aggregate', label: 'Агрегация', icon: Layers },
-  { type: 'template', label: 'Шаблон / Переменная', icon: Variable },
+  { type: 'user_input', label: 'Ввод данных', icon: PenLine },
+  { type: 'format_template', label: 'Форматирование', icon: FileCode2 },
+  { type: 'batch_prompt_template', label: 'Батч-шаблон', icon: Braces },
   { type: 'user_edit_list', label: 'Редактирование списка', icon: UserPen },
   { type: 'user_review', label: 'Просмотр результата', icon: Eye },
 ];
