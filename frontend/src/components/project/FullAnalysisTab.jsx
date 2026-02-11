@@ -491,6 +491,13 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
         prompt = prompt.replace(/\{\{input\}\}/g, input);
       }
 
+      // For nodes with a single input_from, resolve ALL remaining {{var}} from input
+      // This handles AI-generated pipelines that use custom variable names (e.g. {{aggregated_text}})
+      const inputFromDeps = node.data.input_from || [];
+      if (inputFromDeps.length === 1 && typeof input === 'string') {
+        prompt = prompt.replace(/\{\{\w+\}\}/g, input);
+      }
+
       // Check if {{text}} was resolved (transcript is embedded in prompt)
       const textWasSubstituted = currentOutputs.text && prompt.includes(currentOutputs.text);
 
