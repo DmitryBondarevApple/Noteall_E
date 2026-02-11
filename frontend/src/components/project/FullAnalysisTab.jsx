@@ -485,6 +485,7 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult, 
   // Attachments
   const [selectedAttachmentIds, setSelectedAttachmentIds] = useState(new Set());
   const attachmentIdsRef = useRef([]);
+  const autoRunRef = useRef(false);
 
   // Keep ref in sync
   useEffect(() => {
