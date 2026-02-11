@@ -246,7 +246,9 @@ export default function DocProjectPage() {
       setRuns(prev => [res.data, ...prev]);
       toast.success('Анализ завершён');
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Ошибка выполнения');
+      if (err.response?.status !== 402) {
+        toast.error(err.response?.data?.detail || 'Ошибка выполнения');
+      }
     } finally {
       setRunning(false);
     }
