@@ -10,11 +10,16 @@ export const projectsApi = {
   create: (data) => axios.post(`${API}/projects`, data),
   update: (id, data) => axios.put(`${API}/projects/${id}`, data),
   delete: (id) => axios.delete(`${API}/projects/${id}`),
-  upload: (id, file, language = 'ru', reasoningEffort = 'high') => {
+  upload: (id, file, language = 'ru', reasoningEffort = 'high', fastTrack = null) => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('language', language);
     formData.append('reasoning_effort', reasoningEffort);
+    if (fastTrack?.enabled) {
+      formData.append('fast_track', 'true');
+      formData.append('fast_track_topic', fastTrack.topic || '');
+      formData.append('fast_track_pipeline_id', fastTrack.pipelineId || '');
+    }
     return axios.post(`${API}/projects/${id}/upload`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
