@@ -44,6 +44,24 @@ const NODE_STYLES = {
     iconBg: 'bg-slate-100 text-slate-600',
     label: 'Шаблон',
   },
+  user_input: {
+    icon: PenLine,
+    bg: 'bg-blue-50 border-blue-300',
+    iconBg: 'bg-blue-100 text-blue-600',
+    label: 'Ввод данных',
+  },
+  format_template: {
+    icon: FileCode2,
+    bg: 'bg-cyan-50 border-cyan-300',
+    iconBg: 'bg-cyan-100 text-cyan-600',
+    label: 'Форматирование',
+  },
+  batch_prompt_template: {
+    icon: Braces,
+    bg: 'bg-indigo-50 border-indigo-300',
+    iconBg: 'bg-indigo-100 text-indigo-600',
+    label: 'Батч-шаблон',
+  },
   user_edit_list: {
     icon: UserPen,
     bg: 'bg-pink-50 border-pink-300',
