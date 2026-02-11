@@ -1,12 +1,23 @@
 import uuid
+import logging
 from datetime import datetime, timezone
 from typing import List
 from fastapi import APIRouter, HTTPException, Depends
 from app.core.database import db
 from app.core.security import get_admin_user, hash_password
 from app.models.user import UserResponse
+from app.core.config import OPENAI_API_KEY
 
 router = APIRouter(prefix="/admin", tags=["admin"])
+logger = logging.getLogger(__name__)
+
+DEFAULT_MODEL = "gpt-5.2"
+
+
+async def get_active_model() -> str:
+    """Get current active model from settings"""
+    settings = await db.settings.find_one({"key": "active_model"}, {"_id": 0})
+    return settings["value"] if settings else DEFAULT_MODEL
 
 
 @router.get("/users", response_model=List[UserResponse])
