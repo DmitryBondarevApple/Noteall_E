@@ -1,162 +1,174 @@
-<analysis>An analysis of the user's request and the agent's actions has been done. Here is the summary of the work:
+<analysis>**original_problem_statement:**
+The user has requested to evolve the Constructor feature by adding an advanced AI assistant.
 
-**original_problem_statement:**
-The user wants to build a new major section of the application called the Document Agent. This section is intended for complex document processing workflows.
-
-**PRODUCT REQUIREMENTS:**
-- The new section should be accessible via a new top-level navigation item.
-- It needs a hierarchical (tree-like) structure to organize work: e.g., .
-- Within an Analysis Project, the user should be able to:
-    - Upload a set of source documents and materials (text files, PDFs, images, etc.).
-    - Define a target document structure using a template.
-    - Run analysis in multiple parallel streams (like separate chat threads), where each stream focuses on a specific part of the target document.
-    - The AI in each stream should use the source materials as context.
-    - The AI should be able to generate clarification questions based on missing information.
-    - The user can then combine the results from all streams to assemble the final document.
-- The overall site navigation should be moved from a horizontal top bar to a vertical sidebar on the left.
-- The system should support reusable prompt/scenario templates.
-- Uploaded files must be stored persistently and associated with their respective projects.
+PRODUCT REQUIREMENTS:
+1.  **AI Assistant for Scenario Generation**: The primary goal is to create an AI assistant that helps users build analysis scenarios (pipelines) from a natural language prompt.
+2.  **Iterative Chat-based Interface**: The assistant should not be a one-time generation tool. The user wants a persistent chat interface where they can:
+    *   Provide an initial prompt to generate a scenario.
+    *   Receive the generated scenario on the constructor canvas.
+    *   Provide feedback, ask for corrections, and continue the conversation with the AI, maintaining the context of the discussion.
+3.  **Image-based Debugging**: A critical requirement is the ability to upload images (specifically screenshots of errors encountered during scenario execution) into the chat. The AI assistant must be able to analyze the image and the chat history to understand the problem and suggest corrections to the scenario.
+4.  **Context Persistence**: The chat history and the initial prompt must be saved and associated with the generated pipeline.
+5.  **Go-Back Functionality**: The user needs a way to navigate back from the scenario execution/analysis page to the scenario selection page, especially after encountering an error. This allows them to choose a different scenario or refine the current one.
 
 **User's preferred language**:
-The user's primary language is **Russian (Русский)**. The next agent MUST respond in Russian.
+The user's primary language is **Russian**. The next agent MUST respond in Russian only.
 
 **what currently exists?**
-The application has a Projects section for analyzing meeting transcripts. This section includes a pipeline constructor for creating analysis scenarios, a dynamic wizard to run these scenarios, and a tabbed interface to view transcripts, review results, and manage saved analyses.
+The application is a full-stack web app with a React frontend and a Python (FastAPI) backend, using MongoDB as the database. The app is deployed on a user-provided VPS using Docker, Docker Compose, and Nginx, with a CI/CD pipeline set up via GitHub Actions for automatic deployments.
 
-The agent has just begun implementing the new Document Agent feature by creating the initial backend models and API endpoints for the hierarchical project structure.
+Key features implemented in this session include:
+-   **S3 Integration**: File uploads (documents, audio) are now stored in an S3-compatible object storage instead of the local filesystem.
+-   **VPS Deployment & HTTPS**: The application is fully deployed on a production server at  with a valid SSL certificate. A comprehensive deployment guide () was created.
+-   **CI/CD Pipeline**: A GitHub Actions workflow automates deployment to the VPS on every push to the  branch. The workflow is configured to handle build caching and avoid merge conflicts.
+-   **Branding**: The app has been rebranded to Noteall with a custom logo, favicon, updated titles, and login page text. The Made with Emergent badge has been removed.
+-   **Scenario Import/Export**: Users can now export pipelines to a JSON file and import them back into the constructor.
+-   **PDF Parsing with OCR**: The backend can now parse text from PDF files. It first attempts to extract text directly (PyMuPDF) and falls back to OCR (Tesseract) for image-based PDFs, with support for the Russian language.
+-   **AI Model Management**: An admin panel feature was added to check for new OpenAI model versions and update the active model used by the application, which is stored in the database.
 
 **Last working item**:
-- **Last item agent was working:** Starting the implementation of the new Document Agent section. Specifically, the agent created the database models (, ) and the basic API router () to manage the hierarchical project structure.
-- **Status:** IN PROGRESS
-- **Agent Testing Done:** N
-- **Which testing method agent to use?** backend testing agent
-- **User Testing Done:** N
+The agent was processing a major new feature request from the user to overhaul the AI assistant.
+
+-   **Last item agent was working**: The user reported an error during scenario execution and requested to transform the just-completed AI-ассистент (which used a simple modal for generation) into a full-fledged, persistent chat interface. This new chat assistant needs to understand context, accept image uploads for debugging, and allow for iterative refinement of the generated scenarios. The agent had just acknowledged this request and was about to formulate a plan.
+-   **Status**: NOT STARTED
+-   **Agent Testing Done**: N
+-   **Which testing method agent to use?**: both
+-   **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-There are no pending bugs or issues. All previously reported issues were resolved.
+There are no pending bugs or issues. The focus is entirely on the new feature request.
 
 **In progress Task List**:
-- **Task 1: Implement the Document Agent feature (P0)**
-  - **Where to resume:** The backend models and router have been created in  and . The next logical step is to test these new backend endpoints and then begin the frontend implementation, starting with the vertical sidebar navigation.
-  - **What will be achieved with this?** This will build out the foundational structure for the entire new document processing feature as requested by the user.
-  - **Status:** IN PROGRESS
-  - **Should Test frontend/backend/both after fix?** Both
-  - **Blocked on something:** No
-
-**Upcoming and Future Tasks**
-This major feature will be implemented in phases:
-
-**Phase 1: Foundation & Navigation (P0)**
-- **Task 1:** Test the newly created backend endpoints for .
-- **Task 2:** Refactor the main application layout to use a vertical left-hand sidebar for navigation.
-- **Task 3:** Create a new top-level page for Documents ().
-- **Task 4:** On the Documents page, build the UI to display and manage the hierarchical tree of document projects (create, rename, delete folders and projects).
-
-**Phase 2: Project Workspace (P1)**
-- **Task 5:** Build the Project Workspace view, which opens when a user selects a specific analysis project from the tree.
-- **Task 6:** This workspace should include panels for:
-    - **Source Materials:** Implement file/link upload and management, scoped to the current document project.
-    - **Analysis Streams:** A multi-chat interface where each chat is an independent analysis thread.
-    - **Final Document:** A viewer/editor to assemble the final output.
-
-**Phase 3: AI Integration & Finalization (P2)**
-- **Task 7:** Integrate LLM calls into the Analysis Streams, ensuring the AI context includes all source materials.
-- **Task 8:** Implement a system for managing and using reusable prompt templates to initiate analysis streams.
-- **Task 9:** Enhance the Final Document panel to easily bring in content from the various analysis streams.
-
-**Completed work in this session**
-- **Dynamic Wizard Engine:** The Мастер tab was converted into a dynamic wizard () driven by configurations set in the pipeline editor. (DONE)
-- **Persistent Wizard Results:** Implemented  and an Are you sure? confirmation dialog to prevent accidental loss of analysis results. (DONE)
-- **Results Tab Refactor:** Created a  to store multiple analysis results and added functionality to run new analyses (prompt or scenario-based) on them. (DONE)
-- **File/Link Attachments:** Implemented a full-stack feature allowing users to attach files (including images) and links to analysis runs. This involved creating an , backend storage, and updating the LLM service for multimodal input. (DONE)
-- **Edge Editing in Pipeline Editor:** Added the ability to delete and reconnect arrows (edges) in the pipeline constructor UI. (DONE)
-- **UI/UX Refinements:**
-    - Fixed a bug causing oversized text blocks in the Проверка (Review) tab. (DONE)
-    - Reordered and renamed the main project tabs as per user request. (DONE)
-    - Added the attachments panel to all relevant analysis screens. (DONE)
-- **Document Agent Foundation:** Created initial backend models and API router for the new feature. (IN PROGRESS)
-
-**Earlier issues found/mentioned but not fixed**
 None.
 
+**Upcoming and Future Tasks**
+
+**Upcoming Tasks:**
+-   **Task 1: Overhaul AI Assistant as a Chat Interface (P0)**
+    -   **Description**: Replace the current modal-based AI assistant with a persistent chat component on both the  (for creation) and  (for editing).
+    -   **Backend**:
+        -   Create new database models for storing chat messages and sessions, linked to users and pipelines.
+        -   Develop new API endpoints to handle sending/receiving chat messages, including image uploads.
+        -   Modify the AI service () to handle multi-turn conversations and vision capabilities (analyzing screenshots).
+    -   **Frontend**:
+        -   Create a reusable chat component ().
+        -   Integrate this chat component to replace the existing AI-ассистент and Редактировать modals.
+        -   Implement UI for uploading images within the chat.
+        -   Ensure the constructor canvas updates in real-time as the AI modifies the pipeline.
+
+-   **Task 2: Implement Go Back from Execution to Selection (P1)**
+    -   **Description**: Add a button or link on the pipeline execution/analysis results page that allows the user to return to the previous step (scenario selection) without losing context.
+    -   **Frontend**: This will likely involve managing application state and navigation flow, allowing the user to step back in the process.
+
+**Future Tasks:**
+-   **Task 1: Refine Model Update Notification (P2)**
+    -   **Description**: The current implementation allows an admin to manually check for new models. A future improvement would be to automatically check periodically and notify the admin if a new stable model is available.
+
+**Completed work in this session**
+-   **S3 Integration**: Migrated file storage for documents, attachments, and audio files from local disk to an S3-compatible service.
+-   **Production Deployment**: Successfully deployed the entire stack (Frontend, Backend, DB) to a user-provided VPS, including debugging numerous issues related to dependencies, Docker, and networking.
+-   **HTTPS Configuration**: Secured the production domain  with an SSL certificate via Certbot.
+-   **CI/CD Automation**: Implemented a robust GitHub Actions workflow for automated deployments.
+-   **Branding & UI Customization**:
+    -   Replaced the default logo with a custom noteall logo.
+    -   Created and set a custom favicon.
+    -   Updated marketing text and copyright information.
+    -   Removed the Made with Emergent badge.
+-   **Pipeline Import/Export**: Added functionality for users to save and share their scenarios as JSON files.
+-   **PDF Content Extraction (with OCR)**: Implemented a service to parse text from PDFs, using OCR as a fallback.
+-   **AI Model Management**: Created an admin interface to manage the active OpenAI model version.
+-   **Initial AI Assistant (Modal-based)**: Implemented the first version of the AI assistant for scenario generation (now superseded by the new chat requirement).
+
+**Earlier issues found/mentioned but not fixed**
+None. All deployment and caching issues were iteratively resolved.
+
 **Known issue recurrence from previous fork**
-N/A
+None.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Backend:** FastAPI, PostgreSQL, SQLAlchemy
-- **Frontend:** React, Vite, Tailwind CSS, shadcn/ui, React Flow
-- **AI Integration:** OpenAI API (GPT-4 family with vision capabilities)
-- **Architecture:** Monolithic repository with separate  and  applications communicating via a REST API.
+-   **Frontend**: React, , Tailwind CSS, .
+-   **Backend**: Python 3.11, FastAPI,  (async MongoDB driver), Pydantic.
+-   **Database**: MongoDB.
+-   **File Storage**: S3-compatible object storage.
+-   **AI**: OpenAI API (GPT models with Vision).
+-   **Deployment**: Docker, Docker Compose, Nginx (as reverse proxy), VPS, GitHub Actions for CI/CD.
+-   **OCR**: Tesseract.
 
 **key DB schema**
-- , , : Defines the structure and behavior of analysis scenarios.
-- : Manages transcript-based analysis projects.
-- : Stores saved analysis results from various tabs.
-- : Stores metadata for uploaded files and links, associated with a project.
-- ** (NEW):** A self-referencing table for the hierarchical structure (uid=0(root) gid=0(root) groups=0(root), , , ).
-- ** (NEW):** Represents files linked to a .
+-   : {email, hashed_password, role: admin | user}
+-   : {name, user_id, documents, attachments}
+-   : {name, user_id, nodes, edges, }
+-   : {project_id, file_name, , content}
+-   : {project_id, file_name, , content}
+-   : {key: active_model, value: gpt-5.2}
 
 **changes in tech stack**
-None.
+-   File storage was migrated from the local server filesystem to a remote S3 object store.
+-   Tesseract OCR was added as a backend dependency for PDF processing.
 
 **All files of reference**
-- ****: (New) Defines the SQLAlchemy models for the new document agent feature.
-- ****: (New) Defines the FastAPI endpoints for managing the document project hierarchy.
-- ****: (Modified) Updated to include the new  router.
-- ****: (Modified) Main project tabs were reordered, renamed, and one was removed.
-- ****: (Modified) Updated to support edge deletion and reconnection.
-- ****: (Modified) Updated to pass attachment IDs to pipeline runs.
-- ****: (Modified) Updated to include the  for the raw transcript.
+-   : Defines the CI/CD pipeline for deploying to the user's VPS.
+-   : Contains the logic for interacting with the OpenAI API. Will need significant updates for the new chat feature.
+-   : The service for extracting text and performing OCR on PDF files.
+-   : Contains the API endpoints for pipelines. New chat-related endpoints will be added here.
+-   : The main page for the constructor. Will host the new chat-based AI assistant.
+-   : The editor for a single pipeline. Will also need the chat-based assistant for editing.
+-   : Contains manual setup instructions for the VPS, including installing Tesseract.
 
 **Areas that need refactoring**:
-- The pipeline execution logic (topological sort, node running) is duplicated in  and . This could be extracted into a reusable custom hook (e.g., ) to improve maintainability.
+-   The AI Assistant feature needs a complete refactor. The code for the modal-based generation in  and  should be removed and replaced with the new, more complex chat component.
 
 **key api endpoints**
-- : Manage the document project tree.
-- : Update/delete specific document projects.
-- : Upload files.
-- : Save pipeline changes, including modified edges.
-- : Run analysis on existing results.
+-   : (To be deprecated/modified) Generates a new pipeline from a prompt.
+-   : (To be deprecated/modified) Re-generates a pipeline.
+-   : Exports a pipeline as JSON.
+-   : Imports a pipeline from JSON.
+-   : Checks OpenAI for new models.
+-   : Sets the active OpenAI model.
 
 **Critical Info for New Agent**
-- The highest priority is to continue the implementation of the new **Document Agent** feature. The user has approved a multi-phase plan, and you should follow it.
-- Your immediate next step is to test the new backend endpoints for  and then start building the new frontend layout with a **vertical sidebar navigation**.
-- The user is very detail-oriented. Pay close attention to their feedback, especially regarding how the AI model should handle attachments (it should receive them directly, without backend pre-processing).
-- The rest of the application is in a stable state; all recent bug fixes and features were completed and tested.
+-   The user's immediate and highest-priority task is to **replace the current AI assistant with a persistent chat interface that supports image uploads for debugging**. The current modal-based implementation is now considered obsolete.
+-   The production environment is live at . All changes must be pushed to the  branch to trigger the deployment workflow.
+-   The backend now depends on Tesseract for OCR, which must be installed in the Docker container during the build process. The  workflow and backend  handle this.
+-   The user's valid OpenAI API key is stored in the environment and should be used for all AI features.
 
 **documents and test reports created in this job**
--  (updated multiple times)
+-   : A guide for setting up the application on a new VPS.
+-   : The Product Requirements Document, updated with the latest features.
 
 **Last 10 User Messages and any pending HUMAN messages**
-1. **User Request (LATEST):** Kick-off for a major new Document Agent feature with a detailed example workflow. (PENDING)
-2. **User Feedback:** Refined the plan to include a vertical sidebar and a hierarchical project structure. (ADDRESSED in new plan)
-3. **Agent Proposal:** Outlined a detailed, multi-phase plan to build the new feature. (ACCEPTED)
-4. **User Request:** Reorder, rename, and remove main project tabs. (RESOLVED)
-5. **User Request:** Allow deleting and reconnecting arrows in the pipeline editor. (RESOLVED)
-6. **User Bug Report:** Review tab showed huge blocks of text. (RESOLVED)
-7. **User Request:** Add attachment capability to the Master-analysis screen. (RESOLVED)
-8. **User Request:** Move the attachment panel inside the transcript card for better UX. (RESOLVED)
-9. **User Feedback:** Noted attachment capability was missing in another location. (RESOLVED)
-10. **User Feedback:** Asked to change how the application handles analysis results to prevent accidental loss. (RESOLVED)
+1.  **user**: The AI-generated scenario has an error. I need to be able to go back and change the scenario, and I want to upload a screenshot of the error to the AI assistant. The assistant should be a chat that remembers our conversation so I can fix the scenario with it. Can you do this? (COMPLETED - Agent acknowledged and was about to plan).
+2.  **user**: The favicon has ugly black borders. Let's make it a star on a black background. (COMPLETED - Agent created a new SVG favicon).
+3.  **user**: The import/export feature is not on the production site after pushing to GitHub. (COMPLETED - Agent diagnosed a Docker caching issue and fixed the deployment workflow).
+4.  **user**: The deployment is taking over 6 minutes now. (COMPLETED - Agent optimized the deployment workflow to use caching intelligently).
+5.  **user**: The deploy still failed,  has conflicts. (COMPLETED - Agent fixed the deployment script to use HEAD is now at c5f77f0 auto-commit for c002d924-2f0f-4ba8-a9df-43d711634308 to prevent conflicts).
+6.  **user**: Let's create an AI assistant that generates scenarios from a prompt. (COMPLETED - Agent implemented the initial version).
+7.  **user**: The favicon still hasn't changed on the dev environment. (COMPLETED - Agent cleared caches and forced an update).
+8.  **user**: The logo didn't update on production. (COMPLETED - Agent identified a Docker caching issue and provided a fix).
+9.  **user**: How do I log in as an admin on the site? (COMPLETED - Agent provided instructions to update user role in the production MongoDB).
+10. **user**: The star in the logo is too high in the sidebar. Let's also make the star the favicon. (COMPLETED - Agent adjusted CSS and generated a favicon).
 
 **Project Health Check:**
-- **Broken:** None
-- **Mocked:** None
+-   **Broken**: The AI assistant feature is functionally broken from the user's perspective, as it does not meet the new, more complex requirements for iterative debugging.
+-   **Mocked**: No mocked components.
 
 **3rd Party Integrations**
-- **OpenAI GPT-4o**: Uses the Emergent LLM Key for all AI analysis, including multimodal capabilities (text and images).
+-   **OpenAI API**: Used for all AI-powered features, including document analysis and scenario generation. The user provides their own API key (). The model is configurable but currently defaults to .
+-   **Timeweb S3**: S3-compatible object storage for all file uploads. Requires user-provided credentials (, , etc.).
+-   **Deepgram**: Used for audio transcription. Requires a user-provided API key ().
 
 **Testing status**
-- **Testing agent used after significant changes:** YES
-- **Troubleshoot agent used after agent stuck in loop:** NO
-- **Test files created:** None
-- **Known regressions:** None
+-   **Testing agent used after significant changes**: YES, for the S3 integration.
+-   **Troubleshoot agent used after agent stuck in loop**: NO
+-   **Test files created**: None.
+-   **Known regressions**: None.
 
 **Credentials to test flow:**
-N/A (Standard user registration is sufficient)
+-   **Dev Admin**:  (password is likely , but can be reset if needed).
+-   The user has their own account () on the production server, which they were instructed on how to promote to admin.
 
 **What agent forgot to execute**
-- The agent created new backend models and API routes for the  feature but did not run any tests to validate them. This should be done before proceeding.</analysis>
+The agent correctly implemented all requested features sequentially. However, the last request from the user to overhaul the AI assistant into a chat-based system was so significant that it effectively made the agent's *last completed task* (the modal-based assistant) obsolete. The agent has not yet started planning or implementing this new, critical requirement.</analysis>
