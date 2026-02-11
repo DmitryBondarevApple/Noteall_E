@@ -593,6 +593,79 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult, 
     })();
   }, [selectedPipelineId]);
 
+  // Fast-track: auto-select pipeline when autoRun is triggered
+  useEffect(() => {
+    if (autoRun && pipelines.length > 0 && !autoRunRef.current) {
+      autoRunRef.current = true;
+      if (fastTrackPipelineId && pipelines.some(p => p.id === fastTrackPipelineId)) {
+        setSelectedPipelineId(fastTrackPipelineId);
+      }
+      // If fast-track topic provided, pre-fill it
+      if (fastTrackTopic) {
+        setPipelineVarInputs(prev => ({ ...prev, meeting_subject: fastTrackTopic, subject: fastTrackTopic }));
+      }
+    }
+  }, [autoRun, pipelines, fastTrackPipelineId, fastTrackTopic]);
+
+  // Fast-track: auto-start wizard when stages are ready
+  useEffect(() => {
+    if (autoRunRef.current && stages.length > 0 && currentStageIdx === -1 && !isProcessing) {
+      startWizard();
+    }
+  }, [autoRunRef.current, stages.length, currentStageIdx, isProcessing]); // eslint-disable-line
+
+  // Fast-track: auto-proceed through interactive stages
+  useEffect(() => {
+    if (!autoRunRef.current || currentStageIdx < 0 || isProcessing) return;
+    const currentStage = stages[currentStageIdx];
+    if (!currentStage) return;
+
+    const type = currentStage.type;
+    const timer = setTimeout(() => {
+      if (type === 'user_input' || type === 'template') {
+        // Auto-fill template with fast-track topic or empty and submit
+        const tplText = currentStage.primaryNode.data.template_text || '';
+        const vars = (tplText.match(/\{\{(\w+)\}\}/g) || []).map(v => v.replace(/[{}]/g, ''));
+        const uniqueVars = [...new Set(vars)];
+        const autoInputs = {};
+        for (const varName of uniqueVars) {
+          autoInputs[varName] = fastTrackTopic || 'авто';
+        }
+        setTemplateInputs(autoInputs);
+        // Submit after a tick
+        setTimeout(() => {
+          let outputs = { ...nodeOutputs };
+          for (const [key, value] of Object.entries(autoInputs)) {
+            outputs[key] = value;
+          }
+          let result = tplText;
+          for (const [key, value] of Object.entries(autoInputs)) {
+            result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value);
+          }
+          setNodeOutputs(outputs);
+          proceedToNextStage(result);
+        }, 100);
+      } else if (type === 'user_edit_list') {
+        // Auto-select all items
+        const allSelected = editableList.map(item => ({ ...item, selected: true }));
+        setEditableList(allSelected);
+        setTimeout(() => {
+          const selectedTexts = allSelected.map(t => t.text);
+          proceedToNextStage(selectedTexts);
+        }, 100);
+      } else if (type === 'user_review') {
+        // Auto-save result
+        autoRunRef.current = false;
+        onAutoRunComplete?.();
+        // Don't auto-save, let user see the result
+      } else if (currentStage.isPauseStage) {
+        // Auto-continue pause stages
+        proceedToNextStage(nodeOutputs[currentStage.primaryNode.id]);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [currentStageIdx, isProcessing, stages, autoRun]); // eslint-disable-line
+
   // Auto-fix pipeline warnings and save to backend
   const handleAutoFix = useCallback(async () => {
     if (!pipelineData?._nodes || !selectedPipelineId) return;
