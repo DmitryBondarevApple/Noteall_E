@@ -14,6 +14,7 @@ import ConstructorPage from "./pages/ConstructorPage";
 import PipelineEditorPage from "./pages/PipelineEditorPage";
 import SpeakerDirectoryPage from "./pages/SpeakerDirectoryPage";
 import AdminPage from "./pages/AdminPage";
+import BillingPage from "./pages/BillingPage";
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -42,6 +43,7 @@ function AppRoutes() {
       <Route path="/pipelines/new" element={<ProtectedRoute><PipelineEditorPage /></ProtectedRoute>} />
       <Route path="/pipelines/:pipelineId" element={<ProtectedRoute><PipelineEditorPage /></ProtectedRoute>} />
       <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
+      <Route path="/billing" element={<ProtectedRoute><BillingPage /></ProtectedRoute>} />
       {/* Redirects for old routes */}
       <Route path="/dashboard" element={<Navigate to="/meetings" replace />} />
       <Route path="/prompts" element={<Navigate to="/constructor?tab=prompts" replace />} />
