@@ -18,6 +18,14 @@ Build a comprehensive multi-tenant SaaS application with AI features for meeting
 
 ## Bug Fixes & Improvements
 
+### 2026-02-11: Magic Link Invitations (DONE)
+- **Feature:** One-time magic link invitations for adding employees to an organization
+- **Backend:** New `/api/invitations/` routes (create, list, validate, revoke)
+- **Registration:** Modified to accept `invitation_token` — user joins existing org, no credits given
+- **Anti-cheating:** Invited users don't trigger org creation or welcome credits
+- **Frontend:** Invite registration page at `/invite/:token`, invitation management in Admin → Organization tab
+- **Files:** `routes/invitations.py`, `routes/auth.py`, `models/user.py`, `pages/InviteRegisterPage.js`, `pages/AdminPage.js`, `lib/api.js`, `App.js`
+
 ### 2026-02-11: Superadmin Billing Bypass (DONE)
 - **Bug:** Superadmin blocked by "Превышен месячный лимит токенов" despite having 1897 credits
 - **Root cause:** `monthly_token_limit: 50000` was set for admin, and 54991 tokens were used this month
@@ -34,4 +42,4 @@ Build a comprehensive multi-tenant SaaS application with AI features for meeting
 - Test user: bugtest@test.com / bugtest123
 
 ## Backlog
-- No pending tasks
+- Refactoring: Centralize `input_from` derivation from `edges` into a shared utility (currently duplicated in AiChatPanel.jsx, ConstructorPage.jsx, PipelinesPage.jsx, pipelines.py)
