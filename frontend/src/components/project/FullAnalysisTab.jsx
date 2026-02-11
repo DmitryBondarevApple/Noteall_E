@@ -243,14 +243,14 @@ function resolveTemplateVars(tplText, depIds, currentOutputs) {
     }
   }
 
-  // Phase 2: substring match — var name contained in dep ID
+  // Phase 2: substring match — var name contained in dep ID (skip arrays — they're batch items)
   const vars2 = [...new Set((result.match(/\{\{(\w+)\}\}/g) || []).map(v => v.replace(/[{}]/g, '')))];
   for (const varName of vars2) {
     for (const depId of (depIds || [])) {
       if (usedDeps.has(depId)) continue;
       if (depId.includes(varName)) {
         const val = currentOutputs[depId];
-        if (val !== undefined) {
+        if (val !== undefined && !Array.isArray(val)) {
           result = result.split(`{{${varName}}}`).join(String(val));
           usedDeps.add(depId);
           break;
@@ -259,12 +259,12 @@ function resolveTemplateVars(tplText, depIds, currentOutputs) {
     }
   }
 
-  // Phase 3: positional fallback
+  // Phase 3: positional fallback (skip arrays — they're batch items, not template values)
   const vars3 = [...new Set((result.match(/\{\{(\w+)\}\}/g) || []).map(v => v.replace(/[{}]/g, '')))];
   const unusedDeps = (depIds || []).filter(d => !usedDeps.has(d));
   for (let i = 0; i < vars3.length && i < unusedDeps.length; i++) {
     const val = currentOutputs[unusedDeps[i]];
-    if (val !== undefined) {
+    if (val !== undefined && !Array.isArray(val)) {
       result = result.split(`{{${vars3[i]}}}`).join(String(val));
     }
   }
