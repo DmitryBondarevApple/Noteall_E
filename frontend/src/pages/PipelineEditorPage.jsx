@@ -465,42 +465,29 @@ export default function PipelineEditorPage() {
     [setNodes, setEdges, pushState]
   );
 
-  const handleAiRegenerate = async () => {
-    if (!aiEditPrompt.trim() || !pipelineId) return;
-    setAiEditGenerating(true);
-    try {
-      const res = await pipelinesApi.generate(aiEditPrompt.trim(), pipelineId);
-      const pipelineData = res.data;
-      setPipeline(pipelineData);
-      setPipelineName(pipelineData.name);
-      setPipelineDescription(pipelineData.description || '');
-
-      const loadedNodes = pipelineData.nodes.map((n) => ({
-        id: n.node_id,
-        type: 'pipelineNode',
-        position: { x: n.position_x || 0, y: n.position_y || 0 },
-        data: { ...n },
-      }));
-      const loadedEdges = pipelineData.edges.map((e, i) => ({
-        id: `e-${e.source}-${e.target}-${i}`,
-        source: e.source,
-        target: e.target,
-        sourceHandle: e.source_handle || null,
-        targetHandle: e.target_handle || null,
-        data: { edgeType: getEdgeType(e.source_handle, e.target_handle) },
-        ...makeEdgeStyle(getEdgeType(e.source_handle, e.target_handle)),
-      }));
-
-      setNodes(loadedNodes);
-      setEdges(loadedEdges);
-      setAiEditOpen(false);
-      toast.success('Сценарий обновлён');
-    } catch (err) {
-      toast.error(err.response?.data?.detail || 'Ошибка генерации');
-    } finally {
-      setAiEditGenerating(false);
-    }
-  };
+  const handlePipelineFromChat = useCallback((pipelineData) => {
+    if (!pipelineData || !pipelineData.nodes) return;
+    const loadedNodes = pipelineData.nodes.map((n) => ({
+      id: n.node_id,
+      type: 'pipelineNode',
+      position: { x: n.position_x || 0, y: n.position_y || 0 },
+      data: { ...n },
+    }));
+    const loadedEdges = (pipelineData.edges || []).map((e, i) => ({
+      id: `e-${e.source}-${e.target}-${i}`,
+      source: e.source,
+      target: e.target,
+      sourceHandle: e.source_handle || null,
+      targetHandle: e.target_handle || null,
+      data: { edgeType: getEdgeType(e.source_handle, e.target_handle) },
+      ...makeEdgeStyle(getEdgeType(e.source_handle, e.target_handle)),
+    }));
+    setNodes(loadedNodes);
+    setEdges(loadedEdges);
+    if (pipelineData.name) setPipelineName(pipelineData.name);
+    if (pipelineData.description) setPipelineDescription(pipelineData.description);
+    toast.success('Сценарий обновлён через AI');
+  }, [setNodes, setEdges]);
 
   const handleSave = async () => {
     if (!pipelineName.trim()) {
