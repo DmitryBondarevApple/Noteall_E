@@ -121,7 +121,7 @@ export default function ProjectPage() {
                 await loadData();
                 toast.success('Fast-track: запускаем анализ...');
                 setFastTrackAutoRun(true);
-                setActiveTab('analysis');
+                setActiveTab('full-analysis');
               } catch (e) {
                 toast.error('Ошибка автопринятия исправлений');
                 setActiveTab('processed');
