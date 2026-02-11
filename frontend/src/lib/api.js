@@ -244,6 +244,14 @@ export const docTemplatesApi = {
   seed: () => axios.post(`${API}/doc/seed-templates`),
 };
 
+// Invitations (magic links)
+export const invitationsApi = {
+  create: (note) => axios.post(`${API}/invitations/create`, { note: note || null }),
+  list: () => axios.get(`${API}/invitations/list`),
+  revoke: (id) => axios.post(`${API}/invitations/${id}/revoke`),
+  validate: (token) => axios.get(`${API}/invitations/validate/${token}`),
+};
+
 // Billing
 export const billingApi = {
   getBalance: () => axios.get(`${API}/billing/balance`),
