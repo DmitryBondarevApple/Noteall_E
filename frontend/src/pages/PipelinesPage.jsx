@@ -311,39 +311,20 @@ export function PipelinesContent() {
           </div>
         )}
 
-      {/* AI Assistant Modal */}
-      <Dialog open={aiModalOpen} onOpenChange={setAiModalOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Bot className="w-5 h-5 text-cyan-500" />
-              AI-ассистент
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              Опишите какой сценарий анализа вам нужен, и AI создаст его автоматически.
-            </p>
-            <textarea
-              className="w-full h-32 rounded-lg border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="Создай сценарий для анализа протокола совещания: извлеки решения, задачи с ответственными, риски и итоговое резюме"
-              value={aiPrompt}
-              onChange={(e) => setAiPrompt(e.target.value)}
-              disabled={aiGenerating}
-              data-testid="ai-prompt-input"
+      {/* AI Chat Panel (slide-over) */}
+      {aiChatOpen && (
+        <div className="fixed inset-y-0 right-0 z-50 flex">
+          <div className="fixed inset-0 bg-black/30" onClick={() => setAiChatOpen(false)} />
+          <div className="relative ml-auto h-full">
+            <AiChatPanel
+              open={aiChatOpen}
+              onClose={() => setAiChatOpen(false)}
+              pipelineId={null}
+              onPipelineGenerated={handlePipelineFromChat}
             />
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAiModalOpen(false)} disabled={aiGenerating}>
-              Отмена
-            </Button>
-            <Button onClick={handleAiGenerate} disabled={!aiPrompt.trim() || aiGenerating} data-testid="ai-generate-btn" className="gap-2">
-              {aiGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-              {aiGenerating ? 'Генерация...' : 'Создать сценарий'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
     </div>
   );
 }
