@@ -204,3 +204,115 @@ async def admin_list_balances(admin=Depends(get_superadmin_user)):
         )
 
     return result
+
+
+# ── Markup Tiers (Superadmin) ──
+
+from app.services.metering import get_markup_tiers as _get_tiers
+
+
+class MarkupTierUpdate(BaseModel):
+    tiers: list  # [{min_cost, max_cost, multiplier}, ...]
+
+
+@router.get("/admin/markup-tiers")
+async def get_markup_tiers(admin=Depends(get_superadmin_user)):
+    tiers = await _get_tiers()
+    return tiers
+
+
+@router.put("/admin/markup-tiers")
+async def update_markup_tiers(data: MarkupTierUpdate, admin=Depends(get_superadmin_user)):
+    if not data.tiers:
+        raise HTTPException(status_code=400, detail="Tiers cannot be empty")
+
+    # Validate tiers
+    for t in data.tiers:
+        if "min_cost" not in t or "max_cost" not in t or "multiplier" not in t:
+            raise HTTPException(status_code=400, detail="Each tier must have min_cost, max_cost, multiplier")
+        if t["multiplier"] < 1:
+            raise HTTPException(status_code=400, detail="Multiplier must be >= 1")
+
+    now = datetime.now(timezone.utc).isoformat()
+
+    # Replace all tiers
+    await db.markup_tiers.delete_many({})
+    for t in data.tiers:
+        await db.markup_tiers.insert_one({
+            "id": str(uuid.uuid4()),
+            "min_cost": t["min_cost"],
+            "max_cost": t["max_cost"],
+            "multiplier": t["multiplier"],
+            "created_at": now,
+        })
+
+    return {"message": "Markup tiers updated", "count": len(data.tiers)}
+
+
+# ── Usage Stats ──
+
+@router.get("/usage/my")
+async def get_my_usage(user=Depends(get_current_user)):
+    """Get current user's usage stats for current month."""
+    now = datetime.now(timezone.utc)
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0).isoformat()
+
+    pipeline = [
+        {"$match": {"user_id": user["id"], "created_at": {"$gte": month_start}}},
+        {"$group": {
+            "_id": None,
+            "total_tokens": {"$sum": "$total_tokens"},
+            "total_credits": {"$sum": "$credits_used"},
+            "total_requests": {"$sum": 1},
+        }},
+    ]
+    result = await db.usage_records.aggregate(pipeline).to_list(1)
+    stats = result[0] if result else {"total_tokens": 0, "total_credits": 0, "total_requests": 0}
+    stats.pop("_id", None)
+    stats["monthly_token_limit"] = user.get("monthly_token_limit", 0)
+
+    return stats
+
+
+from pydantic import BaseModel as _BM
+
+
+@router.get("/admin/usage")
+async def admin_usage_stats(org_id: str = None, admin=Depends(get_superadmin_user)):
+    """Get usage stats per org or platform-wide."""
+    now = datetime.now(timezone.utc)
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0).isoformat()
+
+    match = {"created_at": {"$gte": month_start}}
+    if org_id:
+        match["org_id"] = org_id
+
+    pipeline = [
+        {"$match": match},
+        {"$group": {
+            "_id": "$org_id",
+            "total_tokens": {"$sum": "$total_tokens"},
+            "total_credits": {"$sum": "$credits_used"},
+            "total_requests": {"$sum": 1},
+        }},
+    ]
+    results = await db.usage_records.aggregate(pipeline).to_list(1000)
+
+    # Enrich with org names
+    org_ids = [r["_id"] for r in results if r["_id"]]
+    org_map = {}
+    if org_ids:
+        orgs = await db.organizations.find({"id": {"$in": org_ids}}, {"_id": 0, "id": 1, "name": 1}).to_list(len(org_ids))
+        org_map = {o["id"]: o["name"] for o in orgs}
+
+    return [
+        {
+            "org_id": r["_id"],
+            "org_name": org_map.get(r["_id"], "Unknown"),
+            "total_tokens": r["total_tokens"],
+            "total_credits": round(r["total_credits"], 4),
+            "total_requests": r["total_requests"],
+        }
+        for r in results
+    ]
+
