@@ -3,7 +3,7 @@
 ## Architecture
 - **Backend**: FastAPI + MongoDB (motor async)
 - **Frontend**: React + Tailwind CSS + shadcn/ui + React Flow
-- **AI**: OpenAI GPT-5.2 via Emergent LLM Key
+- **AI**: GPT-5.2 via Emergent LLM Key (emergentintegrations)
 - **Auth**: JWT-based
 - **Storage**: Timeweb S3
 - **Deploy**: VPS 185.246.220.121, Docker Compose, MongoDB 8.0.19, HTTPS
@@ -12,23 +12,24 @@
 
 ## Implemented Features
 
+### AI-ассистент для генерации сценариев (Feb 2026)
+- POST /api/pipelines/generate — AI создаёт полную структуру сценария по промпту
+- Кнопка "AI-ассистент" на странице Конструктора + в редакторе
+- Промпт сохраняется в сценарии (generation_prompt)
+- Возможность редактирования промпта и перегенерации
+- Переход в редактор после генерации
+
 ### PDF Parsing (Feb 2026)
-- PyMuPDF text extraction from text-layer PDFs
-- OCR fallback via Tesseract (Russian + English) for scanned PDFs
-- Integrated into: Document Agent pipeline runner, meeting attachments
-- Max 100K chars per PDF, auto-truncation
-- Service: /app/backend/app/services/pdf_parser.py
-- Dockerfile updated with tesseract-ocr + tesseract-ocr-rus
+- PyMuPDF + Tesseract OCR fallback (Russian + English)
 
 ### Pipeline Export/Import (Feb 2026)
-- Export pipeline as JSON from dropdown + editor
-- Import via button on constructor page
+- JSON export/import с UI
 
 ### Branding (Feb 2026)
-- Logo, favicon, updated texts, copyright 2026
+- Logo, favicon, updated texts
 
 ### S3 Storage (Feb 2026)
-- All uploads to Timeweb S3, presigned URL downloads
+- All uploads to Timeweb S3
 
 ### Core Features
 - Meeting transcription, speaker identification, AI analysis
