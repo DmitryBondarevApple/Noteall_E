@@ -97,6 +97,9 @@ async def upload_file(
     file: UploadFile = File(...),
     language: str = Form(default="ru"),
     reasoning_effort: str = Form(default="high"),
+    fast_track: str = Form(default=""),
+    fast_track_topic: str = Form(default=""),
+    fast_track_pipeline_id: str = Form(default=""),
     user=Depends(get_current_user)
 ):
     project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
