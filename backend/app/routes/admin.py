@@ -145,7 +145,6 @@ async def switch_model(model: str = None, admin=Depends(get_admin_user)):
     if not model:
         raise HTTPException(status_code=400, detail="Укажите модель")
 
-    now = datetime.now(timezone.utc).isoformat()
     old_model = await get_active_model()
 
     await db.settings.update_one(
