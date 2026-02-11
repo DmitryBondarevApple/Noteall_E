@@ -207,6 +207,41 @@ export default function AdminPage() {
     setEditingTiers(tiers);
   };
 
+  const handleCreateInvite = async () => {
+    setCreatingInvite(true);
+    try {
+      const res = await invitationsApi.create(inviteNote.trim() || null);
+      const link = `${window.location.origin}/invite/${res.data.token}`;
+      await navigator.clipboard.writeText(link);
+      toast.success('Ссылка-приглашение скопирована в буфер обмена');
+      setInviteNote('');
+      const listRes = await invitationsApi.list();
+      setInvitations(listRes.data || []);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Ошибка создания приглашения');
+    } finally {
+      setCreatingInvite(false);
+    }
+  };
+
+  const handleCopyLink = async (token) => {
+    const link = `${window.location.origin}/invite/${token}`;
+    await navigator.clipboard.writeText(link);
+    toast.success('Ссылка скопирована');
+  };
+
+  const handleRevokeInvite = async (id) => {
+    try {
+      await invitationsApi.revoke(id);
+      setInvitations(invitations.map(inv =>
+        inv.id === id ? { ...inv, is_revoked: true } : inv
+      ));
+      toast.success('Приглашение отозвано');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Ошибка');
+    }
+  };
+
   const handleCheckModels = async () => {
     setChecking(true);
     try {
