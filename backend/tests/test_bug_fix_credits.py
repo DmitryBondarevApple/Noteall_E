@@ -334,7 +334,9 @@ class TestRegistrationWelcomeCredits:
         )
         
         assert txn_res.status_code == 200
-        txns = txn_res.json()
+        txn_data = txn_res.json()
+        # API returns {"items": [...], "total": N}
+        txns = txn_data.get("items", [])
         assert len(txns) > 0
         
         # Find the welcome credit transaction
