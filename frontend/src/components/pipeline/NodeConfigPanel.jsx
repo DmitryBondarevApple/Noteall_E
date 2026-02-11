@@ -506,7 +506,7 @@ export function NodeConfigPanel({ node, allNodes, edges, onUpdate, onDelete, onC
               </div>
 
               {/* Pause after execution */}
-              {!['template', 'user_edit_list', 'user_review'].includes(nodeType) && (
+              {!['template', 'user_input', 'format_template', 'batch_prompt_template', 'user_edit_list', 'user_review'].includes(nodeType) && (
                 <div className="flex items-center justify-between py-1">
                   <Label className="text-xs">Остановка после выполнения</Label>
                   <Switch
