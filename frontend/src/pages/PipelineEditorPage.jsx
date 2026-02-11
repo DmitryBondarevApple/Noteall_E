@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useParams, Link, useSearchParams } from 'react-router-dom';
 import AppLayout from '../components/layout/AppLayout';
+import { buildInputFromMap, resolveInputFrom } from '../lib/pipelineUtils';
 import {
   ReactFlow,
   Controls,
@@ -471,15 +472,7 @@ export default function PipelineEditorPage() {
     if (!pipelineData || !pipelineData.nodes) return;
 
     // Build input_from map from edges (auto-fix if AI didn't set input_from)
-    const inputFromMap = {};
-    for (const e of (pipelineData.edges || [])) {
-      if (!inputFromMap[e.target]) {
-        inputFromMap[e.target] = [];
-      }
-      if (!inputFromMap[e.target].includes(e.source)) {
-        inputFromMap[e.target].push(e.source);
-      }
-    }
+    const inputFromMap = buildInputFromMap(pipelineData.edges);
 
     const loadedNodes = pipelineData.nodes.map((n) => ({
       id: n.node_id,
@@ -487,7 +480,7 @@ export default function PipelineEditorPage() {
       position: { x: n.position_x || 0, y: n.position_y || 0 },
       data: {
         ...n,
-        input_from: inputFromMap[n.node_id] || n.input_from || [],
+        input_from: resolveInputFrom(n.node_id, inputFromMap, n.input_from, []),
       },
     }));
     const loadedEdges = (pipelineData.edges || []).map((e, i) => ({
