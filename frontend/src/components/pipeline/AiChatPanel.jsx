@@ -280,12 +280,17 @@ export default function AiChatPanel({ open, onClose, pipelineId, onPipelineGener
 
     try {
       const res = await aiChatApi.sendMessage(sessionId, userContent, imageFile, pipelineContext || null);
-      const { user_message, assistant_message, pipeline_data } = res.data;
+      const { user_message, assistant_message, pipeline_data, usage } = res.data;
 
       // Replace optimistic user msg and add assistant msg
       setMessages((prev) => {
         const filtered = prev.slice(0, -1); // remove optimistic
-        return [...filtered, user_message, assistant_message];
+        const newMsgs = [...filtered, user_message, assistant_message];
+        // Store usage for the assistant message index
+        if (usage) {
+          setUsageMap(m => ({ ...m, [newMsgs.length - 1]: usage }));
+        }
+        return newMsgs;
       });
       scrollToBottom();
 
