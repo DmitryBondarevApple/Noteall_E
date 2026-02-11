@@ -23,7 +23,7 @@ Web application for building and running data processing pipelines (workflows). 
 - Auto-fix for common validation issues
 - Bug fixes: wizard "0 из 0", empty review step
 - Master prompt update for AI pipeline generator
-- User permission fix: `dmitry.bondarev@gmail.com` set to `superadmin` (Feb 2026)
+- User permission fix: `dmitry.bondarev@gmail.com` auto-promoted to `superadmin` on app startup (Feb 2026, in `main.py` startup event)
 
 ## Key Architecture
 ```
