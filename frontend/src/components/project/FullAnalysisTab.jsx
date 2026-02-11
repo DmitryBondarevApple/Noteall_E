@@ -940,6 +940,27 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
               />
             </div>
 
+            {/* Unresolved pipeline variables */}
+            {unresolvedVars.length > 0 && (
+              <div className="border-t pt-4 space-y-3">
+                <Label className="flex items-center gap-1.5 text-sm">
+                  <Variable className="w-4 h-4" />
+                  Параметры сценария
+                </Label>
+                {unresolvedVars.map((varName) => (
+                  <div key={varName} className="space-y-1">
+                    <Label className="text-xs text-muted-foreground capitalize">{varName}</Label>
+                    <Input
+                      placeholder={`Значение для {{${varName}}}`}
+                      value={pipelineVarInputs[varName] || ''}
+                      onChange={(e) => setPipelineVarInputs((prev) => ({ ...prev, [varName]: e.target.value }))}
+                      data-testid={`pipeline-var-${varName}`}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
             <Button
               onClick={startWizard}
               disabled={!selectedPipelineId || stages.length === 0}
