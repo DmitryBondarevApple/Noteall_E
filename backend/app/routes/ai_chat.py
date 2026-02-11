@@ -231,15 +231,40 @@ async def send_message(
         except json.JSONDecodeError:
             pass
 
+    # Check billing limits before AI call
+    org_id = user.get("org_id")
+    if org_id:
+        if not await check_user_monthly_limit(user):
+            raise HTTPException(status_code=402, detail="Превышен месячный лимит токенов")
+        if not await check_org_balance(org_id):
+            raise HTTPException(status_code=402, detail="Недостаточно кредитов. Пополните баланс.")
+
     # Call GPT
     try:
-        ai_response = await call_gpt_chat(
+        gpt_result = await call_gpt_chat_metered(
             system_message=system,
             messages=openai_messages,
         )
+        ai_response = gpt_result.content
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"AI chat error: {e}")
         raise HTTPException(status_code=500, detail=f"AI error: {str(e)}")
+
+    # Deduct credits after successful AI call
+    if org_id:
+        try:
+            await deduct_credits_and_record(
+                org_id=org_id,
+                user_id=user["id"],
+                model=gpt_result.model,
+                prompt_tokens=gpt_result.prompt_tokens,
+                completion_tokens=gpt_result.completion_tokens,
+                source="ai_chat",
+            )
+        except Exception as e:
+            logger.error(f"Metering error (non-blocking): {e}")
 
     assistant_msg = {
         "role": "assistant",
