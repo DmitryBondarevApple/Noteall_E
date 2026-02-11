@@ -10,7 +10,8 @@ from app.core.security import get_current_user
 from app.models.pipeline import (
     PipelineCreate, PipelineUpdate, PipelineResponse
 )
-from app.services.gpt import call_gpt52
+from app.services.gpt import call_gpt52, call_gpt52_metered
+from app.services.metering import check_user_monthly_limit, check_org_balance, deduct_credits_and_record
 
 router = APIRouter(prefix="/pipelines", tags=["pipelines"])
 logger = logging.getLogger(__name__)
