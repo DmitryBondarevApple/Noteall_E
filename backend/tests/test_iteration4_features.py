@@ -12,7 +12,7 @@ import requests
 import os
 import time
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://topic-extraction-1.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://admin-elevation-1.preview.emergentagent.com').rstrip('/')
 
 # Test credentials
 TEST_EMAIL = "admin@voiceworkspace.com"
