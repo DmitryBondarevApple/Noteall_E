@@ -217,7 +217,9 @@ export function ResultsTab({ projectId, selectedReasoningEffort }) {
         setAnalysisMode(null);
         toast.success('Анализ завершён и сохранён');
       } catch (err) {
-        toast.error('Ошибка анализа: ' + (err.response?.data?.detail || err.message));
+        if (err.response?.status !== 402) {
+          toast.error('Ошибка анализа: ' + (err.response?.data?.detail || err.message));
+        }
       } finally {
         setAnalyzing(false);
       }
