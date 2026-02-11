@@ -14,8 +14,10 @@ class PipelineNodeConfig(BaseModel):
     reasoning_effort: Optional[str] = "high"
     # For batch_loop nodes
     batch_size: Optional[int] = 3
+    prompt_source_node: Optional[str] = None  # Explicit reference to template/ai_prompt node for batch loop
     # For template nodes
     template_text: Optional[str] = None
+    loop_vars: Optional[List[str]] = None  # Variables reserved for batch loop iteration (e.g. ["item"])
     # For parse_list nodes — custom script
     script: Optional[str] = None
     # Which node's output to use as input (node_id reference)
