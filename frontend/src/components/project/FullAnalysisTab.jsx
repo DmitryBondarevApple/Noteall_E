@@ -96,8 +96,8 @@ function validatePipeline(nodes, edges) {
           errors.push(`"${label}": prompt_source_node ссылается на несуществующий узел "${data.prompt_source_node}"`);
         } else {
           const srcNode = nodeMap.get(data.prompt_source_node);
-          if (srcNode && !['template', 'ai_prompt'].includes(srcNode.data.node_type)) {
-            warnings.push(`"${label}": prompt_source_node указывает на "${srcNode.data.label}" (${srcNode.data.node_type}), ожидается template или ai_prompt`);
+          if (srcNode && !['template', 'user_input', 'format_template', 'batch_prompt_template', 'ai_prompt'].includes(srcNode.data.node_type)) {
+            warnings.push(`"${label}": prompt_source_node указывает на "${srcNode.data.label}" (${srcNode.data.node_type}), ожидается шаблон или ai_prompt`);
           }
         }
       } else {
@@ -105,8 +105,8 @@ function validatePipeline(nodes, edges) {
       }
     }
 
-    // 3. template: check loop_vars vs {{var}} usage
-    if (type === 'template' && data.template_text) {
+    // 3. template types: check loop_vars vs {{var}} usage
+    if (['template', 'batch_prompt_template'].includes(type) && data.template_text) {
       const vars = (data.template_text.match(/\{\{(\w+)\}\}/g) || []).map(v => v.replace(/[{}]/g, ''));
       const loopVars = data.loop_vars || [];
       // Check if template has {{item}} but no loop_vars
