@@ -862,10 +862,20 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
         const depIds = dataDeps[stage.primaryNode.id] || [];
         const parts = depIds.map((id) => outputs[id]).filter(Boolean);
         if (parts.length >= 2) {
-          // Last dep = short summary, first dep(s) = detailed analysis
           const subject = outputs['meeting_subject'] || outputs['subject'] || outputs['key_subject'] || 'Анализ';
-          const detailed = parts.slice(0, -1).join('\n\n');
-          const summary = parts[parts.length - 1];
+          // Detect which dep is the summary by checking node ID/label for "summar"/"итог"
+          let summaryIdx = -1;
+          for (let i = 0; i < depIds.length; i++) {
+            const depNode = orderedNodes.find(n => n.id === depIds[i]);
+            const lbl = (depNode?.data.label || '').toLowerCase();
+            const id = depIds[i].toLowerCase();
+            const isSummary = (id.includes('summar') || lbl.includes('итог') || lbl.includes('резюме'))
+              && !id.includes('aggregate') && !id.includes('detailed');
+            if (isSummary) { summaryIdx = i; break; }
+          }
+          if (summaryIdx === -1) summaryIdx = 0;
+          const summary = String(parts[summaryIdx] || '');
+          const detailed = parts.filter((_, i) => i !== summaryIdx).join('\n\n');
           content = `# Резюме встречи: ${subject}\n\n## Краткое саммари\n\n${summary}\n\n---\n\n## Подробный анализ по темам\n\n${detailed}`;
         } else {
           content = parts.join('\n\n');
