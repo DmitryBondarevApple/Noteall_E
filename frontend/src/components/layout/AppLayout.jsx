@@ -203,6 +203,47 @@ export default function AppLayout({ children }) {
             )}
           </nav>
 
+          {/* Credit Balance Widget */}
+          {creditInfo && (
+            <div className={cn('px-2 pb-2', collapsed ? 'px-1' : 'px-2')}>
+              {collapsed ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link to="/billing">
+                      <div className="flex flex-col items-center py-2 px-1 rounded-lg bg-slate-800/60 cursor-pointer hover:bg-slate-800 transition-colors" data-testid="sidebar-credit-widget">
+                        <Zap className="w-3.5 h-3.5 text-emerald-400 mb-0.5" />
+                        <span className="text-[10px] font-bold text-emerald-400 tabular-nums">
+                          {creditInfo.value >= 1000
+                            ? `${(creditInfo.value / 1000).toFixed(1)}k`
+                            : Math.round(creditInfo.value)}
+                        </span>
+                      </div>
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="font-medium">
+                    {creditInfo.value.toLocaleString('ru-RU', { maximumFractionDigits: 0 })} {creditInfo.label}
+                    {creditInfo.type === 'limit' && ` из ${creditInfo.total.toLocaleString('ru-RU')}`}
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <Link to="/billing">
+                  <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-slate-800/60 cursor-pointer hover:bg-slate-800 transition-colors" data-testid="sidebar-credit-widget">
+                    <div className="flex items-center gap-2">
+                      <Zap className="w-3.5 h-3.5 text-emerald-400" />
+                      <span className="text-xs text-slate-400">
+                        {creditInfo.type === 'limit' ? 'Лимит' : 'Баланс'}
+                      </span>
+                    </div>
+                    <span className="text-xs font-bold text-emerald-400 tabular-nums" data-testid="sidebar-credit-value">
+                      {creditInfo.value.toLocaleString('ru-RU', { maximumFractionDigits: 0 })}
+                      <span className="text-[10px] font-normal text-slate-500 ml-1">{creditInfo.label}</span>
+                    </span>
+                  </div>
+                </Link>
+              )}
+            </div>
+          )}
+
           {/* Bottom section */}
           <div className="border-t border-slate-700/50 p-2 space-y-1">
             {/* Collapse toggle */}
