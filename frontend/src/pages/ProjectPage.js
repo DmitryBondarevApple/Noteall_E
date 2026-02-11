@@ -341,6 +341,10 @@ export default function ProjectPage() {
               <FullAnalysisTab
                 projectId={projectId}
                 processedTranscript={getTranscript('processed') || getTranscript('raw')}
+                autoRun={fastTrackAutoRun}
+                fastTrackPipelineId={project?.fast_track?.pipeline_id || ''}
+                fastTrackTopic={project?.fast_track?.topic || ''}
+                onAutoRunComplete={() => setFastTrackAutoRun(false)}
                 onSaveResult={(result) => {
                   loadData();
                   toast.success('Анализ сохранён в результаты');
