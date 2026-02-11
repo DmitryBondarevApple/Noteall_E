@@ -87,6 +87,7 @@ export default function AdminPage() {
           orgApi.listAll().catch(() => ({ data: [] })),
           adminApi.listAllPrompts().catch(() => ({ data: [] })),
           adminApi.getModel().catch(() => ({ data: null })),
+          billingApi.getMarkupTiers().catch(() => ({ data: [] })),
         );
       }
       const results = await Promise.all(promises);
@@ -97,6 +98,7 @@ export default function AdminPage() {
         setAllOrgs(results[3].data || []);
         setPrompts(results[4].data || []);
         if (results[5].data) setModelInfo(results[5].data);
+        setMarkupTiers(results[6].data || []);
       }
     } catch (err) {
       toast.error('Ошибка загрузки');
