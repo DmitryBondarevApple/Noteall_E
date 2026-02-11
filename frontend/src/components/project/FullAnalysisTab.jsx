@@ -499,7 +499,7 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
         prompt = prompt.replace(/\{\{\w+\}\}/g, input);
       }
 
-      console.log(`[DEBUG ai_prompt] node=${node.id}, prompt length=${prompt.length}, textWasSubstituted=${textWasSubstituted}, skip_transcript_context=${textWasSubstituted}`);
+      console.log(`[DEBUG ai_prompt BEFORE API] node=${node.id}, prompt length=${prompt.length}, textWasSubstituted=${textWasSubstituted}`);
 
       const response = await chatApi.analyzeRaw(projectId, {
         system_message: systemMsg,
