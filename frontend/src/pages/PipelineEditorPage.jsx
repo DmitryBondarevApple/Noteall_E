@@ -812,6 +812,7 @@ export default function PipelineEditorPage() {
                 onClose={() => setAiChatOpen(false)}
                 pipelineId={pipelineId}
                 onPipelineGenerated={handlePipelineFromChat}
+                pipelineContext={pipelineContext}
               />
             )}
           </>
