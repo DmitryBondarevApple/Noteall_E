@@ -227,6 +227,51 @@ function defaultParseList(text) {
     .filter(l => l.length > 0);
 }
 
+// Resolve template variables using multi-phase matching:
+// Phase 1: exact match from currentOutputs
+// Phase 2: substring match between var name and dep node IDs
+// Phase 3: positional fallback (first unresolved var → first unused dep output)
+function resolveTemplateVars(tplText, depIds, currentOutputs) {
+  let result = tplText;
+  const usedDeps = new Set();
+
+  // Phase 1: exact match from currentOutputs
+  const vars1 = (result.match(/\{\{(\w+)\}\}/g) || []).map(v => v.replace(/[{}]/g, ''));
+  for (const varName of vars1) {
+    if (currentOutputs[varName] !== undefined) {
+      result = result.replace(new RegExp(`\\{\\{${varName}\\}\\}`, 'g'), String(currentOutputs[varName]));
+    }
+  }
+
+  // Phase 2: substring match — var name contained in dep ID
+  const vars2 = [...new Set((result.match(/\{\{(\w+)\}\}/g) || []).map(v => v.replace(/[{}]/g, '')))];
+  for (const varName of vars2) {
+    for (const depId of (depIds || [])) {
+      if (usedDeps.has(depId)) continue;
+      if (depId.includes(varName)) {
+        const val = currentOutputs[depId];
+        if (val !== undefined) {
+          result = result.replace(new RegExp(`\\{\\{${varName}\\}\\}`, 'g'), String(val));
+          usedDeps.add(depId);
+          break;
+        }
+      }
+    }
+  }
+
+  // Phase 3: positional fallback
+  const vars3 = [...new Set((result.match(/\{\{(\w+)\}\}/g) || []).map(v => v.replace(/[{}]/g, '')))];
+  const unusedDeps = (depIds || []).filter(d => !usedDeps.has(d));
+  for (let i = 0; i < vars3.length && i < unusedDeps.length; i++) {
+    const val = currentOutputs[unusedDeps[i]];
+    if (val !== undefined) {
+      result = result.replace(new RegExp(`\\{\\{${vars3[i]}\\}\\}`, 'g'), String(val));
+    }
+  }
+
+  return result;
+}
+
 // ==================== MAIN COMPONENT ====================
 
 export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }) {
