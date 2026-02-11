@@ -16,3 +16,4 @@ from app.routes.meeting_folders import router as meeting_folders_router
 from app.routes.ai_chat import router as ai_chat_router
 from app.routes.organizations import router as organizations_router
 from app.routes.billing import router as billing_router
+from app.routes.invitations import router as invitations_router
