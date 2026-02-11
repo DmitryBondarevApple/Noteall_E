@@ -239,7 +239,7 @@ function resolveTemplateVars(tplText, depIds, currentOutputs) {
   const vars1 = (result.match(/\{\{(\w+)\}\}/g) || []).map(v => v.replace(/[{}]/g, ''));
   for (const varName of vars1) {
     if (currentOutputs[varName] !== undefined) {
-      result = result.replace(new RegExp(`\\{\\{${varName}\\}\\}`, 'g'), String(currentOutputs[varName]));
+      result = result.split(`{{${varName}}}`).join(String(currentOutputs[varName]));
     }
   }
 
@@ -251,7 +251,7 @@ function resolveTemplateVars(tplText, depIds, currentOutputs) {
       if (depId.includes(varName)) {
         const val = currentOutputs[depId];
         if (val !== undefined) {
-          result = result.replace(new RegExp(`\\{\\{${varName}\\}\\}`, 'g'), String(val));
+          result = result.split(`{{${varName}}}`).join(String(val));
           usedDeps.add(depId);
           break;
         }
@@ -265,7 +265,7 @@ function resolveTemplateVars(tplText, depIds, currentOutputs) {
   for (let i = 0; i < vars3.length && i < unusedDeps.length; i++) {
     const val = currentOutputs[unusedDeps[i]];
     if (val !== undefined) {
-      result = result.replace(new RegExp(`\\{\\{${vars3[i]}\\}\\}`, 'g'), String(val));
+      result = result.split(`{{${vars3[i]}}}`).join(String(val));
     }
   }
 
