@@ -102,6 +102,44 @@ function run(context) {
   return { output: text };
 }`,
 
+  user_input: null,
+
+  format_template: `// Подстановка переменных в шаблон
+// context.vars — объект переменных из источников данных
+// context.input — данные от предыдущего узла
+// Возвращает: { output: string }
+
+function run(context) {
+  let text = context.input || '';
+  if (context.vars) {
+    for (const [key, value] of Object.entries(context.vars)) {
+      text = text.replace(
+        new RegExp('\\\\{\\\\{' + key + '\\\\}\\\\}', 'g'),
+        value
+      );
+    }
+  }
+  return { output: text };
+}`,
+
+  batch_prompt_template: `// Подстановка переменных в батч-шаблон
+// context.vars — объект переменных из источников данных
+// context.input — данные от предыдущего узла
+// Возвращает: { output: string }
+
+function run(context) {
+  let text = context.input || '';
+  if (context.vars) {
+    for (const [key, value] of Object.entries(context.vars)) {
+      text = text.replace(
+        new RegExp('\\\\{\\\\{' + key + '\\\\}\\\\}', 'g'),
+        value
+      );
+    }
+  }
+  return { output: text };
+}`,
+
   ai_prompt: `// Подготовка данных перед отправкой промпта в AI
 // context.input — данные от источника данных
 // context.prompt — шаблон промпта из настроек узла
