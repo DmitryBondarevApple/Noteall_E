@@ -146,6 +146,8 @@ function useUndoRedo(nodes, edges, setNodes, setEdges) {
 export default function PipelineEditorPage() {
   const { pipelineId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const returnTo = searchParams.get('from');
   const isNew = !pipelineId;
 
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
