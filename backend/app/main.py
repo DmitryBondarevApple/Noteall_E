@@ -81,6 +81,17 @@ async def model_info():
 @app.on_event("startup")
 async def startup_db_client():
     logger.info("Starting Voice Workspace API v2.0.0")
+    # Ensure superadmin role for the product owner
+    from app.core.database import db
+    SUPERADMIN_EMAIL = "dmitry.bondarev@gmail.com"
+    result = await db.users.update_one(
+        {"email": SUPERADMIN_EMAIL},
+        {"$set": {"role": "superadmin"}},
+    )
+    if result.modified_count:
+        logger.info(f"Promoted {SUPERADMIN_EMAIL} to superadmin")
+    elif result.matched_count:
+        logger.info(f"{SUPERADMIN_EMAIL} is already superadmin")
 
 
 @app.on_event("shutdown")
