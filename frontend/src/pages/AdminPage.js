@@ -487,7 +487,12 @@ export default function AdminPage() {
                       </TableHeader>
                       <TableBody>
                         {allOrgs.map(o => (
-                          <TableRow key={o.id} data-testid={`org-row-${o.id}`}>
+                          <TableRow
+                            key={o.id}
+                            className="cursor-pointer hover:bg-slate-50"
+                            onClick={() => setSelectedOrgId(o.id)}
+                            data-testid={`org-row-${o.id}`}
+                          >
                             <TableCell className="font-medium">{o.name}</TableCell>
                             <TableCell>{o.user_count}</TableCell>
                             <TableCell className="text-muted-foreground">
