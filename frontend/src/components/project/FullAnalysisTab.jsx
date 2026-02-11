@@ -741,7 +741,7 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
       return input || '';
     }
 
-    if (type === 'template') {
+    if (['template', 'user_input', 'format_template', 'batch_prompt_template'].includes(type)) {
       const tplText = node.data.template_text || '';
       if (!tplText) {
         return typeof input === 'string' ? input : (input || '');
