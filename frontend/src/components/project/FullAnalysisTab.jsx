@@ -212,6 +212,18 @@ function executeScript(node, context) {
   }
 }
 
+// Default list parser — splits text by newlines and cleans up markers/numbering
+function defaultParseList(text) {
+  if (!text) return [];
+  return text.split('\n')
+    .map(l => l
+      .replace(/^\s*[-\u2022*]+\s*/, '')
+      .replace(/^\s*\d+[.\)\]]+\s*/, '')
+      .trim()
+    )
+    .filter(l => l.length > 0);
+}
+
 // ==================== MAIN COMPONENT ====================
 
 export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }) {
