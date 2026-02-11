@@ -7,6 +7,7 @@ import { CreditsProvider } from "./contexts/CreditsContext";
 import InsufficientCreditsModal from "./components/modals/InsufficientCreditsModal";
 
 // Pages
+import LandingPage from "./pages/LandingPage";
 import AuthPage from "./pages/AuthPage";
 import InviteRegisterPage from "./pages/InviteRegisterPage";
 import MeetingsPage from "./pages/MeetingsPage";
