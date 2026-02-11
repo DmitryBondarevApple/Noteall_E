@@ -56,3 +56,24 @@ async def call_gpt52(
     except Exception as e:
         logger.error(f"GPT ({model}) error: {e}")
         raise e
+
+
+async def call_gpt_chat(
+    system_message: str,
+    messages: list,
+) -> str:
+    """Call GPT with full message history (supports vision/multi-turn)."""
+    try:
+        model = await _get_active_model()
+        msgs = [{"role": "system", "content": system_message}]
+        msgs.extend(messages)
+
+        response = await client.chat.completions.create(
+            model=model,
+            messages=msgs,
+            temperature=0.3,
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        logger.error(f"GPT chat error: {e}")
+        raise e
