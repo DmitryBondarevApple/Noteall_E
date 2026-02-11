@@ -304,9 +304,10 @@ function buildWizardStages(orderedNodes) {
 
   for (const node of orderedNodes) {
     const type = node.data.node_type;
-    // Template nodes with input_from are auto-processed (not user-interactive)
+    // user_input is always interactive; legacy template without input_from is interactive
     const isInteractive =
       ['user_edit_list', 'user_review'].includes(type) ||
+      type === 'user_input' ||
       (type === 'template' && !(node.data.input_from && node.data.input_from.length > 0));
     const pauseAfter = !!node.data.pause_after;
 
