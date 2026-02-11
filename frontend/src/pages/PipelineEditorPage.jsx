@@ -52,6 +52,7 @@ import {
   PenTool,
   Trash2,
   Download,
+  Bot,
 } from 'lucide-react';
 
 const NODE_TYPE_OPTIONS = [
