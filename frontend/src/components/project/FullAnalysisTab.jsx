@@ -148,9 +148,22 @@ function validatePipeline(nodes, edges) {
 
 // Auto-fix common pipeline issues
 // Returns a new nodes array with fixes applied, or null if nothing to fix
-function autoFixPipeline(nodes) {
+function autoFixPipeline(nodes, edges) {
   let fixed = false;
   const nodeMap = new Map(nodes.map(n => [n.id, n]));
+
+  // Build reverse adjacency: target → [sources] from edges
+  const edgeSources = {};
+  for (const e of (edges || [])) {
+    if (!edgeSources[e.target]) edgeSources[e.target] = [];
+    edgeSources[e.target].push(e.source);
+  }
+  // Build forward adjacency: source → [targets]
+  const edgeTargets = {};
+  for (const e of (edges || [])) {
+    if (!edgeTargets[e.source]) edgeTargets[e.source] = [];
+    edgeTargets[e.source].push(e.target);
+  }
 
   const fixedNodes = nodes.map(n => {
     const data = { ...n.data };
@@ -165,15 +178,42 @@ function autoFixPipeline(nodes) {
       }
     }
 
-    // Fix 2: batch_loop missing prompt_source_node — find upstream template
+    // Fix 2: batch_loop missing prompt_source_node
     if (data.node_type === 'batch_loop' && !data.prompt_source_node) {
+      // Strategy A: check input_from for upstream template
       const deps = data.input_from || [];
+      let found = false;
       for (const depId of deps) {
         const depNode = nodeMap.get(depId);
         if (depNode && depNode.data.node_type === 'template') {
           data.prompt_source_node = depId;
           fixed = true;
+          found = true;
           break;
+        }
+      }
+      // Strategy B: check edge sources for upstream template
+      if (!found) {
+        for (const srcId of (edgeSources[n.id] || [])) {
+          const srcNode = nodeMap.get(srcId);
+          if (srcNode && srcNode.data.node_type === 'template') {
+            data.prompt_source_node = srcId;
+            fixed = true;
+            found = true;
+            break;
+          }
+        }
+      }
+      // Strategy C: check edge targets for downstream ai_prompt (child pattern)
+      if (!found) {
+        for (const tgtId of (edgeTargets[n.id] || [])) {
+          const tgtNode = nodeMap.get(tgtId);
+          if (tgtNode && tgtNode.data.node_type === 'ai_prompt') {
+            data.prompt_source_node = tgtId;
+            fixed = true;
+            found = true;
+            break;
+          }
         }
       }
     }
