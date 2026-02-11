@@ -645,10 +645,10 @@ export default function PipelineEditorPage() {
           {pipelineId !== 'new' && (
             <Button
               size="sm"
-              variant="outline"
+              variant={aiChatOpen ? 'default' : 'outline'}
               className="gap-1.5"
               data-testid="ai-edit-btn"
-              onClick={() => setAiEditOpen(true)}
+              onClick={() => setAiChatOpen(!aiChatOpen)}
             >
               <Bot className="w-4 h-4" />
               AI-ассистент
