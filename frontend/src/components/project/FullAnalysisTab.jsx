@@ -508,7 +508,7 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
         attachment_ids: attachmentIdsRef.current.length > 0 ? attachmentIdsRef.current : undefined,
         skip_transcript_context: textWasSubstituted,
       });
-      console.log(`[DEBUG ai_prompt] node=${node.id}, response_text length=${response.data.response_text?.length}, first 200 chars:`, response.data.response_text?.substring(0, 200));
+      console.log(`[DEBUG ai_prompt AFTER API] node=${node.id}, response_text length=${response.data.response_text?.length}, first 300 chars:`, response.data.response_text?.substring(0, 300));
       return response.data.response_text;
     }
 
