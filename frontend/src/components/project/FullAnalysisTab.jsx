@@ -525,8 +525,21 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
     }
 
     if (type === 'template') {
-      const result = executeScript(node, { input, vars: currentOutputs });
-      return result.output;
+      const tplText = node.data.template_text || '';
+      if (!tplText) {
+        return typeof input === 'string' ? input : (input || '');
+      }
+      // Resolve variables from currentOutputs and dep outputs
+      let result = resolveTemplateVars(tplText, node.data.input_from || [], currentOutputs);
+
+      // If there are still unresolved vars (like {{item}}) and input is an array,
+      // this is a batch prompt template — return both template and items
+      const hasUnresolved = /\{\{\w+\}\}/.test(result);
+      const inputArray = Array.isArray(input) ? input : null;
+      if (hasUnresolved && inputArray) {
+        return { __template: result, __items: inputArray };
+      }
+      return result;
     }
 
     // batch_loop is handled specially in runStageAutoNodes
