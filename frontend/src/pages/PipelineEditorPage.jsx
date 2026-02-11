@@ -663,6 +663,19 @@ export default function PipelineEditorPage() {
               size="sm"
               variant="outline"
               className="gap-1.5"
+              data-testid="ai-edit-btn"
+              onClick={() => setAiEditOpen(true)}
+            >
+              <Bot className="w-4 h-4" />
+              AI-ассистент
+            </Button>
+          )}
+
+          {pipelineId !== 'new' && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5"
               data-testid="export-pipeline-btn"
               onClick={async () => {
                 try {
