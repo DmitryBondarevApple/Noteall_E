@@ -7,6 +7,7 @@ class UserCreate(BaseModel):
     password: str
     name: str
     organization_name: Optional[str] = None
+    invitation_token: Optional[str] = None
 
 
 class UserLogin(BaseModel):
