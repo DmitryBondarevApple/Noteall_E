@@ -586,7 +586,7 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
   // Auto-fix pipeline warnings and save to backend
   const handleAutoFix = useCallback(async () => {
     if (!pipelineData?._nodes || !selectedPipelineId) return;
-    const fixedNodes = autoFixPipeline(pipelineData._nodes);
+    const fixedNodes = autoFixPipeline(pipelineData._nodes, pipelineData._edges);
     if (!fixedNodes) {
       toast.info('Нечего исправлять');
       return;
