@@ -5,15 +5,7 @@ from typing import Optional, List, Literal, Any
 class PipelineNodeConfig(BaseModel):
     """Configuration for a single node in the pipeline"""
     node_id: str
-    node_type: Literal[
-        "ai_prompt",
-        "parse_list",
-        "batch_loop",
-        "aggregate",
-        "template",
-        "user_edit_list",
-        "user_review"
-    ]
+    node_type: str
     label: str
     # For ai_prompt nodes
     prompt_id: Optional[str] = None
