@@ -29,7 +29,11 @@ import {
   Users,
   BookOpen,
   Search,
-  UserCog
+  UserCog,
+  Cpu,
+  RefreshCw,
+  Check,
+  Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -42,6 +46,12 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('users');
+
+  // Model management state
+  const [modelInfo, setModelInfo] = useState(null);
+  const [checkResult, setCheckResult] = useState(null);
+  const [checking, setChecking] = useState(false);
+  const [switching, setSwitching] = useState(false);
 
   useEffect(() => {
     if (!isAdmin()) {
