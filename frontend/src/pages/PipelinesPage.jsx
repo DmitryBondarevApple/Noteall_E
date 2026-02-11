@@ -119,19 +119,35 @@ export function PipelinesContent() {
     e.target.value = '';
   };
 
-  const handleAiGenerate = async () => {
-    if (!aiPrompt.trim()) return;
-    setAiGenerating(true);
+  const handlePipelineFromChat = async (pipelineData) => {
+    if (!pipelineData || !pipelineData.nodes) return;
     try {
-      const res = await pipelinesApi.generate(aiPrompt.trim());
-      setAiModalOpen(false);
-      setAiPrompt('');
-      toast.success('Сценарий создан');
+      const res = await pipelinesApi.create({
+        name: pipelineData.name || 'AI-сценарий',
+        description: pipelineData.description || '',
+        nodes: pipelineData.nodes.map((n) => ({
+          node_id: n.node_id,
+          node_type: n.node_type,
+          label: n.label,
+          inline_prompt: n.inline_prompt || null,
+          system_message: n.system_message || null,
+          position_x: n.position_x || 0,
+          position_y: n.position_y || 0,
+          batch_size: n.batch_size || null,
+          template_text: n.template_text || null,
+          script: n.script || null,
+          input_from: n.input_from || null,
+        })),
+        edges: (pipelineData.edges || []).map((e) => ({
+          source: e.source,
+          target: e.target,
+        })),
+        is_public: false,
+      });
+      toast.success('Сценарий создан через AI');
       navigate(`/pipelines/${res.data.id}`);
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Ошибка генерации');
-    } finally {
-      setAiGenerating(false);
+      toast.error('Ошибка создания сценария');
     }
   };
 
