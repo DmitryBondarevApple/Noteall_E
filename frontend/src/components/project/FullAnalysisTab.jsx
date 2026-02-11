@@ -200,7 +200,7 @@ function autoFixPipeline(nodes, edges) {
       if (!found) {
         for (const srcId of (edgeSources[n.id] || [])) {
           const srcNode = nodeMap.get(srcId);
-          if (srcNode && srcNode.data.node_type === 'template') {
+          if (srcNode && ['template', 'user_input', 'format_template', 'batch_prompt_template'].includes(srcNode.data.node_type)) {
             data.prompt_source_node = srcId;
             fixed = true;
             found = true;
