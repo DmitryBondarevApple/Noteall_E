@@ -18,14 +18,12 @@ Build a comprehensive multi-tenant SaaS application with AI features for meeting
 
 ## Bug Fixes & Improvements
 
-### 2026-02-11: AI Pipeline input_from Fix (DONE)
-- **Bug:** AI assistant generated pipelines with `input_from: null` for all nodes — nodes couldn't receive data from previous nodes
-- **Fix 1 (Prompt):** Updated SYSTEM_PROMPT to explicitly require `input_from` on all nodes except the first
-- **Fix 2 (Auto-fix):** Added logic to derive `input_from` from edges array in:
-  - `PipelineEditorPage.jsx` handlePipelineFromChat
-  - `PipelinesPage.jsx` handlePipelineFromChat
-  - `pipelines.py` import_pipeline endpoint
+### 2026-02-11: Superadmin Billing Bypass (DONE)
+- **Bug:** Superadmin blocked by "Превышен месячный лимит токенов" despite having 1897 credits
+- **Root cause:** `monthly_token_limit: 50000` was set for admin, and 54991 tokens were used this month
+- **Fix:** Superadmins now bypass ALL billing checks (monthly limit + credit balance) in `metering.py`
 
+### 2026-02-11: AI Pipeline input_from Fix (DONE)
 ### 2026-02-11: S3 Bucket Setup (DONE)
 ### 2026-02-11: AI Image Upload Bug (FIXED)
 ### 2026-02-11: Insufficient Credits Modal (DONE)
