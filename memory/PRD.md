@@ -21,6 +21,7 @@
 - Session management: create, list, delete sessions
 - Works on both PipelinesPage (create new) and PipelineEditorPage (edit existing)
 - Chat history saved to MongoDB `ai_chat_sessions` collection
+- **Pipeline context injection**: current scenario (nodes, edges, prompts) is automatically attached to AI context in editor, enabling precise edits to specific nodes
 
 ### Model Management (Feb 2026)
 - Dynamic model selection from Admin panel (Модели tab)
