@@ -6,7 +6,8 @@ from fastapi import APIRouter, HTTPException, Depends
 from app.core.database import db
 from app.core.security import get_current_user
 from app.models.chat import ChatRequestCreate, ChatRequestResponse, ChatResponseUpdate
-from app.services.gpt import call_gpt52
+from app.services.gpt import call_gpt52, call_gpt52_metered
+from app.services.metering import check_user_monthly_limit, check_org_balance, deduct_credits_and_record
 from app.routes.attachments import build_attachment_context
 
 router = APIRouter(tags=["chat"])
