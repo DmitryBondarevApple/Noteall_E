@@ -50,8 +50,10 @@ export const AuthProvider = ({ children }) => {
     return userData;
   };
 
-  const register = async (email, password, name) => {
-    const response = await axios.post(`${API}/auth/register`, { email, password, name });
+  const register = async (email, password, name, organizationName) => {
+    const response = await axios.post(`${API}/auth/register`, {
+      email, password, name, organization_name: organizationName || null,
+    });
     const { access_token, user: userData } = response.data;
     localStorage.setItem('token', access_token);
     axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
@@ -67,10 +69,12 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-  const isAdmin = () => user?.role === 'admin';
+  const isAdmin = () => ['admin', 'org_admin', 'superadmin'].includes(user?.role);
+  const isSuperadmin = () => user?.role === 'superadmin';
+  const isOrgAdmin = () => ['org_admin', 'superadmin'].includes(user?.role);
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout, isAdmin }}>
+    <AuthContext.Provider value={{ user, token, loading, login, register, logout, isAdmin, isSuperadmin, isOrgAdmin }}>
       {children}
     </AuthContext.Provider>
   );
