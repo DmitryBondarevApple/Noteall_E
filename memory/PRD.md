@@ -45,20 +45,24 @@ Build a comprehensive multi-tenant SaaS application with AI features for meeting
 
 ### 2026-02-12: AI-Generated Pipeline Execution Fix (DONE)
 - **Bug:** AI-generated pipelines (with template variables like `{{text}}` and `{{key_subject}}`) failed to execute — "empty topics" reported by user
-- **Root causes found (5 issues):**
-  1. `processedTranscript` was passed as a full DB object to `FullAnalysisTab`, causing `{{text}}` to resolve to `[object Object]` instead of the actual transcript content
-  2. `batch_loop` nodes without scripts never generated `promptVars`, so the AI node inside the loop never executed
-  3. `parse_list` nodes with Python scripts failed silently in the JS runtime — no fallback parsing
-  4. `ai_prompt` nodes with `input_from` couldn't use `{{text}}` to reference their input data — always got the transcript
-  5. `user_review` assembly ordered parts incorrectly (summary/detailed were swapped)
-- **Fixes applied:**
-  - Extract `.content` from transcript object before assigning to `{{text}}`
-  - Default batch behavior in `runBatchLoop`: auto-slices items by `batch_size`, generates `promptVars.item`
-  - `defaultParseList()` fallback for `parse_list` nodes with failing/missing scripts
-  - `ai_prompt` nodes with `input_from` now substitute `{{text}}` from input data before global variable lookup
-  - `user_review` now puts last dep (short summary) first, earlier deps (detailed) after
-  - Transcript prop falls back from processed → raw transcript
-  - `key_subject` added to subject variable lookup chain
+- **Root causes found and fixed:**
+  1. `processedTranscript` was passed as a full DB object → `{{text}}` resolved to `[object Object]`
+  2. `batch_loop` nodes without scripts never generated `promptVars`
+  3. `parse_list` nodes with Python scripts failed silently in JS runtime
+  4. `ai_prompt` nodes with `input_from` couldn't use `{{text}}` to reference input data
+  5. `template` nodes with `input_from` were treated as interactive stages, blocking execution
+  6. `batch_loop` without AI child node couldn't make AI calls (needed template-based prompt support)
+  7. Template variable resolution for multi-dep nodes (e.g., `{{short_summary}}`, `{{detailed_summary}}`)
+  8. `user_review` assembly didn't detect which dep is summary vs detailed
+  9. `ai_prompt` with single input_from didn't resolve custom variable names (e.g., `{{aggregated_text}}`)
+  10. Transcript prop didn't fall back from processed → raw
+- **Key architectural changes:**
+  - Template nodes with `input_from` are now auto-processed (not interactive stages)
+  - New `resolveTemplateVars()` with 3-phase matching (exact → substring → positional)
+  - Batch loop handles `{ __items, __template }` input format for template-sourced prompts
+  - Auto AI calls from batch loop when no child ai_prompt node exists
+  - `defaultParseList()` fallback for Python/failing scripts
+  - Smart summary detection in user_review using node ID/label analysis
 - **Files:** `FullAnalysisTab.jsx`, `ProjectPage.js`
 
 ## Key Credentials
