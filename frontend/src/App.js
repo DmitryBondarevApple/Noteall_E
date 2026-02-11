@@ -3,6 +3,8 @@ import "@/App.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { CreditsProvider } from "./contexts/CreditsContext";
+import InsufficientCreditsModal from "./components/modals/InsufficientCreditsModal";
 
 // Pages
 import AuthPage from "./pages/AuthPage";
@@ -58,8 +60,11 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <AppRoutes />
-        <Toaster position="top-right" richColors />
+        <CreditsProvider>
+          <AppRoutes />
+          <InsufficientCreditsModal />
+          <Toaster position="top-right" richColors />
+        </CreditsProvider>
       </BrowserRouter>
     </AuthProvider>
   );
