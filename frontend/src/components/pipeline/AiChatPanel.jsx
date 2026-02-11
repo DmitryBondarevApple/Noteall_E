@@ -14,8 +14,85 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-function ChatMessage({ msg }) {
+function ChatMessage({ msg, onApplyPipeline }) {
   const isUser = msg.role === 'user';
+
+  // Parse assistant messages for JSON code blocks
+  const renderContent = (text) => {
+    if (!text || isUser) return <span>{text}</span>;
+
+    const parts = [];
+    let remaining = text;
+    let idx = 0;
+
+    while (remaining.length > 0) {
+      const jsonStart = remaining.indexOf('```json');
+      const codeStart = jsonStart === -1 ? remaining.indexOf('```') : jsonStart;
+
+      if (codeStart === -1) {
+        if (remaining.trim()) parts.push(<span key={idx++}>{remaining}</span>);
+        break;
+      }
+
+      // Text before code block
+      if (codeStart > 0) {
+        parts.push(<span key={idx++}>{remaining.slice(0, codeStart)}</span>);
+      }
+
+      // Find end of code block
+      const afterStart = remaining.indexOf('\n', codeStart) + 1;
+      const codeEnd = remaining.indexOf('```', afterStart);
+      if (codeEnd === -1) {
+        parts.push(<span key={idx++}>{remaining.slice(codeStart)}</span>);
+        break;
+      }
+
+      const codeContent = remaining.slice(afterStart, codeEnd).trim();
+      remaining = remaining.slice(codeEnd + 3);
+
+      // Try to parse as pipeline JSON
+      let isPipeline = false;
+      try {
+        const parsed = JSON.parse(codeContent);
+        if (parsed && parsed.nodes) {
+          isPipeline = true;
+          parts.push(
+            <div key={idx++} className="my-2 rounded-lg border border-cyan-200 bg-cyan-50/50 p-2.5">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs font-medium text-cyan-700">
+                  Сценарий: {parsed.name || 'Без названия'}
+                </span>
+                <span className="text-xs text-cyan-600">{parsed.nodes?.length || 0} узлов</span>
+              </div>
+              {parsed.description && (
+                <p className="text-xs text-slate-600 mb-2">{parsed.description}</p>
+              )}
+              {onApplyPipeline && (
+                <button
+                  onClick={() => onApplyPipeline(parsed)}
+                  className="text-xs bg-cyan-600 hover:bg-cyan-700 text-white px-3 py-1 rounded-md transition-colors"
+                  data-testid="apply-pipeline-btn"
+                >
+                  Применить сценарий
+                </button>
+              )}
+            </div>
+          );
+        }
+      } catch {}
+
+      if (!isPipeline) {
+        parts.push(
+          <pre key={idx++} className="my-1.5 text-xs bg-slate-800 text-slate-200 rounded-md p-2 overflow-x-auto">
+            <code>{codeContent}</code>
+          </pre>
+        );
+      }
+    }
+
+    return <>{parts}</>;
+  };
+
   return (
     <div
       className={`flex gap-2.5 ${isUser ? 'flex-row-reverse' : ''}`}
@@ -45,7 +122,7 @@ function ChatMessage({ msg }) {
           />
         )}
         {msg.content && (
-          <div className="whitespace-pre-wrap break-words">{msg.content}</div>
+          <div className="whitespace-pre-wrap break-words">{renderContent(msg.content)}</div>
         )}
       </div>
     </div>
