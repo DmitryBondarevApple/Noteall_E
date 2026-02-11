@@ -121,6 +121,16 @@ export function PipelinesContent() {
 
   const handlePipelineFromChat = async (pipelineData) => {
     if (!pipelineData || !pipelineData.nodes) return;
+
+    // Build input_from map from edges (auto-fix if AI didn't set input_from)
+    const inputFromMap = {};
+    for (const e of (pipelineData.edges || [])) {
+      if (!inputFromMap[e.target]) inputFromMap[e.target] = [];
+      if (!inputFromMap[e.target].includes(e.source)) {
+        inputFromMap[e.target].push(e.source);
+      }
+    }
+
     try {
       const res = await pipelinesApi.create({
         name: pipelineData.name || 'AI-сценарий',
@@ -136,7 +146,7 @@ export function PipelinesContent() {
           batch_size: n.batch_size || null,
           template_text: n.template_text || null,
           script: n.script || null,
-          input_from: n.input_from || null,
+          input_from: inputFromMap[n.node_id] || n.input_from || null,
         })),
         edges: (pipelineData.edges || []).map((e) => ({
           source: e.source,
