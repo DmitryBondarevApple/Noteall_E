@@ -132,13 +132,35 @@ async def analyze_raw(
         {"role": "user", "content": user_msg_content}
     ]
     
-    response_text = await call_gpt52(
+    # Check billing limits
+    org_id = user.get("org_id")
+    if org_id:
+        if not await check_user_monthly_limit(user):
+            raise HTTPException(status_code=402, detail="Превышен месячный лимит токенов")
+        if not await check_org_balance(org_id):
+            raise HTTPException(status_code=402, detail="Недостаточно кредитов. Пополните баланс.")
+
+    gpt_result = await call_gpt52_metered(
         system_message=data.system_message,
         messages=messages,
         reasoning_effort=data.reasoning_effort or "high"
     )
-    
-    return RawAnalysisResponse(response_text=response_text)
+
+    # Deduct credits
+    if org_id:
+        try:
+            await deduct_credits_and_record(
+                org_id=org_id,
+                user_id=user["id"],
+                model=gpt_result.model,
+                prompt_tokens=gpt_result.prompt_tokens,
+                completion_tokens=gpt_result.completion_tokens,
+                source="analyze_raw",
+            )
+        except Exception as e:
+            logger.error(f"Metering error: {e}")
+
+    return RawAnalysisResponse(response_text=gpt_result.content)
 
 
 class SaveFullAnalysisRequest(BaseModel):
