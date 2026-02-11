@@ -231,21 +231,24 @@ function defaultParseList(text) {
 // Phase 1: exact match from currentOutputs
 // Phase 2: substring match between var name and dep node IDs
 // Phase 3: positional fallback (first unresolved var → first unused dep output)
-function resolveTemplateVars(tplText, depIds, currentOutputs) {
+function resolveTemplateVars(tplText, depIds, currentOutputs, loopVars) {
   let result = tplText;
   const usedDeps = new Set();
+  const skipVars = new Set(loopVars || []);
 
-  // Phase 1: exact match from currentOutputs
+  // Phase 1: exact match from currentOutputs (skip loop vars)
   const vars1 = (result.match(/\{\{(\w+)\}\}/g) || []).map(v => v.replace(/[{}]/g, ''));
   for (const varName of vars1) {
+    if (skipVars.has(varName)) continue;
     if (currentOutputs[varName] !== undefined) {
       result = result.split(`{{${varName}}}`).join(String(currentOutputs[varName]));
     }
   }
 
-  // Phase 2: substring match — var name contained in dep ID (skip arrays — they're batch items)
+  // Phase 2: substring match — var name contained in dep ID (skip loop vars and arrays)
   const vars2 = [...new Set((result.match(/\{\{(\w+)\}\}/g) || []).map(v => v.replace(/[{}]/g, '')))];
   for (const varName of vars2) {
+    if (skipVars.has(varName)) continue;
     for (const depId of (depIds || [])) {
       if (usedDeps.has(depId)) continue;
       if (depId.includes(varName)) {
@@ -259,10 +262,11 @@ function resolveTemplateVars(tplText, depIds, currentOutputs) {
     }
   }
 
-  // Phase 3: positional fallback (skip arrays — they're batch items, not template values)
+  // Phase 3: positional fallback (skip loop vars and arrays)
   const vars3 = [...new Set((result.match(/\{\{(\w+)\}\}/g) || []).map(v => v.replace(/[{}]/g, '')))];
   const unusedDeps = (depIds || []).filter(d => !usedDeps.has(d));
   for (let i = 0; i < vars3.length && i < unusedDeps.length; i++) {
+    if (skipVars.has(vars3[i])) continue;
     const val = currentOutputs[unusedDeps[i]];
     if (val !== undefined && !Array.isArray(val)) {
       result = result.split(`{{${vars3[i]}}}`).join(String(val));
