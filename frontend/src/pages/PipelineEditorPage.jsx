@@ -255,7 +255,7 @@ export default function PipelineEditorPage() {
           data: { ...n },
         }));
 
-        const loadedEdges = pipeline.edges.map((e, i) => {
+        const loadedEdges = pipelineData.edges.map((e, i) => {
           const edgeType = getEdgeType(e.source_handle, e.target_handle);
           return {
             id: `e-${e.source}-${e.target}-${i}`,
