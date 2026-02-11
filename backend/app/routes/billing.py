@@ -437,3 +437,170 @@ async def admin_platform_summary(admin=Depends(get_superadmin_user)):
         "user_count": user_count,
     }
 
+
+# ── Org Detail (Superadmin) ──
+
+class AdminTopupRequest(BaseModel):
+    org_id: str
+    amount: float
+    description: str = ""
+
+
+@router.get("/admin/org/{org_id}")
+async def admin_org_detail(org_id: str, admin=Depends(get_superadmin_user)):
+    """Get detailed org info: users, balance, transactions, monthly usage chart, top users."""
+    org = await db.organizations.find_one({"id": org_id}, {"_id": 0})
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+
+    # Users
+    users = await db.users.find(
+        {"org_id": org_id},
+        {"_id": 0, "id": 1, "name": 1, "email": 1, "role": 1, "created_at": 1, "monthly_token_limit": 1},
+    ).to_list(1000)
+
+    # Balance
+    from app.routes.billing import get_or_create_balance
+    bal = await get_or_create_balance(org_id)
+
+    # Transactions (last 100)
+    txns = await db.transactions.find(
+        {"org_id": org_id}, {"_id": 0}
+    ).sort("created_at", -1).limit(100).to_list(100)
+
+    # Enrich txn user names
+    user_ids = list({t.get("user_id") for t in txns if t.get("user_id")})
+    user_map = {}
+    if user_ids:
+        ulist = await db.users.find({"id": {"$in": user_ids}}, {"_id": 0, "id": 1, "name": 1}).to_list(len(user_ids))
+        user_map = {u["id"]: u["name"] for u in ulist}
+    for t in txns:
+        t["user_name"] = user_map.get(t.get("user_id"))
+
+    # Totals
+    topup_agg = await db.transactions.aggregate([
+        {"$match": {"org_id": org_id, "type": "topup"}},
+        {"$group": {"_id": None, "total": {"$sum": "$amount"}}},
+    ]).to_list(1)
+    deduct_agg = await db.transactions.aggregate([
+        {"$match": {"org_id": org_id, "type": "deduction"}},
+        {"$group": {"_id": None, "total": {"$sum": "$amount"}}},
+    ]).to_list(1)
+    total_topups = topup_agg[0]["total"] if topup_agg else 0
+    total_deductions = deduct_agg[0]["total"] if deduct_agg else 0
+
+    # Monthly usage chart (last 12 months)
+    monthly_pipeline = [
+        {"$match": {"org_id": org_id}},
+        {"$addFields": {"month": {"$substr": ["$created_at", 0, 7]}}},
+        {"$group": {
+            "_id": "$month",
+            "credits": {"$sum": "$credits_used"},
+            "tokens": {"$sum": "$total_tokens"},
+            "requests": {"$sum": 1},
+        }},
+        {"$sort": {"_id": 1}},
+        {"$limit": 12},
+    ]
+    monthly_data = await db.usage_records.aggregate(monthly_pipeline).to_list(12)
+    monthly_chart = [
+        {"month": m["_id"], "credits": round(m["credits"], 4), "tokens": m["tokens"], "requests": m["requests"]}
+        for m in monthly_data
+    ]
+
+    # Avg monthly spend
+    if monthly_chart:
+        avg_monthly = sum(m["credits"] for m in monthly_chart) / len(monthly_chart)
+    else:
+        avg_monthly = 0
+
+    # Top users by credit usage
+    top_users_pipeline = [
+        {"$match": {"org_id": org_id}},
+        {"$group": {
+            "_id": "$user_id",
+            "credits": {"$sum": "$credits_used"},
+            "tokens": {"$sum": "$total_tokens"},
+            "requests": {"$sum": 1},
+        }},
+        {"$sort": {"credits": -1}},
+        {"$limit": 10},
+    ]
+    top_users_data = await db.usage_records.aggregate(top_users_pipeline).to_list(10)
+    all_user_map = {u["id"]: u for u in users}
+    top_users = [
+        {
+            "user_id": t["_id"],
+            "name": all_user_map.get(t["_id"], {}).get("name", "Unknown"),
+            "credits": round(t["credits"], 4),
+            "tokens": t["tokens"],
+            "requests": t["requests"],
+        }
+        for t in top_users_data
+    ]
+
+    # Total AI requests & avg cost
+    total_reqs_agg = await db.usage_records.aggregate([
+        {"$match": {"org_id": org_id}},
+        {"$group": {
+            "_id": None,
+            "total_requests": {"$sum": 1},
+            "total_credits": {"$sum": "$credits_used"},
+            "total_tokens": {"$sum": "$total_tokens"},
+        }},
+    ]).to_list(1)
+    total_stats = total_reqs_agg[0] if total_reqs_agg else {"total_requests": 0, "total_credits": 0, "total_tokens": 0}
+    total_stats.pop("_id", None)
+    avg_request_cost = round(total_stats["total_credits"] / total_stats["total_requests"], 4) if total_stats["total_requests"] > 0 else 0
+
+    return {
+        "org": org,
+        "users": users,
+        "balance": bal["balance"],
+        "balance_updated_at": bal["updated_at"],
+        "transactions": txns,
+        "total_topups": round(total_topups, 2),
+        "total_deductions": round(total_deductions, 4),
+        "monthly_chart": monthly_chart,
+        "avg_monthly_spend": round(avg_monthly, 4),
+        "top_users": top_users,
+        "total_requests": total_stats["total_requests"],
+        "total_tokens": total_stats["total_tokens"],
+        "total_credits_spent": round(total_stats["total_credits"], 4),
+        "avg_request_cost": avg_request_cost,
+    }
+
+
+@router.post("/admin/topup")
+async def admin_topup_org(data: AdminTopupRequest, admin=Depends(get_superadmin_user)):
+    """Superadmin: manually add credits to any org."""
+    org = await db.organizations.find_one({"id": data.org_id}, {"_id": 0})
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    if data.amount <= 0:
+        raise HTTPException(status_code=400, detail="Amount must be positive")
+
+    now = datetime.now(timezone.utc).isoformat()
+    bal = await get_or_create_balance(data.org_id)
+    new_balance = bal["balance"] + data.amount
+
+    await db.credit_balances.update_one(
+        {"org_id": data.org_id},
+        {"$set": {"balance": new_balance, "updated_at": now}},
+    )
+
+    desc = data.description or f"Ручное пополнение (суперадмин)"
+    txn = {
+        "id": str(uuid.uuid4()),
+        "org_id": data.org_id,
+        "user_id": admin["id"],
+        "type": "topup",
+        "amount": data.amount,
+        "description": desc,
+        "created_at": now,
+    }
+    await db.transactions.insert_one(txn)
+
+    logger.info(f"Admin topup: org={data.org_id} amount={data.amount} by={admin['id']}")
+    return {"message": f"Начислено {data.amount} кредитов", "balance": new_balance}
+
