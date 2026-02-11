@@ -40,6 +40,14 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
 
 
 async def get_admin_user(user=Depends(get_current_user)):
-    if user.get("role") != "admin":
+    """Allow superadmin, org_admin, or legacy admin."""
+    if user.get("role") not in ("superadmin", "org_admin", "admin"):
         raise HTTPException(status_code=403, detail="Admin access required")
+    return user
+
+
+async def get_superadmin_user(user=Depends(get_current_user)):
+    """Only superadmin access."""
+    if user.get("role") != "superadmin":
+        raise HTTPException(status_code=403, detail="Superadmin access required")
     return user
