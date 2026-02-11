@@ -649,45 +649,13 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
         break;
       }
 
-      // Call AI: either via child AI node or via prompt template from upstream template node
-      if (aiNode && scriptResult.promptVars) {
-        let prompt = aiNode.data.inline_prompt || '';
-        const systemMsg = aiNode.data.system_message || 'Ты — ассистент для анализа.';
-
-        for (const [key, value] of Object.entries(scriptResult.promptVars)) {
-          prompt = prompt.split(`{{${key}}}`).join(value);
-        }
-
-        // Substitute remaining vars (safe split/join)
-        const varMatches = prompt.match(/\{\{(\w+)\}\}/g) || [];
-        for (const m of varMatches) {
-          const varName = m.replace(/[{}]/g, '');
-          if (outputs[varName] !== undefined) {
-            prompt = prompt.split(m).join(String(outputs[varName]));
-          }
-        }
-
-        setProcessingLabel(`${loopNode.data.label}: ${iteration + 1}/${totalBatches}`);
-
-        const textVal = outputs.text || '';
-        const textInPrompt = textVal.length > 100 && prompt.length > textVal.length;
-
-        const response = await chatApi.analyzeRaw(projectId, {
-          system_message: systemMsg,
-          user_message: prompt,
-          reasoning_effort: aiNode.data.reasoning_effort || 'high',
-          attachment_ids: attachmentIdsRef.current.length > 0 ? attachmentIdsRef.current : undefined,
-          skip_transcript_context: textInPrompt,
-        });
-
-        results.push(response.data.response_text);
-      } else if (!aiNode && promptTemplate && scriptResult.promptVars) {
-        // No AI child node, but we have a prompt template from upstream template node
+      // Call AI: prioritize promptTemplate (from upstream template node) over child aiNode
+      if (promptTemplate && scriptResult.promptVars) {
+        // Use prompt template from upstream template node
         let prompt = promptTemplate;
         for (const [key, value] of Object.entries(scriptResult.promptVars)) {
           prompt = prompt.split(`{{${key}}}`).join(value);
         }
-        // Resolve remaining vars from outputs (safe split/join)
         const varMatches2 = prompt.match(/\{\{(\w+)\}\}/g) || [];
         for (const m of varMatches2) {
           const varName = m.replace(/[{}]/g, '');
@@ -705,6 +673,37 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
           system_message: loopNode.data.system_message || 'Ты — аналитик встреч. Пиши нейтрально, безлично, фиксируй факты.',
           user_message: prompt,
           reasoning_effort: loopNode.data.reasoning_effort || 'high',
+          attachment_ids: attachmentIdsRef.current.length > 0 ? attachmentIdsRef.current : undefined,
+          skip_transcript_context: textInPrompt,
+        });
+
+        results.push(response.data.response_text);
+      } else if (aiNode && scriptResult.promptVars) {
+        // Fallback: use child AI node's prompt
+        let prompt = aiNode.data.inline_prompt || '';
+        const systemMsg = aiNode.data.system_message || 'Ты — ассистент для анализа.';
+
+        for (const [key, value] of Object.entries(scriptResult.promptVars)) {
+          prompt = prompt.split(`{{${key}}}`).join(value);
+        }
+
+        const varMatches = prompt.match(/\{\{(\w+)\}\}/g) || [];
+        for (const m of varMatches) {
+          const varName = m.replace(/[{}]/g, '');
+          if (outputs[varName] !== undefined) {
+            prompt = prompt.split(m).join(String(outputs[varName]));
+          }
+        }
+
+        setProcessingLabel(`${loopNode.data.label}: ${iteration + 1}/${totalBatches}`);
+
+        const textVal = outputs.text || '';
+        const textInPrompt = textVal.length > 100 && prompt.length > textVal.length;
+
+        const response = await chatApi.analyzeRaw(projectId, {
+          system_message: systemMsg,
+          user_message: prompt,
+          reasoning_effort: aiNode.data.reasoning_effort || 'high',
           attachment_ids: attachmentIdsRef.current.length > 0 ? attachmentIdsRef.current : undefined,
           skip_transcript_context: textInPrompt,
         });
