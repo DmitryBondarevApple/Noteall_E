@@ -474,31 +474,35 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
       // For nodes with input_from, make input data available as {{text}} and {{input}}
       // This supports AI-generated pipelines where {{text}} refers to the node's input data
       if (node.data.input_from?.length > 0 && typeof input === 'string') {
-        prompt = prompt.replace(/\{\{text\}\}/g, input);
-        prompt = prompt.replace(/\{\{input\}\}/g, input);
+        prompt = prompt.split('{{text}}').join(input);
+        prompt = prompt.split('{{input}}').join(input);
       }
 
       // Also substitute any remaining {{var}} from outputs
-      console.log(`[DEBUG ai_prompt VARS] node=${node.id}, prompt length before subst=${prompt.length}`);
       const varMatches = prompt.match(/\{\{(\w+)\}\}/g) || [];
       for (const m of varMatches) {
         const varName = m.replace(/[{}]/g, '');
         if (currentOutputs[varName] !== undefined) {
-          prompt = prompt.replace(m, String(currentOutputs[varName]));
+          // Use split/join instead of replace to avoid $ special patterns in replacement
+          prompt = prompt.split(m).join(String(currentOutputs[varName]));
         }
       }
 
       // If input is a string and prompt has {{input}}, substitute it
       if (typeof input === 'string') {
-        prompt = prompt.replace(/\{\{input\}\}/g, input);
+        prompt = prompt.split('{{input}}').join(input);
       }
 
       // For nodes with a single input_from, resolve ALL remaining {{var}} from input
       // This handles AI-generated pipelines that use custom variable names (e.g. {{aggregated_text}})
       const inputFromDeps = node.data.input_from || [];
       if (inputFromDeps.length === 1 && typeof input === 'string') {
-        prompt = prompt.replace(/\{\{\w+\}\}/g, input);
+        prompt = prompt.replace(/\{\{\w+\}\}/g, () => input);
       }
+
+      // Check if transcript was embedded in prompt (compare by length to avoid expensive .includes())
+      const textVal = currentOutputs.text || '';
+      const textWasSubstituted = textVal.length > 100 && prompt.length > textVal.length;
 
       console.log(`[DEBUG ai_prompt BEFORE API] node=${node.id}, prompt length=${prompt.length}, textWasSubstituted=${textWasSubstituted}`);
 
