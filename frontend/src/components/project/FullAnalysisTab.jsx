@@ -1529,8 +1529,8 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
               )}
             </div>
 
-            {/* Template node */}
-            {currentStage.type === 'template' && (
+            {/* Template / user_input node */}
+            {(currentStage.type === 'template' || currentStage.type === 'user_input') && (
               <TemplateStageContent
                 node={currentStage.primaryNode}
                 inputs={templateInputs}
