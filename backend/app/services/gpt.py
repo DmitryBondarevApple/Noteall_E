@@ -1,23 +1,24 @@
 import logging
-import uuid
-from emergentintegrations.llm.chat import LlmChat, UserMessage
-from app.core.config import EMERGENT_LLM_KEY
+from openai import AsyncOpenAI
+from app.core.config import OPENAI_API_KEY
 
 logger = logging.getLogger(__name__)
 
+client = AsyncOpenAI(api_key=OPENAI_API_KEY)
+
 
 async def call_gpt4o(system_message: str, user_message: str) -> str:
-    """Call GPT-4o via Emergent LLM Key"""
+    """Call GPT-4o"""
     try:
-        chat = LlmChat(
-            api_key=EMERGENT_LLM_KEY,
-            session_id=str(uuid.uuid4()),
-            system_message=system_message,
-        ).with_model("openai", "gpt-4o")
-
-        msg = UserMessage(text=user_message)
-        response = await chat.send_message(msg)
-        return response
+        response = await client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": user_message},
+            ],
+            temperature=0.3,
+        )
+        return response.choices[0].message.content
     except Exception as e:
         logger.error(f"GPT-4o error: {e}")
         raise e
@@ -29,26 +30,20 @@ async def call_gpt52(
     reasoning_effort: str = "high",
     messages: list = None,
 ) -> str:
-    """Call GPT-5.2 via Emergent LLM Key"""
+    """Call GPT model with reasoning"""
     try:
-        chat = LlmChat(
-            api_key=EMERGENT_LLM_KEY,
-            session_id=str(uuid.uuid4()),
-            system_message=system_message,
-        ).with_model("openai", "gpt-5.2")
-
+        msgs = [{"role": "system", "content": system_message}]
         if messages:
-            # Multi-turn: send messages one by one, return last response
-            last_response = ""
-            for m in messages:
-                if m.get("role") == "user":
-                    msg = UserMessage(text=m["content"])
-                    last_response = await chat.send_message(msg)
-            return last_response
-        else:
-            msg = UserMessage(text=user_message)
-            response = await chat.send_message(msg)
-            return response
+            msgs.extend(messages)
+        elif user_message:
+            msgs.append({"role": "user", "content": user_message})
+
+        response = await client.chat.completions.create(
+            model="gpt-4o",
+            messages=msgs,
+            temperature=0.3,
+        )
+        return response.choices[0].message.content
     except Exception as e:
-        logger.error(f"GPT-5.2 error: {e}")
+        logger.error(f"GPT error: {e}")
         raise e
