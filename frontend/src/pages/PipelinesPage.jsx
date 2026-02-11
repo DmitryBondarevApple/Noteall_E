@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { pipelinesApi, aiChatApi } from '../lib/api';
+import { buildInputFromMap, resolveInputFrom } from '../lib/pipelineUtils';
 import { Button } from '../components/ui/button';
 import AppLayout from '../components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -123,13 +124,7 @@ export function PipelinesContent() {
     if (!pipelineData || !pipelineData.nodes) return;
 
     // Build input_from map from edges (auto-fix if AI didn't set input_from)
-    const inputFromMap = {};
-    for (const e of (pipelineData.edges || [])) {
-      if (!inputFromMap[e.target]) inputFromMap[e.target] = [];
-      if (!inputFromMap[e.target].includes(e.source)) {
-        inputFromMap[e.target].push(e.source);
-      }
-    }
+    const inputFromMap = buildInputFromMap(pipelineData.edges);
 
     try {
       const res = await pipelinesApi.create({
@@ -146,7 +141,7 @@ export function PipelinesContent() {
           batch_size: n.batch_size || null,
           template_text: n.template_text || null,
           script: n.script || null,
-          input_from: inputFromMap[n.node_id] || n.input_from || null,
+          input_from: resolveInputFrom(n.node_id, inputFromMap, n.input_from, null),
         })),
         edges: (pipelineData.edges || []).map((e) => ({
           source: e.source,
