@@ -1,24 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { pipelinesApi } from '../lib/api';
+import { pipelinesApi, aiChatApi } from '../lib/api';
 import { Button } from '../components/ui/button';
 import AppLayout from '../components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '../components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu';
+import AiChatPanel from '../components/pipeline/AiChatPanel';
 import {
   ArrowLeft,
   Plus,
