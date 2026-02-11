@@ -364,6 +364,7 @@ def _topo_sort(nodes, edges):
 
 def _build_data_deps(nodes, edges):
     """Build data dependency map: node_id -> [source_node_ids]."""
+    from app.utils import build_input_from_map
     deps = {}
     for e in edges:
         sh = e.get("source_handle", "") or ""
@@ -371,10 +372,18 @@ def _build_data_deps(nodes, edges):
         is_data = "data" in sh or "data" in th
         if is_data:
             deps.setdefault(e["target"], []).append(e["source"])
+    # Merge input_from from nodes using shared utility for non-handle edges
+    edge_map = build_input_from_map(edges)
     for n in nodes:
+        node_id = n.get("node_id")
         input_from = n.get("input_from") or []
+        # Use edge-derived input_from as fallback if node has none
+        if not input_from and node_id in edge_map:
+            input_from = edge_map[node_id]
         if input_from:
-            deps.setdefault(n["node_id"], []).extend(input_from)
+            deps.setdefault(node_id, []).extend(
+                s for s in input_from if s not in deps.get(node_id, [])
+            )
     return deps
 
 

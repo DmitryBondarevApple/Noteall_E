@@ -318,23 +318,9 @@ async def import_pipeline(file: UploadFile = File(...), user=Depends(get_current
         name = f"{name} (импорт)"
 
     # Auto-fix input_from from edges if missing
-    edges = data.get("edges", [])
-    input_from_map = {}
-    for e in edges:
-        target = e.get("target")
-        source = e.get("source")
-        if target and source:
-            if target not in input_from_map:
-                input_from_map[target] = []
-            if source not in input_from_map[target]:
-                input_from_map[target].append(source)
-
+    from app.utils import fix_nodes_input_from
     nodes = data.get("nodes", [])
-    for node in nodes:
-        node_id = node.get("node_id")
-        if node_id and not node.get("input_from"):
-            if node_id in input_from_map:
-                node["input_from"] = input_from_map[node_id]
+    fix_nodes_input_from(nodes, data.get("edges", []))
 
     pipeline_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
