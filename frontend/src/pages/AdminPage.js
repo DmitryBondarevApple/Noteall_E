@@ -286,6 +286,10 @@ export default function AdminPage() {
                     <Cpu className="w-4 h-4" />
                     Модели
                   </TabsTrigger>
+                  <TabsTrigger value="markup" className="gap-2" data-testid="admin-markup-tab">
+                    <DollarSign className="w-4 h-4" />
+                    Наценки
+                  </TabsTrigger>
                 </>
               )}
             </TabsList>
