@@ -440,7 +440,7 @@ export default function PipelineEditorPage() {
           system_message: nodeType === 'ai_prompt' ? '' : null,
           reasoning_effort: nodeType === 'ai_prompt' ? 'high' : null,
           batch_size: nodeType === 'batch_loop' ? 3 : null,
-          template_text: nodeType === 'template' ? '' : null,
+          template_text: ['user_input', 'format_template', 'batch_prompt_template', 'template'].includes(nodeType) ? '' : null,
           script: null,
           input_from: [],
         },
