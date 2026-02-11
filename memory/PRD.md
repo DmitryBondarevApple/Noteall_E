@@ -116,6 +116,14 @@ Build a comprehensive multi-tenant SaaS application with AI features for meeting
 - **UI:** Yellow warnings and red errors displayed above "Запустить сценарий" button. Errors disable the button, warnings don't.
 - **Files:** `FullAnalysisTab.jsx` — `validatePipeline()` function + `validationResult` state
 
+### 2026-02-12: Pipeline Auto-Fix (DONE)
+- **Feature:** "Исправить автоматически" button that fixes common pipeline warnings in one click
+- **Fixes applied:**
+  1. Template with `{{item}}` missing `loop_vars` → adds `["item"]`
+  2. batch_loop missing `prompt_source_node` → resolves from input_from, edge sources (upstream template), or edge targets (downstream ai_prompt)
+- **Saves to backend** via PUT `/api/pipelines/{id}` and re-runs validation
+- **File:** `FullAnalysisTab.jsx` — `autoFixPipeline()` + `handleAutoFix()`
+
 ## Backlog
 - (пусто)
 
