@@ -6,6 +6,7 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
     name: str
+    organization_name: Optional[str] = None
 
 
 class UserLogin(BaseModel):
@@ -18,6 +19,8 @@ class UserResponse(BaseModel):
     email: str
     name: str
     role: str
+    org_id: Optional[str] = None
+    org_name: Optional[str] = None
     created_at: str
 
 
