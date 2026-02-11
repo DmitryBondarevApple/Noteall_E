@@ -309,7 +309,9 @@ export function ResultsTab({ projectId, selectedReasoningEffort }) {
         setAnalysisMode(null);
         toast.success('Анализ по сценарию завершён и сохранён');
       } catch (err) {
-        toast.error('Ошибка: ' + (err.response?.data?.detail || err.message));
+        if (err.response?.status !== 402) {
+          toast.error('Ошибка: ' + (err.response?.data?.detail || err.message));
+        }
       } finally {
         setAnalyzing(false);
       }

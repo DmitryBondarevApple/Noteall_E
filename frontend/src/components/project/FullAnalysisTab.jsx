@@ -540,7 +540,9 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
         const outputs = await runAutoNodes(firstStage.autoNodesBefore, {});
         setNodeOutputs(outputs);
       } catch (err) {
-        toast.error('Ошибка выполнения: ' + (err.message || ''));
+        if (err.response?.status !== 402) {
+          toast.error('Ошибка выполнения: ' + (err.message || ''));
+        }
       } finally {
         setIsProcessing(false);
         setProcessingLabel('');
@@ -608,7 +610,9 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
       prepareStageUI(nextStage, outputs);
 
     } catch (err) {
-      toast.error('Ошибка: ' + (err.message || ''));
+      if (err.response?.status !== 402) {
+        toast.error('Ошибка: ' + (err.message || ''));
+      }
       console.error(err);
     } finally {
       setIsProcessing(false);
