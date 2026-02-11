@@ -117,8 +117,15 @@ async def upload_file(
     content = await file.read()
     s3_key = None
     if s3_enabled():
-        s3_key = f"uploads/{filename}"
-        upload_bytes(s3_key, content, file.content_type or "audio/mpeg")
+        try:
+            s3_key = f"uploads/{filename}"
+            upload_bytes(s3_key, content, file.content_type or "audio/mpeg")
+        except Exception as e:
+            logger.warning(f"S3 upload failed, falling back to local storage: {e}")
+            s3_key = None
+            file_path = Path(UPLOAD_DIR) / filename
+            with open(file_path, "wb") as f:
+                f.write(content)
     else:
         file_path = Path(UPLOAD_DIR) / filename
         with open(file_path, "wb") as f:
