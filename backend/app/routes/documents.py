@@ -663,12 +663,25 @@ async def run_pipeline(project_id: str, data: RunPipelineRequest, user=Depends(g
                         if source_context:
                             system_msg += f"\n\nИсходные материалы проекта:\n{source_context}"
                         try:
-                            ai_result = await call_gpt52(
+                            gpt_result = await call_gpt52_metered(
                                 system_message=system_msg,
                                 user_message=prompt,
                                 reasoning_effort=ai_node.get("reasoning_effort", "high")
                             )
+                            ai_result = gpt_result.content
                             results.append(ai_result)
+                            org_id = user.get("org_id")
+                            if org_id:
+                                try:
+                                    await deduct_credits_and_record(
+                                        org_id=org_id, user_id=user["id"],
+                                        model=gpt_result.model,
+                                        prompt_tokens=gpt_result.prompt_tokens,
+                                        completion_tokens=gpt_result.completion_tokens,
+                                        source="pipeline_batch",
+                                    )
+                                except Exception as me:
+                                    logger.error(f"Metering error: {me}")
                         except Exception as e:
                             results.append(f"[Ошибка AI: {str(e)}]")
                 else:
