@@ -19,6 +19,7 @@ from app.routes import (
     meeting_folders_router,
     ai_chat_router,
     organizations_router,
+    billing_router,
 )
 from app.core.database import client
 
@@ -59,6 +60,7 @@ app.include_router(documents_router, prefix="/api")
 app.include_router(meeting_folders_router, prefix="/api")
 app.include_router(ai_chat_router, prefix="/api")
 app.include_router(organizations_router, prefix="/api")
+app.include_router(billing_router, prefix="/api")
 
 
 @app.get("/api/health")
