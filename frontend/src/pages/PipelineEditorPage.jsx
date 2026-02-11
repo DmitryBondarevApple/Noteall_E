@@ -767,7 +767,9 @@ export default function PipelineEditorPage() {
                     const type = n.data?.node_type;
                     const colors = {
                       ai_prompt: '#c4b5fd', parse_list: '#7dd3fc', batch_loop: '#fcd34d',
-                      aggregate: '#6ee7b7', template: '#cbd5e1', user_edit_list: '#f9a8d4', user_review: '#5eead4',
+                      aggregate: '#6ee7b7', template: '#cbd5e1', user_input: '#93c5fd',
+                      format_template: '#67e8f9', batch_prompt_template: '#a5b4fc',
+                      user_edit_list: '#f9a8d4', user_review: '#5eead4',
                     };
                     return colors[type] || '#cbd5e1';
                   }}
