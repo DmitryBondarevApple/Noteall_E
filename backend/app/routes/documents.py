@@ -875,11 +875,25 @@ async def send_stream_message(
     user_msg = {"role": "user", "content": data.content, "timestamp": now}
 
     try:
-        ai_response = await call_gpt52(
+        gpt_result = await call_gpt52_metered(
             system_message=system_message,
             messages=openai_messages,
             reasoning_effort="high"
         )
+        ai_response = gpt_result.content
+        # Meter the call
+        org_id = user.get("org_id")
+        if org_id:
+            try:
+                await deduct_credits_and_record(
+                    org_id=org_id, user_id=user["id"],
+                    model=gpt_result.model,
+                    prompt_tokens=gpt_result.prompt_tokens,
+                    completion_tokens=gpt_result.completion_tokens,
+                    source="doc_stream",
+                )
+            except Exception as me:
+                logger.error(f"Metering error: {me}")
     except Exception as e:
         logger.error(f"AI stream error: {e}")
         ai_response = f"Ошибка AI: {str(e)}"
