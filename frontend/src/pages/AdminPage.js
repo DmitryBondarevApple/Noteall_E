@@ -594,6 +594,101 @@ export default function AdminPage() {
                 </Card>
               </TabsContent>
             )}
+
+            {/* Markup Tiers Tab (superadmin) */}
+            {isSuperadmin() && (
+              <TabsContent value="markup">
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle>Таблица наценок</CardTitle>
+                        <CardDescription>Наценка зависит от базовой стоимости AI-запроса (USD). Множитель применяется к стоимости от провайдера.</CardDescription>
+                      </div>
+                      <div className="flex gap-2">
+                        {editingTiers ? (
+                          <>
+                            <Button variant="outline" size="sm" onClick={() => setEditingTiers(null)}>Отмена</Button>
+                            <Button size="sm" onClick={handleSaveMarkupTiers} disabled={savingTiers} data-testid="save-markup-btn" className="gap-1">
+                              {savingTiers ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                              Сохранить
+                            </Button>
+                          </>
+                        ) : (
+                          <Button variant="outline" size="sm" onClick={() => setEditingTiers([...markupTiers])} data-testid="edit-markup-btn">
+                            Редактировать
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>От (USD)</TableHead>
+                          <TableHead>До (USD)</TableHead>
+                          <TableHead>Множитель</TableHead>
+                          <TableHead>Пример</TableHead>
+                          {editingTiers && <TableHead className="w-12"></TableHead>}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {(editingTiers || markupTiers).map((tier, idx) => (
+                          <TableRow key={idx} data-testid={`markup-tier-${idx}`}>
+                            <TableCell>
+                              {editingTiers ? (
+                                <Input
+                                  type="number" step="0.001" className="w-28"
+                                  value={tier.min_cost} onChange={e => handleTierChange(idx, 'min_cost', e.target.value)}
+                                />
+                              ) : (
+                                <span className="font-mono text-sm">${tier.min_cost}</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {editingTiers ? (
+                                <Input
+                                  type="number" step="0.001" className="w-28"
+                                  value={tier.max_cost} onChange={e => handleTierChange(idx, 'max_cost', e.target.value)}
+                                />
+                              ) : (
+                                <span className="font-mono text-sm">${tier.max_cost}</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {editingTiers ? (
+                                <Input
+                                  type="number" step="0.5" min="1" className="w-20"
+                                  value={tier.multiplier} onChange={e => handleTierChange(idx, 'multiplier', e.target.value)}
+                                />
+                              ) : (
+                                <Badge variant="secondary" className="font-mono">{tier.multiplier}x</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground text-sm">
+                              ${tier.min_cost.toFixed(4)} &rarr; ${(tier.min_cost * tier.multiplier).toFixed(4)}
+                            </TableCell>
+                            {editingTiers && (
+                              <TableCell>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRemoveTier(idx)}>
+                                  <X className="w-4 h-4 text-red-500" />
+                                </Button>
+                              </TableCell>
+                            )}
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                    {editingTiers && (
+                      <Button variant="outline" size="sm" className="mt-3 gap-1" onClick={handleAddTier} data-testid="add-tier-btn">
+                        <Plus className="w-3 h-3" /> Добавить уровень
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
           </Tabs>
         </main>
 
