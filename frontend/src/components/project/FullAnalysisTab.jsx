@@ -543,6 +543,35 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
     })();
   }, [selectedPipelineId]);
 
+  // Auto-fix pipeline warnings and save to backend
+  const handleAutoFix = useCallback(async () => {
+    if (!pipelineData?._nodes || !selectedPipelineId) return;
+    const fixedNodes = autoFixPipeline(pipelineData._nodes);
+    if (!fixedNodes) {
+      toast.info('Нечего исправлять');
+      return;
+    }
+
+    try {
+      // Convert back to API format
+      const apiNodes = fixedNodes.map(n => ({ ...n.data }));
+      await pipelinesApi.update(selectedPipelineId, { nodes: apiNodes });
+
+      // Re-process locally
+      const edges = pipelineData._edges;
+      setPipelineData({ ...pipelineData, _nodes: fixedNodes, _edges: edges });
+      const ordered = resolveExecutionOrder(fixedNodes, edges);
+      setOrderedNodes(ordered);
+      setStages(buildWizardStages(ordered));
+      setDataDeps(buildDataDeps(fixedNodes, edges));
+      setValidationResult(validatePipeline(fixedNodes, edges));
+
+      toast.success('Сценарий исправлен и сохранён');
+    } catch (err) {
+      toast.error('Ошибка сохранения: ' + (err.message || ''));
+    }
+  }, [pipelineData, selectedPipelineId]);
+
   // Reset everything
   const resetWizard = useCallback(() => {
     setCurrentStageIdx(-1);
