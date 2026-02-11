@@ -1014,7 +1014,7 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
       setIsEditingReview(false);
     }
 
-    if (type === 'template') {
+    if (type === 'template' || type === 'user_input') {
       // Reset template inputs but keep subject if previously set
       setTemplateInputs({});
     }
