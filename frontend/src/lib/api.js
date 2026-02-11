@@ -255,7 +255,9 @@ export const billingApi = {
   getMarkupTiers: () => axios.get(`${API}/billing/admin/markup-tiers`),
   updateMarkupTiers: (tiers) => axios.put(`${API}/billing/admin/markup-tiers`, { tiers }),
   getMyUsage: () => axios.get(`${API}/billing/usage/my`),
+  getOrgUsersUsage: () => axios.get(`${API}/billing/usage/org-users`),
   adminUsage: (orgId) => axios.get(`${API}/billing/admin/usage`, { params: orgId ? { org_id: orgId } : {} }),
+  adminSummary: () => axios.get(`${API}/billing/admin/summary`),
 };
 
 // Seed
