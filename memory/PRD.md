@@ -69,6 +69,15 @@ Build a comprehensive multi-tenant SaaS application with AI features for meeting
 - Superadmin: admin@voiceworkspace.com / admin123
 - Test user: bugtest@test.com / bugtest123
 
+### 2026-02-12: user_edit_list Stage Not Populating Topics (FIXED)
+- **Bug:** After AI successfully extracted topics and parse_list parsed them, the user_edit_list stage showed "Выбрано: 0 из 0" — topics never appeared in the UI
+- **Root causes:**
+  1. `startWizard()` never called `prepareStageUI()` for the first wizard stage — the function that populates `editableList` React state from pipeline outputs was only called in `proceedToNextStage()` (subsequent stages), not for the initial stage
+  2. `prepareStageUI` was defined AFTER `startWizard` in the file, causing "Cannot access before initialization" error due to `useCallback` hoisting
+- **Fix:** Added `prepareStageUI(firstStage, outputs)` call in `startWizard()` after `runAutoNodes` completes, and moved `prepareStageUI` definition before `startWizard`
+- **Verified:** Wizard now shows "Выбрано: 34 из 34" with checkboxes
+- **File:** `FullAnalysisTab.jsx`
+
 ## Backlog
 - (пусто)
 
