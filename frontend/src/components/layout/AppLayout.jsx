@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { billingApi } from '../../lib/api';
 import { Button } from '../ui/button';
 import {
   DropdownMenu,
@@ -18,6 +19,7 @@ import {
   PanelLeft,
   CalendarDays,
   CreditCard,
+  Zap,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
