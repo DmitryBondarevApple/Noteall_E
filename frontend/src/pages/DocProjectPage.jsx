@@ -339,6 +339,18 @@ export default function DocProjectPage() {
                   {running ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
                   {running ? 'Выполнение...' : 'Запустить'}
                 </Button>
+                {selectedPipelineId && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9 shrink-0"
+                    onClick={() => navigate(`/pipelines/${selectedPipelineId}?from=/documents/${projectId}`)}
+                    title="Редактировать сценарий"
+                    data-testid="edit-pipeline-btn"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+                )}
               </div>
               {attachments.length === 0 && (
                 <p className="text-xs text-amber-600 mt-1.5 flex items-center gap-1">
