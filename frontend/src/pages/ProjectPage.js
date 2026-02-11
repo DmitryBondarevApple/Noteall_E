@@ -104,14 +104,29 @@ export default function ProjectPage() {
   useEffect(() => {
     if (project?.status === 'transcribing' || project?.status === 'processing') {
       const wasProcessing = project?.status === 'processing';
+      const isFastTrack = project?.fast_track?.enabled;
       const interval = setInterval(async () => {
         try {
           const res = await projectsApi.get(projectId);
           setProject(res.data);
           if (res.data.status !== 'transcribing' && res.data.status !== 'processing') {
             setProcessing(false);
-            loadData();
-            if (wasProcessing && (res.data.status === 'ready' || res.data.status === 'needs_review')) {
+            await loadData();
+
+            if (isFastTrack && (res.data.status === 'ready' || res.data.status === 'needs_review')) {
+              // Fast-track: auto-accept all fragments and switch to analysis
+              toast.success('Fast-track: обработка завершена, принимаем исправления...');
+              try {
+                await fragmentsApi.bulkAccept(projectId);
+                await loadData();
+                toast.success('Fast-track: запускаем анализ...');
+                setFastTrackAutoRun(true);
+                setActiveTab('analysis');
+              } catch (e) {
+                toast.error('Ошибка автопринятия исправлений');
+                setActiveTab('processed');
+              }
+            } else if (wasProcessing && (res.data.status === 'ready' || res.data.status === 'needs_review')) {
               toast.success('Обработка завершена');
               setActiveTab('processed');
             } else if (!wasProcessing) {
@@ -123,7 +138,7 @@ export default function ProjectPage() {
       }, 3000);
       return () => clearInterval(interval);
     }
-  }, [project?.status, projectId, loadData]);
+  }, [project?.status, project?.fast_track?.enabled, projectId, loadData]);
 
   // Handlers
   const handleUploadStart = () => {
