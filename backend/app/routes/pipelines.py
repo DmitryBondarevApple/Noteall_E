@@ -185,11 +185,34 @@ async def generate_pipeline(data: GenerateRequest, user=Depends(get_current_user
 Отвечай ТОЛЬКО валидным JSON без markdown-обёртки."""
 
     try:
-        result = await call_gpt52(
+        # Check billing limits
+        org_id = user.get("org_id")
+        if org_id:
+            if not await check_user_monthly_limit(user):
+                raise HTTPException(status_code=402, detail="Превышен месячный лимит токенов")
+            if not await check_org_balance(org_id):
+                raise HTTPException(status_code=402, detail="Недостаточно кредитов. Пополните баланс.")
+
+        gpt_result = await call_gpt52_metered(
             system_message=system_prompt,
             user_message=data.prompt,
             reasoning_effort="high"
         )
+        result = gpt_result.content
+
+        # Deduct credits
+        if org_id:
+            try:
+                await deduct_credits_and_record(
+                    org_id=org_id,
+                    user_id=user["id"],
+                    model=gpt_result.model,
+                    prompt_tokens=gpt_result.prompt_tokens,
+                    completion_tokens=gpt_result.completion_tokens,
+                    source="pipeline_generate",
+                )
+            except Exception as e:
+                logger.error(f"Metering error (non-blocking): {e}")
 
         # Parse JSON from response
         result = result.strip()
