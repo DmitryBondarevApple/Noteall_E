@@ -598,7 +598,7 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
 
     const batchSize = loopNode.data.batch_size || 3;
     const effectiveSize = batchSize === 0 ? items.length : batchSize;
-    const totalBatches = Math.max(1, Math.ceil(items.length / effectiveSize));
+    const totalBatches = items.length > 0 ? Math.ceil(items.length / effectiveSize) : 0;
 
     // Find the AI prompt node that follows this loop in the ordered nodes
     const loopIdx = orderedNodes.findIndex((n) => n.id === loopNode.id);
