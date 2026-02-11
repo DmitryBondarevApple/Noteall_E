@@ -160,18 +160,38 @@ export default function BillingPage() {
 
                   <Card data-testid="quick-stats-card">
                     <CardContent className="pt-6">
-                      <p className="text-sm text-muted-foreground mb-3">Быстрая статистика</p>
+                      <p className="text-sm text-muted-foreground mb-3">Использование за месяц</p>
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm">Транзакций</span>
-                          <Badge variant="secondary">{txnTotal}</Badge>
+                          <span className="text-sm">AI-запросов</span>
+                          <Badge variant="secondary">{myUsage?.total_requests || 0}</Badge>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-sm">USD эквивалент</span>
+                          <span className="text-sm">Токенов</span>
                           <span className="text-sm font-medium">
-                            ${((balance?.balance || 0) * 0.02).toFixed(2)}
+                            {(myUsage?.total_tokens || 0).toLocaleString('ru-RU')}
                           </span>
                         </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Потрачено кредитов</span>
+                          <span className="text-sm font-medium">
+                            {(myUsage?.total_credits || 0).toLocaleString('ru-RU', { maximumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                        {myUsage?.monthly_token_limit > 0 && (
+                          <div className="pt-2 border-t">
+                            <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                              <span>Лимит токенов</span>
+                              <span>{(myUsage.total_tokens || 0).toLocaleString()} / {myUsage.monthly_token_limit.toLocaleString()}</span>
+                            </div>
+                            <div className="w-full bg-slate-100 rounded-full h-1.5">
+                              <div
+                                className="bg-slate-900 h-1.5 rounded-full transition-all"
+                                style={{ width: `${Math.min(100, ((myUsage.total_tokens || 0) / myUsage.monthly_token_limit) * 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
