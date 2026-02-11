@@ -70,6 +70,7 @@ export default function AdminPage() {
   const [savingTiers, setSavingTiers] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedOrgId, setSelectedOrgId] = useState(null);
 
   useEffect(() => {
     if (!isAdmin()) return;
