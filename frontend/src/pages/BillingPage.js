@@ -55,6 +55,7 @@ export default function BillingPage() {
   // Superadmin
   const [adminBalances, setAdminBalances] = useState([]);
   const [adminSummary, setAdminSummary] = useState(null);
+  const [selectedOrgId, setSelectedOrgId] = useState(null);
 
   // Purchase dialog
   const [purchaseDialog, setPurchaseDialog] = useState(null);
