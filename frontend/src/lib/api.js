@@ -258,6 +258,9 @@ export const billingApi = {
   getOrgUsersUsage: () => axios.get(`${API}/billing/usage/org-users`),
   adminUsage: (orgId) => axios.get(`${API}/billing/admin/usage`, { params: orgId ? { org_id: orgId } : {} }),
   adminSummary: () => axios.get(`${API}/billing/admin/summary`),
+  adminOrgDetail: (orgId) => axios.get(`${API}/billing/admin/org/${orgId}`),
+  adminTopup: (orgId, amount, description) =>
+    axios.post(`${API}/billing/admin/topup`, { org_id: orgId, amount, description }),
 };
 
 // Seed
