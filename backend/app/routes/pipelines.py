@@ -1,14 +1,24 @@
 import uuid
+import json
+import logging
 from datetime import datetime, timezone
 from typing import List, Optional
+from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from app.core.database import db
 from app.core.security import get_current_user
 from app.models.pipeline import (
     PipelineCreate, PipelineUpdate, PipelineResponse
 )
+from app.services.gpt import call_gpt52
 
 router = APIRouter(prefix="/pipelines", tags=["pipelines"])
+logger = logging.getLogger(__name__)
+
+
+class GenerateRequest(BaseModel):
+    prompt: str
+    pipeline_id: Optional[str] = None
 
 
 @router.get("", response_model=List[PipelineResponse])
