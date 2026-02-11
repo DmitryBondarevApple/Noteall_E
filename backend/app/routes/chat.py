@@ -312,12 +312,35 @@ async def analyze_with_prompt(
 Отвечай структурированно, используя markdown для форматирования.
 При ссылках на реплики участников указывай их имена."""
     
+    # Check billing limits
+    org_id = user.get("org_id")
+    if org_id:
+        if not await check_user_monthly_limit(user):
+            raise HTTPException(status_code=402, detail="Превышен месячный лимит токенов")
+        if not await check_org_balance(org_id):
+            raise HTTPException(status_code=402, detail="Недостаточно кредитов. Пополните баланс.")
+
     # Call GPT with full conversation
-    response_text = await call_gpt52(
+    gpt_result = await call_gpt52_metered(
         system_message=system_message,
         messages=messages,
         reasoning_effort=data.reasoning_effort or "high"
     )
+    response_text = gpt_result.content
+
+    # Deduct credits
+    if org_id:
+        try:
+            await deduct_credits_and_record(
+                org_id=org_id,
+                user_id=user["id"],
+                model=gpt_result.model,
+                prompt_tokens=gpt_result.prompt_tokens,
+                completion_tokens=gpt_result.completion_tokens,
+                source="analyze_prompt",
+            )
+        except Exception as e:
+            logger.error(f"Metering error: {e}")
     
     # Save chat request
     chat_id = str(uuid.uuid4())
