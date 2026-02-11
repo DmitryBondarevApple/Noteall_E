@@ -268,7 +268,7 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
 
   const unresolvedVars = useMemo(() => {
     if (!pipelineData || !orderedNodes.length) return [];
-    const knownOutputs = new Set(['text', 'input']);
+    const knownOutputs = new Set(['text', 'input', 'item', 'items', 'iteration', 'results', 'batch_size', 'batchSize']);
     for (const n of orderedNodes) {
       knownOutputs.add(n.id);
       if (n.data.label) knownOutputs.add(n.data.label);
