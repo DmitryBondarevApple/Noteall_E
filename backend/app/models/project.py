@@ -25,5 +25,6 @@ class ProjectResponse(BaseModel):
     reasoning_effort: Optional[str] = None
     recording_filename: Optional[str] = None
     recording_duration: Optional[float] = None
+    fast_track: Optional[Dict[str, Any]] = None
     created_at: str
     updated_at: str
