@@ -413,6 +413,7 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
   const [stages, setStages] = useState([]);
   const [dataDeps, setDataDeps] = useState({});
   const [orderedNodes, setOrderedNodes] = useState([]);
+  const [validationResult, setValidationResult] = useState({ errors: [], warnings: [] });
 
   const unresolvedVars = useMemo(() => {
     if (!pipelineData || !orderedNodes.length) return [];
