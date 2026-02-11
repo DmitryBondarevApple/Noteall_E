@@ -14,11 +14,30 @@ import {
 } from '../components/ui/dialog';
 import {
   CreditCard, Wallet, ArrowUpRight, ArrowDownRight, History,
-  Loader2, Building2, TrendingUp, Zap, ShoppingCart,
+  Loader2, Building2, Zap, ShoppingCart, Users, BarChart3, TrendingUp,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
+
+function MetricCard({ label, value, sub, icon: Icon, color = 'bg-slate-50', iconColor = 'text-slate-600' }) {
+  return (
+    <Card>
+      <CardContent className="pt-5 pb-4">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">{label}</p>
+            <p className="text-2xl font-bold tracking-tight">{value}</p>
+            {sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
+          </div>
+          <div className={`w-10 h-10 rounded-xl ${color} flex items-center justify-center`}>
+            <Icon className={`w-5 h-5 ${iconColor}`} />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function BillingPage() {
   const { user, isOrgAdmin, isSuperadmin } = useAuth();
@@ -30,9 +49,11 @@ export default function BillingPage() {
   const [transactions, setTransactions] = useState([]);
   const [txnTotal, setTxnTotal] = useState(0);
   const [myUsage, setMyUsage] = useState(null);
+  const [orgUsersUsage, setOrgUsersUsage] = useState([]);
 
   // Superadmin
   const [adminBalances, setAdminBalances] = useState([]);
+  const [adminSummary, setAdminSummary] = useState(null);
 
   // Purchase dialog
   const [purchaseDialog, setPurchaseDialog] = useState(null);
@@ -46,8 +67,14 @@ export default function BillingPage() {
         billingApi.getTransactions().catch(() => ({ data: { items: [], total: 0 } })),
         billingApi.getMyUsage().catch(() => ({ data: null })),
       ];
+      if (isOrgAdmin()) {
+        promises.push(billingApi.getOrgUsersUsage().catch(() => ({ data: [] })));
+      }
       if (isSuperadmin()) {
-        promises.push(billingApi.adminBalances().catch(() => ({ data: [] })));
+        promises.push(
+          billingApi.adminBalances().catch(() => ({ data: [] })),
+          billingApi.adminSummary().catch(() => ({ data: null })),
+        );
       }
       const results = await Promise.all(promises);
       setBalance(results[0].data);
@@ -56,15 +83,22 @@ export default function BillingPage() {
       setTransactions(txnData?.items || txnData || []);
       setTxnTotal(txnData?.total || 0);
       setMyUsage(results[3].data);
-      if (isSuperadmin() && results[4]) {
-        setAdminBalances(results[4].data || []);
+
+      let idx = 4;
+      if (isOrgAdmin()) {
+        setOrgUsersUsage(results[idx]?.data || []);
+        idx++;
+      }
+      if (isSuperadmin()) {
+        setAdminBalances(results[idx]?.data || []);
+        setAdminSummary(results[idx + 1]?.data);
       }
     } catch {
       toast.error('Ошибка загрузки данных биллинга');
     } finally {
       setLoading(false);
     }
-  }, [isSuperadmin]);
+  }, [isOrgAdmin, isSuperadmin]);
 
   useEffect(() => {
     loadData();
@@ -119,23 +153,29 @@ export default function BillingPage() {
                 <Wallet className="w-4 h-4" />
                 Обзор
               </TabsTrigger>
+              {isOrgAdmin() && (
+                <TabsTrigger value="team" className="gap-2" data-testid="billing-team-tab">
+                  <Users className="w-4 h-4" />
+                  Команда
+                </TabsTrigger>
+              )}
               <TabsTrigger value="history" className="gap-2" data-testid="billing-history-tab">
                 <History className="w-4 h-4" />
                 История
               </TabsTrigger>
               {isSuperadmin() && (
-                <TabsTrigger value="all-orgs" className="gap-2" data-testid="billing-all-orgs-tab">
-                  <Building2 className="w-4 h-4" />
-                  Все организации
+                <TabsTrigger value="platform" className="gap-2" data-testid="billing-platform-tab">
+                  <BarChart3 className="w-4 h-4" />
+                  Платформа
                 </TabsTrigger>
               )}
             </TabsList>
 
-            {/* Overview Tab */}
+            {/* ===== OVERVIEW TAB ===== */}
             <TabsContent value="overview">
               <div className="space-y-6">
-                {/* Balance Card */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Balance + Usage Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <Card className="md:col-span-2" data-testid="balance-card">
                     <CardContent className="pt-6">
                       <div className="flex items-start justify-between">
@@ -143,12 +183,12 @@ export default function BillingPage() {
                           <p className="text-sm text-muted-foreground mb-1">Баланс кредитов</p>
                           <div className="flex items-baseline gap-2">
                             <span className="text-4xl font-bold tracking-tight" data-testid="credit-balance">
-                              {(balance?.balance || 0).toLocaleString('ru-RU')}
+                              {(balance?.balance || 0).toLocaleString('ru-RU', { maximumFractionDigits: 2 })}
                             </span>
                             <span className="text-lg text-muted-foreground">кредитов</span>
                           </div>
                           <p className="text-xs text-muted-foreground mt-2">
-                            1 кредит = $0.02 USD
+                            ≈ ${((balance?.balance || 0) * 0.02).toFixed(2)} USD
                           </p>
                         </div>
                         <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center">
@@ -158,41 +198,37 @@ export default function BillingPage() {
                     </CardContent>
                   </Card>
 
-                  <Card data-testid="quick-stats-card">
-                    <CardContent className="pt-6">
-                      <p className="text-sm text-muted-foreground mb-3">Использование за месяц</p>
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm">AI-запросов</span>
-                          <Badge variant="secondary">{myUsage?.total_requests || 0}</Badge>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm">Токенов</span>
-                          <span className="text-sm font-medium">
-                            {(myUsage?.total_tokens || 0).toLocaleString('ru-RU')}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm">Потрачено кредитов</span>
-                          <span className="text-sm font-medium">
-                            {(myUsage?.total_credits || 0).toLocaleString('ru-RU', { maximumFractionDigits: 2 })}
-                          </span>
-                        </div>
-                        {myUsage?.monthly_token_limit > 0 && (
-                          <div className="pt-2 border-t">
-                            <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                              <span>Лимит токенов</span>
-                              <span>{(myUsage.total_tokens || 0).toLocaleString()} / {myUsage.monthly_token_limit.toLocaleString()}</span>
-                            </div>
-                            <div className="w-full bg-slate-100 rounded-full h-1.5">
-                              <div
-                                className="bg-slate-900 h-1.5 rounded-full transition-all"
-                                style={{ width: `${Math.min(100, ((myUsage.total_tokens || 0) / myUsage.monthly_token_limit) * 100)}%` }}
-                              />
-                            </div>
+                  <MetricCard
+                    label="AI-запросов за месяц"
+                    value={myUsage?.total_requests || 0}
+                    sub={`${(myUsage?.total_tokens || 0).toLocaleString('ru-RU')} токенов`}
+                    icon={BarChart3}
+                    color="bg-blue-50"
+                    iconColor="text-blue-600"
+                  />
+                  <Card data-testid="usage-limit-card">
+                    <CardContent className="pt-5 pb-4">
+                      <p className="text-xs text-muted-foreground mb-1">Потрачено кредитов</p>
+                      <p className="text-2xl font-bold tracking-tight">
+                        {(myUsage?.total_credits || 0).toLocaleString('ru-RU', { maximumFractionDigits: 2 })}
+                      </p>
+                      {myUsage?.monthly_token_limit > 0 && (
+                        <div className="mt-3">
+                          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                            <span>Лимит</span>
+                            <span>{(myUsage.total_tokens || 0).toLocaleString()} / {myUsage.monthly_token_limit.toLocaleString()}</span>
                           </div>
-                        )}
-                      </div>
+                          <div className="w-full bg-slate-100 rounded-full h-1.5">
+                            <div
+                              className={`h-1.5 rounded-full transition-all ${
+                                ((myUsage.total_tokens || 0) / myUsage.monthly_token_limit) > 0.9
+                                  ? 'bg-red-500' : 'bg-emerald-500'
+                              }`}
+                              style={{ width: `${Math.min(100, ((myUsage.total_tokens || 0) / myUsage.monthly_token_limit) * 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 </div>
@@ -211,7 +247,7 @@ export default function BillingPage() {
                       {plans.map(plan => (
                         <div
                           key={plan.id}
-                          className="relative border rounded-xl p-5 hover:border-slate-400 transition-colors group"
+                          className="relative border rounded-xl p-5 hover:border-slate-400 transition-colors"
                           data-testid={`plan-card-${plan.id}`}
                         >
                           <div className="mb-4">
@@ -239,11 +275,6 @@ export default function BillingPage() {
                           )}
                         </div>
                       ))}
-                      {plans.length === 0 && (
-                        <p className="text-muted-foreground col-span-full text-center py-8">
-                          Тарифные планы не найдены
-                        </p>
-                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -254,12 +285,7 @@ export default function BillingPage() {
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-base">Последние операции</CardTitle>
                       {transactions.length > 0 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setActiveTab('history')}
-                          className="text-xs"
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => setActiveTab('history')} className="text-xs">
                           Все операции
                         </Button>
                       )}
@@ -269,20 +295,10 @@ export default function BillingPage() {
                     {transactions.length > 0 ? (
                       <div className="space-y-2">
                         {transactions.slice(0, 5).map(txn => (
-                          <div
-                            key={txn.id}
-                            className="flex items-center justify-between py-2 border-b last:border-0"
-                            data-testid={`recent-txn-${txn.id}`}
-                          >
+                          <div key={txn.id} className="flex items-center justify-between py-2 border-b last:border-0" data-testid={`recent-txn-${txn.id}`}>
                             <div className="flex items-center gap-3">
-                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                                txn.type === 'topup' ? 'bg-emerald-50' : 'bg-red-50'
-                              }`}>
-                                {txn.type === 'topup' ? (
-                                  <ArrowUpRight className="w-4 h-4 text-emerald-600" />
-                                ) : (
-                                  <ArrowDownRight className="w-4 h-4 text-red-600" />
-                                )}
+                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${txn.type === 'topup' ? 'bg-emerald-50' : 'bg-red-50'}`}>
+                                {txn.type === 'topup' ? <ArrowUpRight className="w-4 h-4 text-emerald-600" /> : <ArrowDownRight className="w-4 h-4 text-red-600" />}
                               </div>
                               <div>
                                 <p className="text-sm font-medium">{txn.description}</p>
@@ -291,25 +307,94 @@ export default function BillingPage() {
                                 </p>
                               </div>
                             </div>
-                            <span className={`font-semibold tabular-nums ${
-                              txn.type === 'topup' ? 'text-emerald-600' : 'text-red-600'
-                            }`}>
-                              {txn.type === 'topup' ? '+' : '-'}{txn.amount.toLocaleString('ru-RU')}
+                            <span className={`font-semibold tabular-nums ${txn.type === 'topup' ? 'text-emerald-600' : 'text-red-600'}`}>
+                              {txn.type === 'topup' ? '+' : '-'}{txn.amount.toLocaleString('ru-RU', { maximumFractionDigits: 4 })}
                             </span>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <p className="text-muted-foreground text-center py-8 text-sm">
-                        Операций пока нет
-                      </p>
+                      <p className="text-muted-foreground text-center py-8 text-sm">Операций пока нет</p>
                     )}
                   </CardContent>
                 </Card>
               </div>
             </TabsContent>
 
-            {/* History Tab */}
+            {/* ===== TEAM TAB (org_admin) ===== */}
+            {isOrgAdmin() && (
+              <TabsContent value="team">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Использование по сотрудникам</CardTitle>
+                    <CardDescription>Статистика AI-запросов за текущий месяц</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {orgUsersUsage.length > 0 ? (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Сотрудник</TableHead>
+                            <TableHead className="text-right">Запросов</TableHead>
+                            <TableHead className="text-right">Токенов</TableHead>
+                            <TableHead className="text-right">Кредитов</TableHead>
+                            <TableHead>Лимит</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {orgUsersUsage.map(u => {
+                            const limitPct = u.monthly_token_limit > 0
+                              ? Math.min(100, (u.total_tokens / u.monthly_token_limit) * 100) : 0;
+                            return (
+                              <TableRow key={u.user_id} data-testid={`team-user-${u.user_id}`}>
+                                <TableCell>
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
+                                      <span className="text-xs font-medium">{u.name?.[0]?.toUpperCase()}</span>
+                                    </div>
+                                    <div>
+                                      <p className="font-medium text-sm">{u.name}</p>
+                                      <p className="text-xs text-muted-foreground">{u.email}</p>
+                                    </div>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-right tabular-nums">{u.total_requests}</TableCell>
+                                <TableCell className="text-right tabular-nums">{u.total_tokens.toLocaleString('ru-RU')}</TableCell>
+                                <TableCell className="text-right tabular-nums font-medium">
+                                  {u.total_credits.toLocaleString('ru-RU', { maximumFractionDigits: 2 })}
+                                </TableCell>
+                                <TableCell className="w-40">
+                                  {u.monthly_token_limit > 0 ? (
+                                    <div>
+                                      <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                                        <span>{u.total_tokens.toLocaleString()}</span>
+                                        <span>{u.monthly_token_limit.toLocaleString()}</span>
+                                      </div>
+                                      <div className="w-full bg-slate-100 rounded-full h-1.5">
+                                        <div
+                                          className={`h-1.5 rounded-full transition-all ${limitPct > 90 ? 'bg-red-500' : limitPct > 70 ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                                          style={{ width: `${limitPct}%` }}
+                                        />
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <span className="text-xs text-muted-foreground">Без лимита</span>
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <p className="text-muted-foreground text-center py-12 text-sm">Нет данных об использовании за текущий месяц</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
+
+            {/* ===== HISTORY TAB ===== */}
             <TabsContent value="history">
               <Card>
                 <CardHeader>
@@ -335,83 +420,111 @@ export default function BillingPage() {
                               {format(new Date(txn.created_at), 'dd.MM.yyyy HH:mm', { locale: ru })}
                             </TableCell>
                             <TableCell>
-                              <Badge
-                                className={txn.type === 'topup'
-                                  ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100'
-                                  : 'bg-red-100 text-red-700 hover:bg-red-100'}
-                              >
+                              <Badge className={txn.type === 'topup' ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100' : 'bg-red-100 text-red-700 hover:bg-red-100'}>
                                 {txn.type === 'topup' ? 'Пополнение' : 'Списание'}
                               </Badge>
                             </TableCell>
                             <TableCell>{txn.description}</TableCell>
-                            <TableCell className="text-muted-foreground">
-                              {txn.user_name || '—'}
-                            </TableCell>
-                            <TableCell className={`text-right font-semibold tabular-nums ${
-                              txn.type === 'topup' ? 'text-emerald-600' : 'text-red-600'
-                            }`}>
-                              {txn.type === 'topup' ? '+' : '-'}{txn.amount.toLocaleString('ru-RU')}
+                            <TableCell className="text-muted-foreground">{txn.user_name || '—'}</TableCell>
+                            <TableCell className={`text-right font-semibold tabular-nums ${txn.type === 'topup' ? 'text-emerald-600' : 'text-red-600'}`}>
+                              {txn.type === 'topup' ? '+' : '-'}{txn.amount.toLocaleString('ru-RU', { maximumFractionDigits: 4 })}
                             </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
                   ) : (
-                    <p className="text-muted-foreground text-center py-12 text-sm">
-                      Операций пока нет. Пополните баланс, чтобы начать использовать AI-функции.
-                    </p>
+                    <p className="text-muted-foreground text-center py-12 text-sm">Операций пока нет</p>
                   )}
                 </CardContent>
               </Card>
             </TabsContent>
 
-            {/* Superadmin: All Organizations */}
+            {/* ===== PLATFORM TAB (superadmin) ===== */}
             {isSuperadmin() && (
-              <TabsContent value="all-orgs">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Балансы организаций</CardTitle>
-                    <CardDescription>Общий обзор кредитов по всем организациям</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {adminBalances.length > 0 ? (
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Организация</TableHead>
-                            <TableHead className="text-right">Баланс</TableHead>
-                            <TableHead className="text-right">Пополнено</TableHead>
-                            <TableHead className="text-right">Потрачено</TableHead>
-                            <TableHead>Обновлено</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {adminBalances.map(b => (
-                            <TableRow key={b.org_id} data-testid={`admin-balance-${b.org_id}`}>
-                              <TableCell className="font-medium">{b.org_name}</TableCell>
-                              <TableCell className="text-right font-semibold tabular-nums">
-                                {b.balance.toLocaleString('ru-RU')}
-                              </TableCell>
-                              <TableCell className="text-right text-emerald-600 tabular-nums">
-                                +{b.total_topups.toLocaleString('ru-RU')}
-                              </TableCell>
-                              <TableCell className="text-right text-red-600 tabular-nums">
-                                -{b.total_deductions.toLocaleString('ru-RU')}
-                              </TableCell>
-                              <TableCell className="text-muted-foreground whitespace-nowrap">
-                                {format(new Date(b.updated_at), 'dd.MM.yyyy HH:mm', { locale: ru })}
-                              </TableCell>
+              <TabsContent value="platform">
+                <div className="space-y-6">
+                  {/* Platform Metrics */}
+                  {adminSummary && (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <MetricCard
+                        label="Выручка (USD)"
+                        value={`$${adminSummary.total_revenue_usd.toLocaleString('ru-RU')}`}
+                        sub={`${adminSummary.total_topups_credits.toLocaleString()} кредитов куплено`}
+                        icon={TrendingUp}
+                        color="bg-emerald-50"
+                        iconColor="text-emerald-600"
+                      />
+                      <MetricCard
+                        label="Потрачено кредитов"
+                        value={adminSummary.total_deductions_credits.toLocaleString('ru-RU', { maximumFractionDigits: 2 })}
+                        sub="за всё время"
+                        icon={ArrowDownRight}
+                        color="bg-red-50"
+                        iconColor="text-red-500"
+                      />
+                      <MetricCard
+                        label="Запросов за месяц"
+                        value={adminSummary.month_requests.toLocaleString('ru-RU')}
+                        sub={`${adminSummary.month_tokens.toLocaleString()} токенов`}
+                        icon={BarChart3}
+                        color="bg-blue-50"
+                        iconColor="text-blue-600"
+                      />
+                      <MetricCard
+                        label="Организаций / Юзеров"
+                        value={`${adminSummary.org_count} / ${adminSummary.user_count}`}
+                        icon={Building2}
+                        color="bg-purple-50"
+                        iconColor="text-purple-600"
+                      />
+                    </div>
+                  )}
+
+                  {/* All Orgs Balances */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Балансы организаций</CardTitle>
+                      <CardDescription>Текущие балансы и статистика расходов</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {adminBalances.length > 0 ? (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Организация</TableHead>
+                              <TableHead className="text-right">Баланс</TableHead>
+                              <TableHead className="text-right">Пополнено</TableHead>
+                              <TableHead className="text-right">Потрачено</TableHead>
+                              <TableHead>Обновлено</TableHead>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    ) : (
-                      <p className="text-muted-foreground text-center py-12 text-sm">
-                        Нет данных
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
+                          </TableHeader>
+                          <TableBody>
+                            {adminBalances.map(b => (
+                              <TableRow key={b.org_id} data-testid={`admin-balance-${b.org_id}`}>
+                                <TableCell className="font-medium">{b.org_name}</TableCell>
+                                <TableCell className="text-right font-semibold tabular-nums">
+                                  {b.balance.toLocaleString('ru-RU', { maximumFractionDigits: 2 })}
+                                </TableCell>
+                                <TableCell className="text-right text-emerald-600 tabular-nums">
+                                  +{b.total_topups.toLocaleString('ru-RU')}
+                                </TableCell>
+                                <TableCell className="text-right text-red-600 tabular-nums">
+                                  -{b.total_deductions.toLocaleString('ru-RU', { maximumFractionDigits: 2 })}
+                                </TableCell>
+                                <TableCell className="text-muted-foreground whitespace-nowrap">
+                                  {format(new Date(b.updated_at), 'dd.MM.yyyy HH:mm', { locale: ru })}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      ) : (
+                        <p className="text-muted-foreground text-center py-12 text-sm">Нет данных</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
               </TabsContent>
             )}
           </Tabs>
@@ -422,9 +535,7 @@ export default function BillingPage() {
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Подтверждение покупки</DialogTitle>
-              <DialogDescription>
-                Мок-оплата: деньги не списываются
-              </DialogDescription>
+              <DialogDescription>Мок-оплата: деньги не списываются</DialogDescription>
             </DialogHeader>
             {purchaseDialog && (
               <div className="space-y-4">
@@ -435,30 +546,19 @@ export default function BillingPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Кредиты</span>
-                    <span className="font-semibold text-emerald-600">
-                      +{purchaseDialog.credits.toLocaleString('ru-RU')}
-                    </span>
+                    <span className="font-semibold text-emerald-600">+{purchaseDialog.credits.toLocaleString('ru-RU')}</span>
                   </div>
                   <div className="flex items-center justify-between border-t pt-2 mt-2">
                     <span className="text-sm font-medium">К оплате</span>
                     <span className="text-lg font-bold">${purchaseDialog.price_usd}</span>
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground text-center">
-                  Это демо-режим. Кредиты будут начислены без реальной оплаты.
-                </p>
+                <p className="text-xs text-muted-foreground text-center">Демо-режим. Кредиты начислятся без реальной оплаты.</p>
               </div>
             )}
             <DialogFooter>
-              <Button variant="outline" onClick={() => setPurchaseDialog(null)}>
-                Отмена
-              </Button>
-              <Button
-                onClick={handlePurchase}
-                disabled={purchasing}
-                data-testid="confirm-purchase-btn"
-                className="gap-2"
-              >
+              <Button variant="outline" onClick={() => setPurchaseDialog(null)}>Отмена</Button>
+              <Button onClick={handlePurchase} disabled={purchasing} data-testid="confirm-purchase-btn" className="gap-2">
                 {purchasing ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
                 Оплатить
               </Button>
