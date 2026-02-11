@@ -295,6 +295,7 @@ async def send_message(
         "user_message": user_msg,
         "assistant_message": assistant_msg,
         "pipeline_data": pipeline_data,
+        "usage": metering_info,
     }
 
 
