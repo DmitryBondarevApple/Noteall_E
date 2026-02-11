@@ -62,7 +62,7 @@ async def generate_script(data: GenerateScriptRequest, user=Depends(get_current_
     if org_id:
         if not await check_user_monthly_limit(user):
             raise HTTPException(status_code=402, detail="Превышен месячный лимит токенов")
-        if not await check_org_balance(org_id):
+        if not await check_org_balance(org_id, user):
             raise HTTPException(status_code=402, detail="Недостаточно кредитов. Пополните баланс.")
 
     gpt_result = await call_gpt52_metered(system_message, user_message, reasoning_effort="medium")
@@ -140,7 +140,7 @@ async def analyze_raw(
     if org_id:
         if not await check_user_monthly_limit(user):
             raise HTTPException(status_code=402, detail="Превышен месячный лимит токенов")
-        if not await check_org_balance(org_id):
+        if not await check_org_balance(org_id, user):
             raise HTTPException(status_code=402, detail="Недостаточно кредитов. Пополните баланс.")
 
     gpt_result = await call_gpt52_metered(
@@ -320,7 +320,7 @@ async def analyze_with_prompt(
     if org_id:
         if not await check_user_monthly_limit(user):
             raise HTTPException(status_code=402, detail="Превышен месячный лимит токенов")
-        if not await check_org_balance(org_id):
+        if not await check_org_balance(org_id, user):
             raise HTTPException(status_code=402, detail="Недостаточно кредитов. Пополните баланс.")
 
     # Call GPT with full conversation
