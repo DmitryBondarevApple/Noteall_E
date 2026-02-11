@@ -194,7 +194,9 @@ async def process_transcript_with_gpt(
         project_id,
         content_for_gpt,
         master_prompt,
-        project.get("reasoning_effort", "high")
+        project.get("reasoning_effort", "high"),
+        user.get("org_id"),
+        user["id"],
     )
     
     return {"message": "Processing started", "status": "processing"}
