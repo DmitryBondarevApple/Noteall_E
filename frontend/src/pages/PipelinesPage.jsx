@@ -87,6 +87,10 @@ export function PipelinesContent() {
     }
   };
 
+  const [aiModalOpen, setAiModalOpen] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiGenerating, setAiGenerating] = useState(false);
+
   const handleExport = async (id, name) => {
     try {
       const res = await pipelinesApi.export(id);
