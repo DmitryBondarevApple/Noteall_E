@@ -612,6 +612,8 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
       items = [];
     }
 
+    console.log(`[DEBUG runBatchLoop] node=${loopNode.id}, items=${items.length}, hasPromptTemplate=${!!promptTemplate}, promptTemplate preview=${promptTemplate?.substring(0, 100)}`);
+
     const batchSize = loopNode.data.batch_size || 3;
     const effectiveSize = batchSize === 0 ? items.length : batchSize;
     const totalBatches = items.length > 0 ? Math.ceil(items.length / effectiveSize) : 0;
@@ -620,6 +622,10 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
     const loopIdx = orderedNodes.findIndex((n) => n.id === loopNode.id);
     const nextNodes = orderedNodes.slice(loopIdx + 1);
     const aiNode = nextNodes.find((n) => n.data.node_type === 'ai_prompt');
+
+    console.log(`[DEBUG runBatchLoop] batchSize=${effectiveSize}, totalBatches=${totalBatches}, aiNode=${aiNode?.id || 'none'}`);
+    console.log(`[DEBUG runBatchLoop] DECISION: promptTemplate=${!!promptTemplate}, aiNode=${!!aiNode} → will use ${promptTemplate ? 'promptTemplate' : (aiNode ? 'aiNode' : 'NOTHING')}`);
+
 
     let results = [];
     let outputs = { ...currentOutputs };
