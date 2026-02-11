@@ -572,6 +572,12 @@ export default function BillingPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        {/* Org Detail Modal */}
+        <OrgDetailModal
+          orgId={selectedOrgId}
+          open={!!selectedOrgId}
+          onClose={() => setSelectedOrgId(null)}
+        />
       </div>
     </AppLayout>
   );
