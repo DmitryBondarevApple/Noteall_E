@@ -34,6 +34,35 @@ export default function AppLayout({ children }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
+  const [creditInfo, setCreditInfo] = useState(null);
+
+  useEffect(() => {
+    if (!user) return;
+    const load = async () => {
+      try {
+        const [balRes, usageRes] = await Promise.all([
+          billingApi.getBalance().catch(() => ({ data: null })),
+          billingApi.getMyUsage().catch(() => ({ data: null })),
+        ]);
+        const bal = balRes.data;
+        const usage = usageRes.data;
+        const isAdminRole = ['org_admin', 'superadmin'].includes(user?.role);
+        const limit = usage?.monthly_token_limit || 0;
+
+        if (isAdminRole) {
+          setCreditInfo({ value: bal?.balance || 0, label: 'кредитов', type: 'org' });
+        } else if (limit > 0) {
+          const remaining = Math.max(0, limit - (usage?.total_tokens || 0));
+          setCreditInfo({ value: remaining, label: 'токенов', type: 'limit', total: limit });
+        } else {
+          setCreditInfo({ value: bal?.balance || 0, label: 'кредитов', type: 'org' });
+        }
+      } catch {}
+    };
+    load();
+    const interval = setInterval(load, 60000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   const handleLogout = () => {
     logout();
