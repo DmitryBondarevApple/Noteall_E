@@ -269,19 +269,45 @@ export function NodeConfigPanel({ node, allNodes, edges, onUpdate, onDelete, onC
 
         {/* Batch size (for batch_loop) */}
         {nodeType === 'batch_loop' && (
-          <div className="space-y-1.5">
-            <Label className="text-xs">Размер батча</Label>
-            <Input
-              type="number"
-              min={0}
-              value={nodeData.batch_size || 3}
-              onChange={(e) => handleChange('batch_size', parseInt(e.target.value) || 0)}
-              data-testid="node-batch-size"
-            />
-            <p className="text-[10px] text-muted-foreground">
-              0 = все элементы за один раз
-            </p>
-          </div>
+          <>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Размер батча</Label>
+              <Input
+                type="number"
+                min={0}
+                value={nodeData.batch_size || 3}
+                onChange={(e) => handleChange('batch_size', parseInt(e.target.value) || 0)}
+                data-testid="node-batch-size"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                0 = все элементы за один раз
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Источник промпта</Label>
+              <Select
+                value={nodeData.prompt_source_node || '_auto'}
+                onValueChange={(v) => handleChange('prompt_source_node', v === '_auto' ? null : v)}
+              >
+                <SelectTrigger data-testid="node-prompt-source">
+                  <SelectValue placeholder="Автоопределение" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_auto">Автоопределение</SelectItem>
+                  {allNodes
+                    .filter((n) => n.id !== node.id && ['template', 'ai_prompt'].includes(n.data?.node_type))
+                    .map((n) => (
+                      <SelectItem key={n.id} value={n.id}>
+                        {n.data?.label || n.id}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[10px] text-muted-foreground">
+                Template/AI-нода, из которой берётся промпт для каждого батча
+              </p>
+            </div>
+          </>
         )}
 
         {/* ===== SCRIPT EDITOR (for all script-capable nodes) ===== */}
