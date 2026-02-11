@@ -102,6 +102,18 @@ export const adminApi = {
   switchModel: (model) => axios.post(`${API}/admin/model/switch?model=${encodeURIComponent(model)}`),
 };
 
+// Organizations
+export const orgApi = {
+  getMy: () => axios.get(`${API}/organizations/my`),
+  getMyUsers: () => axios.get(`${API}/organizations/my/users`),
+  inviteUser: (email) => axios.post(`${API}/organizations/my/invite`, { email }),
+  removeUser: (userId) => axios.delete(`${API}/organizations/my/users/${userId}`),
+  updateUserRole: (userId, role) => axios.put(`${API}/organizations/my/users/${userId}/role?role=${role}`),
+  setUserLimit: (userId, limit) => axios.put(`${API}/organizations/my/users/${userId}/limit`, { monthly_token_limit: limit }),
+  listAll: () => axios.get(`${API}/organizations/all`),
+  getOrg: (orgId) => axios.get(`${API}/organizations/${orgId}`),
+};
+
 // Export
 export const exportApi = {
   toWord: (content, filename) => axios.post(`${API}/export/word`, { content, filename }, { responseType: 'blob' }),
