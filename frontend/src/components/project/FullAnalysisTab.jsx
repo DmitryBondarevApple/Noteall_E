@@ -655,21 +655,22 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
         const systemMsg = aiNode.data.system_message || 'Ты — ассистент для анализа.';
 
         for (const [key, value] of Object.entries(scriptResult.promptVars)) {
-          prompt = prompt.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value);
+          prompt = prompt.split(`{{${key}}}`).join(value);
         }
 
-        // Substitute remaining vars
+        // Substitute remaining vars (safe split/join)
         const varMatches = prompt.match(/\{\{(\w+)\}\}/g) || [];
         for (const m of varMatches) {
           const varName = m.replace(/[{}]/g, '');
           if (outputs[varName] !== undefined) {
-            prompt = prompt.replace(m, String(outputs[varName]));
+            prompt = prompt.split(m).join(String(outputs[varName]));
           }
         }
 
         setProcessingLabel(`${loopNode.data.label}: ${iteration + 1}/${totalBatches}`);
 
-        const textInPrompt = outputs.text && prompt.includes(outputs.text);
+        const textVal = outputs.text || '';
+        const textInPrompt = textVal.length > 100 && prompt.length > textVal.length;
 
         const response = await chatApi.analyzeRaw(projectId, {
           system_message: systemMsg,
@@ -684,20 +685,21 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
         // No AI child node, but we have a prompt template from upstream template node
         let prompt = promptTemplate;
         for (const [key, value] of Object.entries(scriptResult.promptVars)) {
-          prompt = prompt.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value);
+          prompt = prompt.split(`{{${key}}}`).join(value);
         }
-        // Resolve remaining vars from outputs
+        // Resolve remaining vars from outputs (safe split/join)
         const varMatches2 = prompt.match(/\{\{(\w+)\}\}/g) || [];
         for (const m of varMatches2) {
           const varName = m.replace(/[{}]/g, '');
           if (outputs[varName] !== undefined) {
-            prompt = prompt.replace(m, String(outputs[varName]));
+            prompt = prompt.split(m).join(String(outputs[varName]));
           }
         }
 
         setProcessingLabel(`${loopNode.data.label}: ${iteration + 1}/${totalBatches}`);
 
-        const textInPrompt = outputs.text && prompt.includes(outputs.text);
+        const textVal = outputs.text || '';
+        const textInPrompt = textVal.length > 100 && prompt.length > textVal.length;
 
         const response = await chatApi.analyzeRaw(projectId, {
           system_message: loopNode.data.system_message || 'Ты — аналитик встреч. Пиши нейтрально, безлично, фиксируй факты.',
