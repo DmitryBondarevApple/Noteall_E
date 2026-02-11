@@ -75,6 +75,13 @@
 - Superadmin: markup tier management in Admin panel (Наценки tab)
 - Metering integrated into: ai_chat, pipeline_generate, analyze_prompt, analyze_raw, generate_script, doc_stream, pipeline_node, pipeline_batch, transcript_processing
 
+### Admin & Usage Dashboards (Feb 2026)
+- SUPERADMIN platform tab: revenue ($), deductions, monthly requests/tokens, org/user counts
+- ORG_ADMIN team tab: per-employee AI usage (requests, tokens, credits, progress bar for limits)
+- Overview tab: balance card, monthly AI requests, credits spent with limit progress bar
+- AI Chat cost badge: after each response shows tokens used and credits deducted
+- New endpoints: /api/billing/usage/org-users, /api/billing/admin/summary
+
 ### Core Features
 - Meeting transcription, speaker identification, AI analysis
 - Document Agent with automated pipeline runner
@@ -123,7 +130,6 @@
 - `settings`: {key: "active_model", value: "gpt-5.2"}
 
 ## Backlog
-- **P0**: SaaS Stage 4: Admin dashboards (superadmin: revenue/credit charts, org_admin: usage stats per employee)
 - **P1**: SaaS Stage 5: Real payment gateway integration (Stripe)
 - **P2**: Auto-check for new AI models and admin notification
 - **P2**: Export results to Word/PDF
