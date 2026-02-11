@@ -49,7 +49,9 @@ export const fragmentsApi = {
   update: (projectId, fragmentId, data) => 
     axios.put(`${API}/projects/${projectId}/fragments/${fragmentId}`, data),
   revert: (projectId, fragmentId) =>
-    axios.post(`${API}/projects/${projectId}/fragments/${fragmentId}/revert`)
+    axios.post(`${API}/projects/${projectId}/fragments/${fragmentId}/revert`),
+  bulkAccept: (projectId) =>
+    axios.post(`${API}/projects/${projectId}/fragments/bulk-accept`),
 };
 
 // Speakers (project-specific)
