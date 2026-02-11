@@ -78,6 +78,18 @@ Build a comprehensive multi-tenant SaaS application with AI features for meeting
 - **Verified:** Wizard now shows "Выбрано: 34 из 34" with checkboxes
 - **File:** `FullAnalysisTab.jsx`
 
+### 2026-02-12: Batch Loop Using Wrong AI Node + Empty Final Review (FIXED)
+- **Bug:** After user_edit_list, the final review stage (step 9) showed only headers "ИТОГОВОЕ РЕЗЮМЕ" and "ПОДРОБНОЕ РЕЗЮМЕ ПО ТЕМАМ" with no content
+- **Root causes:**
+  1. `runBatchLoop` prioritized child `aiNode` (step_7: short summary) over `promptTemplate` (from step_4: batch template) — the batch loop was using the wrong prompt
+  2. step_7 was incorrectly marked as "consumed" by the batch loop, so it never ran its actual task (generating a short summary)
+  3. `resolveTemplateVars` used `String.replace()` with regex, vulnerable to `$` characters in AI-generated text
+- **Fix:**
+  1. Reversed priority in batch loop: `promptTemplate` takes precedence over `aiNode`
+  2. Only mark `aiNode` as consumed when it was actually used (no `promptTemplate`)
+  3. Replaced regex `.replace()` with `.split().join()` in `resolveTemplateVars` for safe substitution
+- **File:** `FullAnalysisTab.jsx`
+
 ## Backlog
 - (пусто)
 
