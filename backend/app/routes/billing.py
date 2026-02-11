@@ -314,3 +314,126 @@ async def admin_usage_stats(org_id: str = None, admin=Depends(get_superadmin_use
         for r in results
     ]
 
+
+# ── Org-level per-user usage (org_admin) ──
+
+@router.get("/usage/org-users")
+async def org_users_usage(user=Depends(get_admin_user)):
+    """Get per-user usage stats within the current org for the current month."""
+    org_id = user.get("org_id")
+    if not org_id:
+        raise HTTPException(status_code=400, detail="No organization")
+
+    now = datetime.now(timezone.utc)
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0).isoformat()
+
+    pipeline = [
+        {"$match": {"org_id": org_id, "created_at": {"$gte": month_start}}},
+        {"$group": {
+            "_id": "$user_id",
+            "total_tokens": {"$sum": "$total_tokens"},
+            "total_credits": {"$sum": "$credits_used"},
+            "total_requests": {"$sum": 1},
+        }},
+        {"$sort": {"total_credits": -1}},
+    ]
+    results = await db.usage_records.aggregate(pipeline).to_list(1000)
+
+    # Enrich with user info
+    user_ids = [r["_id"] for r in results if r["_id"]]
+    user_map = {}
+    if user_ids:
+        users = await db.users.find(
+            {"id": {"$in": user_ids}},
+            {"_id": 0, "id": 1, "name": 1, "email": 1, "monthly_token_limit": 1},
+        ).to_list(len(user_ids))
+        user_map = {u["id"]: u for u in users}
+
+    # Also include org users with zero usage
+    all_org_users = await db.users.find(
+        {"org_id": org_id},
+        {"_id": 0, "id": 1, "name": 1, "email": 1, "monthly_token_limit": 1},
+    ).to_list(1000)
+    users_with_data = {r["_id"] for r in results}
+
+    output = []
+    for r in results:
+        u = user_map.get(r["_id"], {})
+        output.append({
+            "user_id": r["_id"],
+            "name": u.get("name", "Unknown"),
+            "email": u.get("email", ""),
+            "total_tokens": r["total_tokens"],
+            "total_credits": round(r["total_credits"], 4),
+            "total_requests": r["total_requests"],
+            "monthly_token_limit": u.get("monthly_token_limit", 0),
+        })
+
+    # Add users with no usage this month
+    for u in all_org_users:
+        if u["id"] not in users_with_data:
+            output.append({
+                "user_id": u["id"],
+                "name": u.get("name", "Unknown"),
+                "email": u.get("email", ""),
+                "total_tokens": 0,
+                "total_credits": 0,
+                "total_requests": 0,
+                "monthly_token_limit": u.get("monthly_token_limit", 0),
+            })
+
+    return output
+
+
+# ── Superadmin platform summary ──
+
+@router.get("/admin/summary")
+async def admin_platform_summary(admin=Depends(get_superadmin_user)):
+    """Get platform-wide summary metrics."""
+    now = datetime.now(timezone.utc)
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0).isoformat()
+
+    # Total topups ever
+    topup_pipeline = [
+        {"$match": {"type": "topup"}},
+        {"$group": {"_id": None, "total": {"$sum": "$amount"}}},
+    ]
+    topup_result = await db.transactions.aggregate(topup_pipeline).to_list(1)
+    total_topups = topup_result[0]["total"] if topup_result else 0
+
+    # Total deductions ever
+    deduct_pipeline = [
+        {"$match": {"type": "deduction"}},
+        {"$group": {"_id": None, "total": {"$sum": "$amount"}}},
+    ]
+    deduct_result = await db.transactions.aggregate(deduct_pipeline).to_list(1)
+    total_deductions = deduct_result[0]["total"] if deduct_result else 0
+
+    # This month usage
+    month_pipeline = [
+        {"$match": {"created_at": {"$gte": month_start}}},
+        {"$group": {
+            "_id": None,
+            "total_tokens": {"$sum": "$total_tokens"},
+            "total_credits": {"$sum": "$credits_used"},
+            "total_requests": {"$sum": 1},
+        }},
+    ]
+    month_result = await db.usage_records.aggregate(month_pipeline).to_list(1)
+    month_stats = month_result[0] if month_result else {"total_tokens": 0, "total_credits": 0, "total_requests": 0}
+    month_stats.pop("_id", None)
+
+    org_count = await db.organizations.count_documents({})
+    user_count = await db.users.count_documents({})
+
+    return {
+        "total_topups_credits": round(total_topups, 2),
+        "total_deductions_credits": round(total_deductions, 4),
+        "total_revenue_usd": round(total_topups * 0.02, 2),
+        "month_tokens": month_stats.get("total_tokens", 0),
+        "month_credits": round(month_stats.get("total_credits", 0), 4),
+        "month_requests": month_stats.get("total_requests", 0),
+        "org_count": org_count,
+        "user_count": user_count,
+    }
+
