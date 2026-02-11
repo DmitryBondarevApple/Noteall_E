@@ -590,11 +590,22 @@ export default function PipelineEditorPage() {
       {/* Header */}
       <header className="bg-white border-b px-4 py-2 flex items-center justify-between shrink-0 z-20">
         <div className="flex items-center gap-3">
-          <Link to="/pipelines">
+          <Link to={returnTo || "/pipelines"}>
             <Button variant="ghost" size="icon" className="h-8 w-8" data-testid="back-to-pipelines">
               <ArrowLeft className="w-4 h-4" />
             </Button>
           </Link>
+          {returnTo && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-xs h-7"
+              onClick={() => navigate(returnTo)}
+              data-testid="return-to-project-btn"
+            >
+              Вернуться к проекту
+            </Button>
+          )}
           <button
             onClick={() => setEditMetaOpen(true)}
             className="flex items-center gap-2 hover:bg-slate-50 rounded-lg px-2 py-1 transition-colors"
