@@ -8,6 +8,7 @@ import InsufficientCreditsModal from "./components/modals/InsufficientCreditsMod
 
 // Pages
 import AuthPage from "./pages/AuthPage";
+import InviteRegisterPage from "./pages/InviteRegisterPage";
 import MeetingsPage from "./pages/MeetingsPage";
 import ProjectPage from "./pages/ProjectPage";
 import DocumentsPage from "./pages/DocumentsPage";
@@ -36,6 +37,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<PublicRoute><AuthPage /></PublicRoute>} />
+      <Route path="/invite/:token" element={<InviteRegisterPage />} />
       <Route path="/meetings" element={<ProtectedRoute><MeetingsPage /></ProtectedRoute>} />
       <Route path="/meetings/speakers" element={<ProtectedRoute><SpeakerDirectoryPage /></ProtectedRoute>} />
       <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectPage /></ProtectedRoute>} />
