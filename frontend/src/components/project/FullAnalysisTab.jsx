@@ -744,6 +744,63 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
     return outputs;
   }, [orderedNodes, projectId, getNodeInput]);
 
+  // Prepare UI state when entering a new stage
+  // NOTE: This must be defined BEFORE startWizard and proceedToNextStage which depend on it
+  const prepareStageUI = useCallback((stage, outputs) => {
+    const type = stage.primaryNode.data.node_type;
+
+    if (type === 'user_edit_list') {
+      // Input should be an array of strings (from parse_list or similar)
+      const input = getNodeInput(stage.primaryNode.id, outputs);
+      const items = Array.isArray(input) ? input : (typeof input === 'string' ? input.split('\n').filter(Boolean) : []);
+      setEditableList(items.map((text, i) => ({ id: i, text, selected: true })));
+    }
+
+    if (type === 'user_review') {
+      const input = getNodeInput(stage.primaryNode.id, outputs);
+      let content = '';
+      if (typeof input === 'string') {
+        content = input;
+      } else if (input && typeof input === 'object') {
+        // Multiple data sources — build document from all inputs
+        const depIds = dataDeps[stage.primaryNode.id] || [];
+        const parts = depIds.map((id) => outputs[id]).filter(Boolean);
+        if (parts.length >= 2) {
+          const subject = outputs['meeting_subject'] || outputs['subject'] || outputs['key_subject'] || 'Анализ';
+          // Detect which dep is the summary by checking node ID/label for "summar"/"итог"
+          let summaryIdx = -1;
+          for (let i = 0; i < depIds.length; i++) {
+            const depNode = orderedNodes.find(n => n.id === depIds[i]);
+            const lbl = (depNode?.data.label || '').toLowerCase();
+            const id = depIds[i].toLowerCase();
+            const isSummary = (id.includes('summar') || lbl.includes('итог') || lbl.includes('резюме'))
+              && !id.includes('aggregate') && !id.includes('detailed');
+            if (isSummary) { summaryIdx = i; break; }
+          }
+          if (summaryIdx === -1) summaryIdx = 0;
+          const summary = String(parts[summaryIdx] || '');
+          const detailed = parts.filter((_, i) => i !== summaryIdx).join('\n\n');
+          content = `# Резюме встречи: ${subject}\n\n## Краткое саммари\n\n${summary}\n\n---\n\n## Подробный анализ по темам\n\n${detailed}`;
+        } else {
+          content = parts.join('\n\n');
+        }
+      }
+      setReviewContent(content);
+      setIsEditingReview(false);
+    }
+
+    if (type === 'template') {
+      // Reset template inputs but keep subject if previously set
+      setTemplateInputs({});
+    }
+
+    if (stage.isPauseStage) {
+      // Show the output of the primary node
+      const nodeOut = outputs[stage.primaryNode.id];
+      setPauseResult(typeof nodeOut === 'string' ? nodeOut : JSON.stringify(nodeOut, null, 2));
+    }
+  }, [getNodeInput, dataDeps, orderedNodes]);
+
   // Start the wizard — run first stage
   const startWizard = useCallback(async () => {
     if (stages.length === 0) return;
