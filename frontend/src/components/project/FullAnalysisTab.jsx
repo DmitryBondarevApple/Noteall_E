@@ -454,7 +454,6 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
   const executeNode = useCallback(async (node, currentOutputs) => {
     const type = node.data.node_type;
     const input = getNodeInput(node.id, currentOutputs);
-    console.log(`[DEBUG executeNode] node=${node.id}, type=${type}, input type=${typeof input}, input length=${typeof input === 'string' ? input.length : Array.isArray(input) ? input.length : 'N/A'}`);
 
     if (type === 'ai_prompt') {
       // Build prompt with variable substitution
@@ -508,7 +507,6 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
       const textVal = currentOutputs.text || '';
       const textWasSubstituted = textVal.length > 100 && prompt.length > textVal.length;
 
-      console.log(`[DEBUG ai_prompt BEFORE API] node=${node.id}, prompt length=${prompt.length}, textWasSubstituted=${textWasSubstituted}`);
 
       const response = await chatApi.analyzeRaw(projectId, {
         system_message: systemMsg,
@@ -517,7 +515,6 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
         attachment_ids: attachmentIdsRef.current.length > 0 ? attachmentIdsRef.current : undefined,
         skip_transcript_context: textWasSubstituted,
       });
-      console.log(`[DEBUG ai_prompt AFTER API] node=${node.id}, response_text length=${response.data.response_text?.length}, first 300 chars:`, response.data.response_text?.substring(0, 300));
       return response.data.response_text;
     }
 
@@ -529,7 +526,6 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
       }
       // Default: parse text into list of items (handles Python scripts or missing scripts)
       const parsed = defaultParseList(typeof input === 'string' ? input : String(input || ''));
-      console.log(`[DEBUG parse_list] node=${node.id}, input type=${typeof input}, input length=${typeof input === 'string' ? input.length : 'N/A'}, parsed items=${parsed.length}`);
       return parsed;
     }
 
@@ -549,15 +545,12 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
         return typeof input === 'string' ? input : (input || '');
       }
       // Resolve variables from currentOutputs and dep outputs
-      console.log(`[DEBUG executeNode template] node=${node.id}, tplText preview=${tplText.substring(0, 100)}, depIds=${node.data.input_from}, input type=${typeof input}, isArray=${Array.isArray(input)}, loop_vars=${node.data.loop_vars}`);
       let result = resolveTemplateVars(tplText, node.data.input_from || [], currentOutputs, node.data.loop_vars);
-      console.log(`[DEBUG executeNode template] resolved result preview=${result.substring(0, 200)}`);
 
       // If there are still unresolved vars (like {{item}}) and input is an array,
       // this is a batch prompt template — return both template and items
       const hasUnresolved = /\{\{\w+\}\}/.test(result);
       const inputArray = Array.isArray(input) ? input : null;
-      console.log(`[DEBUG executeNode template] hasUnresolved=${hasUnresolved}, inputArray=${!!inputArray}`);
       if (hasUnresolved && inputArray) {
         return { __template: result, __items: inputArray };
       }
@@ -574,23 +567,18 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
 
   const runAutoNodes = useCallback(async (nodes, currentOutputs) => {
     let outputs = { ...currentOutputs };
-    console.log('[DEBUG runAutoNodes] processing nodes:', nodes.map(n => `${n.id}(${n.data.node_type})`));
     for (const node of nodes) {
       if (pausedRef.current) return outputs;
       // Skip nodes already consumed by a batch loop
       if (nodesConsumedByLoop.current.has(node.id)) {
-        console.log('[DEBUG runAutoNodes] SKIPPING consumed node:', node.id);
         continue;
       }
 
       setProcessingLabel(node.data.step_title || node.data.label);
 
       if (node.data.node_type === 'batch_loop') {
-        console.log('[DEBUG runAutoNodes] running batch_loop:', node.id);
         outputs = await runBatchLoop(node, outputs);
-        console.log('[DEBUG runAutoNodes] batch_loop done, output keys:', Object.keys(outputs).filter(k => !currentOutputs[k]));
       } else {
-        console.log('[DEBUG runAutoNodes] executing node:', node.id, 'type:', node.data.node_type);
         const result = await executeNode(node, outputs);
         outputs[node.id] = result;
         // Also store by label for variable reference
@@ -598,7 +586,6 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
           outputs[node.data.label] = result;
         }
         const preview = typeof result === 'string' ? result.substring(0, 150) : (Array.isArray(result) ? `Array(${result.length})` : (result && typeof result === 'object' ? JSON.stringify(result).substring(0, 150) : typeof result));
-        console.log(`[DEBUG runAutoNodes] node ${node.id} result: ${preview}`);
       }
     }
     return outputs;
@@ -619,7 +606,6 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
       items = [];
     }
 
-    console.log(`[DEBUG runBatchLoop] node=${loopNode.id}, items=${items.length}, hasPromptTemplate=${!!promptTemplate}, promptTemplate preview=${promptTemplate?.substring(0, 100)}`);
 
     const batchSize = loopNode.data.batch_size || 3;
     const effectiveSize = batchSize === 0 ? items.length : batchSize;
@@ -638,7 +624,6 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
       } else if (typeof srcOutput === 'string') {
         promptTemplate = srcOutput;
       }
-      console.log(`[DEBUG runBatchLoop] explicit prompt_source_node=${loopNode.data.prompt_source_node}, resolved promptTemplate=${!!promptTemplate}`);
     }
 
     // Fallback: find next ai_prompt node (only when no promptTemplate)
@@ -648,7 +633,6 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
       aiNode = nextNodes.find((n) => n.data.node_type === 'ai_prompt');
     }
 
-    console.log(`[DEBUG runBatchLoop] batchSize=${effectiveSize}, totalBatches=${totalBatches}, aiNode=${aiNode?.id || 'none'}, hasPromptTemplate=${!!promptTemplate}`);
 
 
     let results = [];
@@ -795,10 +779,7 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
 
     if (type === 'user_review') {
       const input = getNodeInput(stage.primaryNode.id, outputs);
-      console.log('[DEBUG prepareStageUI user_review] input type:', typeof input, 'isNull:', input === null, 'isUndefined:', input === undefined);
-      console.log('[DEBUG prepareStageUI user_review] dataDeps:', dataDeps[stage.primaryNode.id]);
       if (typeof input === 'string') {
-        console.log('[DEBUG prepareStageUI user_review] input string length:', input.length, 'preview:', input.substring(0, 200));
       }
       let content = '';
       if (typeof input === 'string') {
@@ -856,11 +837,9 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
         ? processedTranscript
         : processedTranscript?.content || '';
     }
-    console.log('[DEBUG startWizard] text length:', initialOutputs.text?.length, 'text type:', typeof initialOutputs.text, 'processedTranscript type:', typeof processedTranscript);
     for (const [key, value] of Object.entries(pipelineVarInputs)) {
       if (value) initialOutputs[key] = value;
     }
-    console.log('[DEBUG startWizard] initialOutputs keys:', Object.keys(initialOutputs));
 
     // Run auto nodes before first stage
     const firstStage = stages[0];
@@ -897,9 +876,6 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
       }
     }
 
-    console.log('[DEBUG proceedToNextStage] currentStageIdx:', currentStageIdx, 'currentStage:', currentStage.id, 'type:', currentStage.type);
-    console.log('[DEBUG proceedToNextStage] userOutput type:', typeof userOutput, 'isArray:', Array.isArray(userOutput), 'length:', Array.isArray(userOutput) ? userOutput.length : 'N/A');
-    console.log('[DEBUG proceedToNextStage] autoNodesAfter:', currentStage.autoNodesAfter.map(n => n.id));
 
     setIsProcessing(true);
     setBatchProgress(0);
@@ -921,19 +897,15 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
       }
 
       const nextStage = stages[nextIdx];
-      console.log('[DEBUG proceedToNextStage] nextStage:', nextStage.id, 'type:', nextStage.type);
-      console.log('[DEBUG proceedToNextStage] nextStage.autoNodesBefore:', nextStage.autoNodesBefore.map(n => `${n.id}(${n.data.node_type})`));
 
       // Run auto nodes BEFORE next stage
       if (nextStage.autoNodesBefore.length > 0) {
         outputs = await runAutoNodes(nextStage.autoNodesBefore, outputs);
       }
 
-      console.log('[DEBUG proceedToNextStage] AFTER autoNodesBefore, output keys:', Object.keys(outputs));
       for (const key of Object.keys(outputs)) {
         const val = outputs[key];
         const preview = typeof val === 'string' ? val.substring(0, 100) : (Array.isArray(val) ? `Array(${val.length})` : typeof val);
-        console.log(`[DEBUG outputs] ${key}: ${preview}`);
       }
 
       // If next stage is a non-interactive pause stage, execute its primary node
