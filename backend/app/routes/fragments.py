@@ -32,6 +32,70 @@ async def update_project_status_if_needed(project_id: str):
             )
 
 
+@router.post("/bulk-accept")
+async def bulk_accept_fragments(project_id: str, user=Depends(get_current_user)):
+    """Auto-accept all pending/auto_corrected fragments. For fast-track mode."""
+    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Get all pending fragments
+    pending = await db.uncertain_fragments.find({
+        "project_id": project_id,
+        "status": {"$in": ["pending", "auto_corrected"]}
+    }, {"_id": 0}).to_list(1000)
+    
+    # For auto_corrected: accept the AI suggestion
+    # For pending: leave the original text (no correction needed)
+    accepted = 0
+    for frag in pending:
+        if frag.get("status") == "auto_corrected" and frag.get("corrected_text"):
+            # AI already proposed a correction - accept it
+            corrected = frag["corrected_text"]
+            # Apply correction to transcript
+            transcript = await db.transcripts.find_one(
+                {"project_id": project_id, "version_type": "processed"}, {"_id": 0}
+            )
+            if transcript:
+                word = frag.get("original_text", "")
+                escaped = re.escape(word)
+                pattern = re.compile(rf'\[+{escaped}\?+\]+')
+                content = transcript.get("content", "")
+                new_content = pattern.sub(corrected, content)
+                if new_content != content:
+                    await db.transcripts.update_one(
+                        {"project_id": project_id, "version_type": "processed"},
+                        {"$set": {"content": new_content}}
+                    )
+        else:
+            # Pending with no AI correction - remove [word?] markers, keep original
+            transcript = await db.transcripts.find_one(
+                {"project_id": project_id, "version_type": "processed"}, {"_id": 0}
+            )
+            if transcript:
+                word = frag.get("original_text", "")
+                escaped = re.escape(word)
+                pattern = re.compile(rf'\[+{escaped}\?+\]+')
+                content = transcript.get("content", "")
+                new_content = pattern.sub(word, content)
+                if new_content != content:
+                    await db.transcripts.update_one(
+                        {"project_id": project_id, "version_type": "processed"},
+                        {"$set": {"content": new_content}}
+                    )
+        
+        await db.uncertain_fragments.update_one(
+            {"id": frag["id"]},
+            {"$set": {"status": "confirmed", "corrected_text": frag.get("corrected_text") or frag.get("original_text")}}
+        )
+        accepted += 1
+    
+    # Update project status
+    await update_project_status_if_needed(project_id)
+    
+    return {"accepted": accepted, "total": len(pending)}
+
+
 @router.get("", response_model=List[UncertainFragmentResponse])
 async def get_fragments(project_id: str, user=Depends(get_current_user)):
     project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
