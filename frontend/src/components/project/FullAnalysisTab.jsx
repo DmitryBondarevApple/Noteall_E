@@ -549,8 +549,8 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
         return typeof input === 'string' ? input : (input || '');
       }
       // Resolve variables from currentOutputs and dep outputs
-      console.log(`[DEBUG executeNode template] node=${node.id}, tplText preview=${tplText.substring(0, 100)}, depIds=${node.data.input_from}, input type=${typeof input}, isArray=${Array.isArray(input)}`);
-      let result = resolveTemplateVars(tplText, node.data.input_from || [], currentOutputs);
+      console.log(`[DEBUG executeNode template] node=${node.id}, tplText preview=${tplText.substring(0, 100)}, depIds=${node.data.input_from}, input type=${typeof input}, isArray=${Array.isArray(input)}, loop_vars=${node.data.loop_vars}`);
+      let result = resolveTemplateVars(tplText, node.data.input_from || [], currentOutputs, node.data.loop_vars);
       console.log(`[DEBUG executeNode template] resolved result preview=${result.substring(0, 200)}`);
 
       // If there are still unresolved vars (like {{item}}) and input is an array,
