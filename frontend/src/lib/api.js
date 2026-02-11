@@ -244,5 +244,15 @@ export const docTemplatesApi = {
   seed: () => axios.post(`${API}/doc/seed-templates`),
 };
 
+// Billing
+export const billingApi = {
+  getBalance: () => axios.get(`${API}/billing/balance`),
+  getPlans: () => axios.get(`${API}/billing/plans`),
+  getTransactions: (limit = 50, skip = 0) =>
+    axios.get(`${API}/billing/transactions`, { params: { limit, skip } }),
+  topup: (planId) => axios.post(`${API}/billing/topup`, { plan_id: planId }),
+  adminBalances: () => axios.get(`${API}/billing/admin/balances`),
+};
+
 // Seed
 export const seedData = () => axios.post(`${API}/seed`);
