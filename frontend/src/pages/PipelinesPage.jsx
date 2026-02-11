@@ -120,6 +120,22 @@ export function PipelinesContent() {
     e.target.value = '';
   };
 
+  const handleAiGenerate = async () => {
+    if (!aiPrompt.trim()) return;
+    setAiGenerating(true);
+    try {
+      const res = await pipelinesApi.generate(aiPrompt.trim());
+      setAiModalOpen(false);
+      setAiPrompt('');
+      toast.success('Сценарий создан');
+      navigate(`/pipelines/${res.data.id}`);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Ошибка генерации');
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
