@@ -1,0 +1,89 @@
+{
+  "summary": "Bug fix verified - AI Chat credits issue resolved. The original bug where users got 402 error when sending AI chat messages due to 0 credit balance has been fixed. Welcome credits (100) are now added on registration, and existing orgs were topped up.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_bug_fix_credits.py",
+    "/app/test_reports/pytest/pytest_credits_fix.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_bug_fix_credits.py"
+  ],
+  "success_rate": {
+    "backend": "100% (15/15 passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "admin_user": "admin@voiceworkspace.com / admin123 (superadmin)",
+    "bugtest_user": "bugtest@test.com / bugtest123 (org_admin)"
+  },
+  "seed_data_creation": "Test registration creates new users with unique emails for testing welcome credits",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Bug fix for AI Chat 402 error verified. The fix added welcome credits (100) on registration (auth.py lines 74-88) and topped up existing orgs. AI Chat endpoint POST /api/ai-chat/sessions/{session_id}/message now works correctly. Frontend handles 402 errors with clear Russian messages (AiChatPanel.jsx lines 304-308).",
+  "features_tested": {
+    "ai_chat_message_sending": {
+      "status": "PASS",
+      "description": "Messages sent successfully via POST /api/ai-chat/sessions/{session_id}/message",
+      "response": "AI responds with content, usage info (tokens + credits) is tracked"
+    },
+    "ai_chat_sessions_crud": {
+      "status": "PASS",
+      "tests_passed": "create, list, get, delete sessions"
+    },
+    "registration_welcome_credits": {
+      "status": "PASS",
+      "description": "New users get 100 welcome credits on registration",
+      "verified_in": "auth.py lines 74-88, transaction created with 'Приветственные кредиты'"
+    },
+    "billing_balance_endpoint": {
+      "status": "PASS",
+      "endpoint": "GET /api/billing/balance",
+      "returns": "{ balance, org_id }"
+    },
+    "existing_orgs_topup": {
+      "status": "PASS",
+      "description": "bugtest@test.com org shows +100 welcome credits in transaction history"
+    },
+    "error_handling_402": {
+      "status": "PASS",
+      "frontend": "Shows 'Недостаточно кредитов. Перейдите в раздел \"Биллинг\" для пополнения.'",
+      "backend": "Returns clear Russian error messages for monthly limit and credit balance"
+    }
+  },
+  "ui_verification": {
+    "login_page": "PASS - users can login",
+    "pipeline_editor": "PASS - AI assistant panel opens correctly",
+    "ai_chat_panel": "PASS - Messages sent/received, usage badge shows tokens+credits",
+    "billing_page_overview": "PASS - Shows balance, AI requests count, credits spent",
+    "billing_page_history": "PASS - Shows transaction history including welcome credits topup"
+  },
+  "key_observations": {
+    "bugtest_user_balance": "92.67 credits (started with 100, used ~7.33 for AI calls)",
+    "welcome_credits_transaction": "Found in history: 'Приветственные кредиты' +100",
+    "ai_model_used": "gpt-5.2",
+    "credits_per_ai_call": "~1.3-3.2 credits per message depending on token count"
+  },
+  "mocked_apis": {
+    "POST /api/billing/topup": "MOCK - Credits added without real payment (existing behavior)",
+    "AI Chat": "REAL - Uses actual OpenAI API (gpt-5.2 model)"
+  },
+  "bug_rca": {
+    "root_cause": "Organizations had 0 credit balance after billing system was added, causing check_org_balance() to return False and blocking AI calls with 402 error",
+    "fix_applied": [
+      "Added 100 welcome credits on new user registration (auth.py)",
+      "Topped up existing orgs that had 0 balance",
+      "Frontend handles 402 with clear Russian error message"
+    ],
+    "verification": "Both admin and bugtest users can now send AI chat messages without 402 errors"
+  }
+}
