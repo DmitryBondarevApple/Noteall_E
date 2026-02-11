@@ -162,9 +162,12 @@ async def send_message(
         ext = image.filename.rsplit(".", 1)[-1] if "." in image.filename else "png"
         s3_key = f"chat_images/{session_id}/{uuid.uuid4()}.{ext}"
         if s3_enabled():
-            upload_bytes(s3_key, image_data, image.content_type or "image/png")
-            image_s3_key = s3_key
-            image_display_url = presigned_url(s3_key)
+            try:
+                upload_bytes(s3_key, image_data, image.content_type or "image/png")
+                image_s3_key = s3_key
+                image_display_url = presigned_url(s3_key)
+            except Exception as e:
+                logger.warning(f"S3 upload failed, image will be sent without persistent storage: {e}")
         # Prepare base64 for OpenAI Vision
         image_base64 = base64.b64encode(image_data).decode("utf-8")
 
