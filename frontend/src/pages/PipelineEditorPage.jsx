@@ -849,6 +849,39 @@ export default function PipelineEditorPage() {
           </div>
         </DialogContent>
       </Dialog>
+      {/* AI Edit Modal */}
+      <Dialog open={aiEditOpen} onOpenChange={setAiEditOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Bot className="w-5 h-5 text-cyan-500" />
+              AI-ассистент
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Отредактируйте промпт и AI перегенерирует сценарий.
+            </p>
+            <textarea
+              className="w-full h-40 rounded-lg border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="Опишите изменения для сценария..."
+              value={aiEditPrompt}
+              onChange={(e) => setAiEditPrompt(e.target.value)}
+              disabled={aiEditGenerating}
+              data-testid="ai-edit-prompt-input"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAiEditOpen(false)} disabled={aiEditGenerating}>
+              Отмена
+            </Button>
+            <Button onClick={handleAiRegenerate} disabled={!aiEditPrompt.trim() || aiEditGenerating} data-testid="ai-regenerate-btn" className="gap-2">
+              {aiEditGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+              {aiEditGenerating ? 'Генерация...' : 'Обновить сценарий'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
     </AppLayout>
   );
