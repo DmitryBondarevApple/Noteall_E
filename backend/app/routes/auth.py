@@ -35,12 +35,45 @@ async def register(data: UserCreate):
 
     now = datetime.now(timezone.utc).isoformat()
     user_id = str(uuid.uuid4())
-    org_id = str(uuid.uuid4())
 
-    # Check if this email was pre-invited to an org
-    invitation = await db.org_invitations.find_one({"email": data.email, "accepted": False})
-    if invitation:
-        # User was invited — join that org as regular user
+    # Check if registering via magic-link invitation
+    if data.invitation_token:
+        inv = await db.invitations.find_one({"token": data.invitation_token})
+        if not inv:
+            raise HTTPException(status_code=400, detail="Invalid invitation link")
+        if inv.get("is_used"):
+            raise HTTPException(status_code=400, detail="This invitation has already been used")
+        if inv.get("is_revoked"):
+            raise HTTPException(status_code=400, detail="This invitation has been revoked")
+
+        inv_org_id = inv["org_id"]
+        user_doc = {
+            "id": user_id,
+            "email": data.email,
+            "password": hash_password(data.password),
+            "name": data.name,
+            "role": "user",
+            "org_id": inv_org_id,
+            "monthly_token_limit": 0,
+            "created_at": now,
+        }
+        await db.users.insert_one(user_doc)
+
+        # Mark invitation as used
+        await db.invitations.update_one(
+            {"token": data.invitation_token},
+            {"$set": {
+                "is_used": True,
+                "used_by_id": user_id,
+                "used_by_name": data.name,
+                "used_at": now,
+            }},
+        )
+        org_name = inv.get("org_name")
+
+    # Check if this email was pre-invited to an org (legacy email-based invite)
+    elif await db.org_invitations.find_one({"email": data.email, "accepted": False}):
+        invitation = await db.org_invitations.find_one({"email": data.email, "accepted": False})
         inv_org_id = invitation["org_id"]
         user_doc = {
             "id": user_id,
@@ -58,8 +91,10 @@ async def register(data: UserCreate):
             {"$set": {"accepted": True, "accepted_at": now, "user_id": user_id}},
         )
         org_name = await _get_org_name(inv_org_id)
+
     else:
         # New user — create their own org
+        org_id = str(uuid.uuid4())
         org_name = data.organization_name or data.name
         org_doc = {
             "id": org_id,
