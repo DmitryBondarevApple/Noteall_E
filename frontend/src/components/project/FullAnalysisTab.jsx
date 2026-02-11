@@ -36,6 +36,9 @@ import {
   Eye,
   AlertCircle,
   Wrench,
+  PenLine,
+  Braces,
+  FileCode2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import Markdown from 'react-markdown';
