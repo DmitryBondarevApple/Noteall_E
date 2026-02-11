@@ -145,6 +145,44 @@ function validatePipeline(nodes, edges) {
   return { errors, warnings };
 }
 
+// Auto-fix common pipeline issues
+// Returns a new nodes array with fixes applied, or null if nothing to fix
+function autoFixPipeline(nodes) {
+  let fixed = false;
+  const nodeMap = new Map(nodes.map(n => [n.id, n]));
+
+  const fixedNodes = nodes.map(n => {
+    const data = { ...n.data };
+
+    // Fix 1: template with {{item}} missing loop_vars
+    if (data.node_type === 'template' && data.template_text) {
+      const vars = (data.template_text.match(/\{\{(\w+)\}\}/g) || []).map(v => v.replace(/[{}]/g, ''));
+      const loopVars = data.loop_vars || [];
+      if (vars.includes('item') && !loopVars.includes('item')) {
+        data.loop_vars = [...loopVars, 'item'];
+        fixed = true;
+      }
+    }
+
+    // Fix 2: batch_loop missing prompt_source_node — find upstream template
+    if (data.node_type === 'batch_loop' && !data.prompt_source_node) {
+      const deps = data.input_from || [];
+      for (const depId of deps) {
+        const depNode = nodeMap.get(depId);
+        if (depNode && depNode.data.node_type === 'template') {
+          data.prompt_source_node = depId;
+          fixed = true;
+          break;
+        }
+      }
+    }
+
+    return { ...n, data };
+  });
+
+  return fixed ? fixedNodes : null;
+}
+
 const STEP_ICONS = {
   ai_prompt: Sparkles,
   parse_list: Code,
