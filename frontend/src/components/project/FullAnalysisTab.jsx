@@ -625,13 +625,30 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
     const effectiveSize = batchSize === 0 ? items.length : batchSize;
     const totalBatches = items.length > 0 ? Math.ceil(items.length / effectiveSize) : 0;
 
-    // Find the AI prompt node that follows this loop in the ordered nodes
-    const loopIdx = orderedNodes.findIndex((n) => n.id === loopNode.id);
-    const nextNodes = orderedNodes.slice(loopIdx + 1);
-    const aiNode = nextNodes.find((n) => n.data.node_type === 'ai_prompt');
+    // Resolve prompt source: explicit prompt_source_node > upstream __template > heuristic aiNode search
+    let aiNode = null;
+    if (loopNode.data.prompt_source_node) {
+      // Explicit prompt source — look up its output as template
+      const srcOutput = currentOutputs[loopNode.data.prompt_source_node];
+      if (srcOutput && typeof srcOutput === 'object' && srcOutput.__template) {
+        promptTemplate = srcOutput.__template;
+        if (!items.length && Array.isArray(srcOutput.__items)) {
+          items = srcOutput.__items;
+        }
+      } else if (typeof srcOutput === 'string') {
+        promptTemplate = srcOutput;
+      }
+      console.log(`[DEBUG runBatchLoop] explicit prompt_source_node=${loopNode.data.prompt_source_node}, resolved promptTemplate=${!!promptTemplate}`);
+    }
 
-    console.log(`[DEBUG runBatchLoop] batchSize=${effectiveSize}, totalBatches=${totalBatches}, aiNode=${aiNode?.id || 'none'}`);
-    console.log(`[DEBUG runBatchLoop] DECISION: promptTemplate=${!!promptTemplate}, aiNode=${!!aiNode} → will use ${promptTemplate ? 'promptTemplate' : (aiNode ? 'aiNode' : 'NOTHING')}`);
+    // Fallback: find next ai_prompt node (only when no promptTemplate)
+    if (!promptTemplate) {
+      const loopIdx = orderedNodes.findIndex((n) => n.id === loopNode.id);
+      const nextNodes = orderedNodes.slice(loopIdx + 1);
+      aiNode = nextNodes.find((n) => n.data.node_type === 'ai_prompt');
+    }
+
+    console.log(`[DEBUG runBatchLoop] batchSize=${effectiveSize}, totalBatches=${totalBatches}, aiNode=${aiNode?.id || 'none'}, hasPromptTemplate=${!!promptTemplate}`);
 
 
     let results = [];
