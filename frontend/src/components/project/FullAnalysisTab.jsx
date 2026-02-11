@@ -172,8 +172,8 @@ function autoFixPipeline(nodes, edges) {
   const fixedNodes = nodes.map(n => {
     const data = { ...n.data };
 
-    // Fix 1: template with {{item}} missing loop_vars
-    if (data.node_type === 'template' && data.template_text) {
+    // Fix 1: batch_prompt_template or template with {{item}} missing loop_vars
+    if (['template', 'batch_prompt_template'].includes(data.node_type) && data.template_text) {
       const vars = (data.template_text.match(/\{\{(\w+)\}\}/g) || []).map(v => v.replace(/[{}]/g, ''));
       const loopVars = data.loop_vars || [];
       if (vars.includes('item') && !loopVars.includes('item')) {
