@@ -8,6 +8,9 @@ import {
   Eye,
   Variable,
   Code,
+  PenLine,
+  Braces,
+  FileCode2,
 } from 'lucide-react';
 
 const NODE_STYLES = {
