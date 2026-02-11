@@ -16,7 +16,7 @@ export default function AuthPage() {
   const navigate = useNavigate();
 
   const [loginData, setLoginData] = useState({ email: '', password: '' });
-  const [registerData, setRegisterData] = useState({ email: '', password: '', name: '' });
+  const [registerData, setRegisterData] = useState({ email: '', password: '', name: '', organizationName: '' });
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -36,7 +36,7 @@ export default function AuthPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await register(registerData.email, registerData.password, registerData.name);
+      await register(registerData.email, registerData.password, registerData.name, registerData.organizationName);
       // Seed initial data
       try {
         await seedData();
