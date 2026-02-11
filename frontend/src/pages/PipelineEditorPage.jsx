@@ -157,6 +157,10 @@ export default function PipelineEditorPage() {
   const [saving, setSaving] = useState(false);
   const [editMetaOpen, setEditMetaOpen] = useState(isNew);
   const [mode, setMode] = useState('editor'); // 'editor' | 'preview'
+  const [pipeline, setPipeline] = useState(null);
+  const [aiEditOpen, setAiEditOpen] = useState(false);
+  const [aiEditPrompt, setAiEditPrompt] = useState('');
+  const [aiEditGenerating, setAiEditGenerating] = useState(false);
 
   const { pushState, undo, redo, canUndo, canRedo } = useUndoRedo(
     nodes, edges, setNodes, setEdges
