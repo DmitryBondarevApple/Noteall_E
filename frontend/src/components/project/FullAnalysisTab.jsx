@@ -633,7 +633,9 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
     // Pre-populate outputs: transcript as {{text}} + user-entered variables
     const initialOutputs = {};
     if (processedTranscript) {
-      initialOutputs.text = processedTranscript;
+      initialOutputs.text = typeof processedTranscript === 'string'
+        ? processedTranscript
+        : processedTranscript?.content || '';
     }
     for (const [key, value] of Object.entries(pipelineVarInputs)) {
       if (value) initialOutputs[key] = value;
