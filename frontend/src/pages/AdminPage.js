@@ -88,6 +88,7 @@ export default function AdminPage() {
       const promises = [
         orgApi.getMy().catch(() => ({ data: null })),
         orgApi.getMyUsers().catch(() => ({ data: [] })),
+        invitationsApi.list().catch(() => ({ data: [] })),
       ];
       if (isSuperadmin()) {
         promises.push(
@@ -101,12 +102,13 @@ export default function AdminPage() {
       const results = await Promise.all(promises);
       setOrg(results[0].data);
       setOrgUsers(results[1].data || []);
+      setInvitations(results[2].data || []);
       if (isSuperadmin()) {
-        setAllUsers(results[2].data || []);
-        setAllOrgs(results[3].data || []);
-        setPrompts(results[4].data || []);
-        if (results[5].data) setModelInfo(results[5].data);
-        setMarkupTiers(results[6].data || []);
+        setAllUsers(results[3].data || []);
+        setAllOrgs(results[4].data || []);
+        setPrompts(results[5].data || []);
+        if (results[6].data) setModelInfo(results[6].data);
+        setMarkupTiers(results[7].data || []);
       }
     } catch (err) {
       toast.error('Ошибка загрузки');
