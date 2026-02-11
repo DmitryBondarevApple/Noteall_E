@@ -130,6 +130,25 @@ export const pipelinesApi = {
   }),
 };
 
+// AI Chat (assistant for pipelines)
+export const aiChatApi = {
+  createSession: (pipelineId) => axios.post(`${API}/ai-chat/sessions`, { pipeline_id: pipelineId || null }),
+  listSessions: (pipelineId) => axios.get(`${API}/ai-chat/sessions`, { params: pipelineId ? { pipeline_id: pipelineId } : {} }),
+  getSession: (sessionId) => axios.get(`${API}/ai-chat/sessions/${sessionId}`),
+  deleteSession: (sessionId) => axios.delete(`${API}/ai-chat/sessions/${sessionId}`),
+  sendMessage: (sessionId, content, imageFile) => {
+    const formData = new FormData();
+    formData.append('content', content || '');
+    if (imageFile) {
+      formData.append('image', imageFile);
+    }
+    return axios.post(`${API}/ai-chat/sessions/${sessionId}/message`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 120000,
+    });
+  },
+};
+
 // Attachments
 export const attachmentsApi = {
   list: (projectId) => axios.get(`${API}/projects/${projectId}/attachments`),
