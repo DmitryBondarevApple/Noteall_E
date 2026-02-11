@@ -1,0 +1,80 @@
+{
+  "summary": "Stage 4: Admin & Usage Dashboards - All tests passed. Backend 13/13 tests passed, Frontend UI fully functional.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_billing_stage4.py",
+    "/app/test_reports/pytest/pytest_billing_stage4.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_billing_stage4.py"
+  ],
+  "success_rate": {
+    "backend": "100% (13/13 passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "org_admin_user": "billing_test@test.com / test123",
+    "superadmin_user": "superadmin@test.com / test123"
+  },
+  "seed_data_creation": "No new seed data created. Used existing test users from Stage 2/3.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Stage 4 dashboards fully tested. New endpoints: GET /api/billing/usage/org-users (org_admin), GET /api/billing/admin/summary (superadmin). BillingPage has 4 tabs: Overview (all users), Team (org_admin), History (all users), Platform (superadmin). AI Chat panel shows usage badge (tokens + credits) after each assistant response.",
+  "features_tested": {
+    "backend_apis": {
+      "GET /api/billing/usage/org-users": "PASS - Returns per-user usage within org (org_admin only)",
+      "GET /api/billing/admin/summary": "PASS - Returns platform-wide summary metrics (superadmin only)",
+      "Authorization tests": "PASS - org_admin gets 403 on admin/summary, unauthenticated gets 401"
+    },
+    "billing_page_tabs": {
+      "Overview tab": "PASS - Shows balance card (4,997.28 credits), AI requests count (2), credits spent (2.72)",
+      "Team tab (org_admin)": "PASS - Shows per-employee table with requests, tokens, credits, limit progress bar",
+      "History tab": "PASS - Shows full transaction table with types (Пополнение/Списание), descriptions, amounts",
+      "Platform tab (superadmin)": "PASS - Shows 4 metric cards (Revenue $120, Deductions 2.72, Requests 2, Orgs/Users 34/47) + org balances table"
+    },
+    "tab_visibility": {
+      "org_admin sees": "Overview, Team, History (3 tabs)",
+      "superadmin sees": "Overview, Team, History, Platform (4 tabs)"
+    },
+    "ai_chat_usage_badge": {
+      "Location": "Under assistant response in AI Chat panel",
+      "Format": "⚡ {tokens} токенов · {credits} кр.",
+      "Example": "2413 токенов · 3.0957 кр.",
+      "Status": "PASS - Badge appears after each AI response"
+    },
+    "purchase_dialog": {
+      "Status": "PASS - Opens correctly with plan details",
+      "Mock indicator": "Shows 'Мок-оплата: деньги не списываются' and 'Демо-режим'",
+      "Topup execution": "PASS - Balance updated after mock topup"
+    }
+  },
+  "platform_summary_metrics_observed": {
+    "total_revenue_usd": "$120",
+    "total_deductions_credits": "2.72",
+    "month_requests": "2",
+    "month_tokens": "1,921",
+    "org_count": "34",
+    "user_count": "47"
+  },
+  "team_usage_table_observed": {
+    "user": "Billing Tester",
+    "requests": "2",
+    "tokens": "1,921",
+    "credits": "2.72",
+    "limit": "Без лимита (No limit)"
+  },
+  "mocked_apis_confirmed": {
+    "POST /api/billing/topup": "MOCK - Credits added directly without real payment processing",
+    "AI calls": "REAL - Uses actual OpenAI API (not mocked)"
+  }
+}
