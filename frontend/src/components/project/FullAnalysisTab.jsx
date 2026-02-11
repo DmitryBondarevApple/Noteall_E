@@ -641,7 +641,7 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
         break;
       }
 
-      // If there's an AI node following, call it with the promptVars
+      // Call AI: either via child AI node or via prompt template from upstream template node
       if (aiNode && scriptResult.promptVars) {
         let prompt = aiNode.data.inline_prompt || '';
         const systemMsg = aiNode.data.system_message || 'Ты — ассистент для анализа.';
@@ -667,6 +667,34 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
           system_message: systemMsg,
           user_message: prompt,
           reasoning_effort: aiNode.data.reasoning_effort || 'high',
+          attachment_ids: attachmentIdsRef.current.length > 0 ? attachmentIdsRef.current : undefined,
+          skip_transcript_context: textInPrompt,
+        });
+
+        results.push(response.data.response_text);
+      } else if (!aiNode && promptTemplate && scriptResult.promptVars) {
+        // No AI child node, but we have a prompt template from upstream template node
+        let prompt = promptTemplate;
+        for (const [key, value] of Object.entries(scriptResult.promptVars)) {
+          prompt = prompt.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value);
+        }
+        // Resolve remaining vars from outputs
+        const varMatches2 = prompt.match(/\{\{(\w+)\}\}/g) || [];
+        for (const m of varMatches2) {
+          const varName = m.replace(/[{}]/g, '');
+          if (outputs[varName] !== undefined) {
+            prompt = prompt.replace(m, String(outputs[varName]));
+          }
+        }
+
+        setProcessingLabel(`${loopNode.data.label}: ${iteration + 1}/${totalBatches}`);
+
+        const textInPrompt = outputs.text && prompt.includes(outputs.text);
+
+        const response = await chatApi.analyzeRaw(projectId, {
+          system_message: loopNode.data.system_message || 'Ты — аналитик встреч. Пиши нейтрально, безлично, фиксируй факты.',
+          user_message: prompt,
+          reasoning_effort: loopNode.data.reasoning_effort || 'high',
           attachment_ids: attachmentIdsRef.current.length > 0 ? attachmentIdsRef.current : undefined,
           skip_transcript_context: textInPrompt,
         });
