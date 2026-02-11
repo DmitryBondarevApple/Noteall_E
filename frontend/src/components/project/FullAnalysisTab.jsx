@@ -770,6 +770,7 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
       try {
         const outputs = await runAutoNodes(firstStage.autoNodesBefore, initialOutputs);
         setNodeOutputs(outputs);
+        prepareStageUI(firstStage, outputs);
       } catch (err) {
         if (err.response?.status !== 402) {
           toast.error('Ошибка выполнения: ' + (err.message || ''));
@@ -780,6 +781,7 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
       }
     } else {
       setNodeOutputs(initialOutputs);
+      prepareStageUI(firstStage, initialOutputs);
     }
   }, [stages, resetWizard, runAutoNodes, processedTranscript, pipelineVarInputs]);
 
