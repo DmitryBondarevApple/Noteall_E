@@ -120,7 +120,11 @@ export const pipelinesApi = {
     return axios.post(`${API}/pipelines/import/json`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
-  }
+  },
+  generate: (prompt, pipelineId) => axios.post(`${API}/pipelines/generate`, {
+    prompt,
+    pipeline_id: pipelineId || null
+  }),
 };
 
 // Attachments
