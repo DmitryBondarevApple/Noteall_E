@@ -147,6 +147,7 @@ export default function AiChatPanel({ open, onClose, pipelineId, onPipelineGener
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [sending, setSending] = useState(false);
+  const [usageMap, setUsageMap] = useState({});
   const [loadingSessions, setLoadingSessions] = useState(false);
   const [view, setView] = useState('chat'); // 'chat' | 'sessions'
   const messagesEndRef = useRef(null);
