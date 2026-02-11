@@ -31,6 +31,7 @@ import {
   Eye,
   Download,
   Upload,
+  Bot,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
