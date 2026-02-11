@@ -253,9 +253,10 @@ async def send_message(
         raise HTTPException(status_code=500, detail=f"AI error: {str(e)}")
 
     # Deduct credits after successful AI call
+    metering_info = None
     if org_id:
         try:
-            await deduct_credits_and_record(
+            metering_info = await deduct_credits_and_record(
                 org_id=org_id,
                 user_id=user["id"],
                 model=gpt_result.model,
