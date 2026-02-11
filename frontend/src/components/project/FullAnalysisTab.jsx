@@ -61,6 +61,90 @@ import { AttachmentsPanel } from './AttachmentsPanel';
 
 // ==================== PIPELINE ENGINE UTILITIES ====================
 
+// Validate pipeline structure before execution
+// Returns { errors: [...], warnings: [...] }
+function validatePipeline(nodes, edges) {
+  const errors = [];
+  const warnings = [];
+  if (!nodes || nodes.length === 0) return { errors: ['Сценарий пуст — нет узлов'], warnings };
+
+  const nodeIds = new Set(nodes.map(n => n.id));
+  const nodeMap = new Map(nodes.map(n => [n.id, n]));
+
+  for (const node of nodes) {
+    const { id, data } = node;
+    const label = data.label || id;
+    const type = data.node_type;
+
+    // 1. Check input_from references exist
+    if (data.input_from) {
+      for (const src of data.input_from) {
+        if (!nodeIds.has(src)) {
+          errors.push(`"${label}": input_from ссылается на несуществующий узел "${src}"`);
+        }
+      }
+    }
+
+    // 2. batch_loop: check prompt_source_node
+    if (type === 'batch_loop') {
+      if (data.prompt_source_node) {
+        if (!nodeIds.has(data.prompt_source_node)) {
+          errors.push(`"${label}": prompt_source_node ссылается на несуществующий узел "${data.prompt_source_node}"`);
+        } else {
+          const srcNode = nodeMap.get(data.prompt_source_node);
+          if (srcNode && !['template', 'ai_prompt'].includes(srcNode.data.node_type)) {
+            warnings.push(`"${label}": prompt_source_node указывает на "${srcNode.data.label}" (${srcNode.data.node_type}), ожидается template или ai_prompt`);
+          }
+        }
+      } else {
+        warnings.push(`"${label}" (batch_loop): не указан prompt_source_node — будет использовано автоопределение`);
+      }
+    }
+
+    // 3. template: check loop_vars vs {{var}} usage
+    if (type === 'template' && data.template_text) {
+      const vars = (data.template_text.match(/\{\{(\w+)\}\}/g) || []).map(v => v.replace(/[{}]/g, ''));
+      const loopVars = data.loop_vars || [];
+      // Check if template has {{item}} but no loop_vars
+      if (vars.includes('item') && !loopVars.includes('item')) {
+        warnings.push(`"${label}": шаблон содержит {{item}}, но loop_vars не указаны — {{item}} может быть подставлен раньше времени`);
+      }
+      // Check loop_vars that aren't in the template
+      for (const lv of loopVars) {
+        if (!vars.includes(lv)) {
+          warnings.push(`"${label}": loop_vars содержит "${lv}", но {{${lv}}} не найден в шаблоне`);
+        }
+      }
+    }
+
+    // 4. ai_prompt: check that prompt is not empty
+    if (type === 'ai_prompt' && !data.inline_prompt && !data.prompt_id) {
+      errors.push(`"${label}" (ai_prompt): не указан промпт (inline_prompt или prompt_id)`);
+    }
+  }
+
+  // 5. Check edges reference existing nodes
+  for (const edge of edges) {
+    if (!nodeIds.has(edge.source)) {
+      errors.push(`Связь от несуществующего узла "${edge.source}"`);
+    }
+    if (!nodeIds.has(edge.target)) {
+      errors.push(`Связь к несуществующему узлу "${edge.target}"`);
+    }
+  }
+
+  // 6. Check for at least one interactive node
+  const hasInteractive = nodes.some(n =>
+    ['user_edit_list', 'user_review'].includes(n.data.node_type) ||
+    (n.data.node_type === 'template' && !(n.data.input_from?.length > 0))
+  );
+  if (!hasInteractive) {
+    warnings.push('Сценарий не содержит интерактивных шагов — выполнится полностью автоматически');
+  }
+
+  return { errors, warnings };
+}
+
 const STEP_ICONS = {
   ai_prompt: Sparkles,
   parse_list: Code,
