@@ -255,16 +255,33 @@ export function NodeConfigPanel({ node, allNodes, edges, onUpdate, onDelete, onC
 
         {/* Template text (for template nodes) */}
         {nodeType === 'template' && (
-          <div className="space-y-1.5">
-            <Label className="text-xs">Шаблон</Label>
-            <Textarea
-              value={nodeData.template_text || ''}
-              onChange={(e) => handleChange('template_text', e.target.value)}
-              rows={3}
-              placeholder="{{meeting_subject}}"
-              data-testid="node-template-text"
-            />
-          </div>
+          <>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Шаблон</Label>
+              <Textarea
+                value={nodeData.template_text || ''}
+                onChange={(e) => handleChange('template_text', e.target.value)}
+                rows={3}
+                placeholder="{{meeting_subject}}"
+                data-testid="node-template-text"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Итерационные переменные (loop_vars)</Label>
+              <Input
+                value={(nodeData.loop_vars || []).join(', ')}
+                onChange={(e) => {
+                  const vars = e.target.value.split(',').map(v => v.trim()).filter(Boolean);
+                  handleChange('loop_vars', vars.length > 0 ? vars : null);
+                }}
+                placeholder="item"
+                data-testid="node-loop-vars"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Переменные для батч-цикла (через запятую). НЕ будут подставлены шаблонизатором.
+              </p>
+            </div>
+          </>
         )}
 
         {/* Batch size (for batch_loop) */}
