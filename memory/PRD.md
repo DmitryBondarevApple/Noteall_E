@@ -63,6 +63,18 @@
 - Superadmin: view all organizations' balances (tab in billing)
 - Navigation: "Биллинг" sidebar link for org_admin and superadmin users
 
+### AI Metering & Cost System (Feb 2026)
+- Token counting via OpenAI response usage data (prompt_tokens + completion_tokens)
+- Model pricing table for cost calculation (per 1M tokens: input/output)
+- Tiered markup system: configurable multipliers based on base request cost
+- Default tiers: $0-0.001=10x, $0.001-0.01=7x, $0.01-0.1=5x, $0.1-1=3x, $1+=2x
+- Automatic credit deduction after every AI call (non-blocking)
+- Monthly token limit enforcement per user (402 if exceeded)
+- Org balance check before AI calls (402 if insufficient)
+- Usage stats: per-user monthly stats (tokens, credits, requests)
+- Superadmin: markup tier management in Admin panel (Наценки tab)
+- Metering integrated into: ai_chat, pipeline_generate, analyze_prompt, analyze_raw, generate_script, doc_stream, pipeline_node, pipeline_batch, transcript_processing
+
 ### Core Features
 - Meeting transcription, speaker identification, AI analysis
 - Document Agent with automated pipeline runner
@@ -72,6 +84,9 @@
 - `credit_balances`: {org_id, balance (float), updated_at}
 - `transactions`: {id, org_id, user_id, type (topup|deduction), amount, description, created_at}
 - `tariff_plans`: {id, name, price_usd, credits, is_active, created_at}
+
+- `usage_records`: {id, org_id, user_id, model, prompt_tokens, completion_tokens, total_tokens, base_cost_usd, markup_multiplier, final_cost_usd, credits_used, source, created_at}
+- `markup_tiers`: {id, min_cost, max_cost, multiplier, created_at}
 
 ## Key API Endpoints
 - POST /api/auth/register — Register with optional organization_name
@@ -108,9 +123,8 @@
 - `settings`: {key: "active_model", value: "gpt-5.2"}
 
 ## Backlog
-- **P0**: SaaS Stage 3: AI request metering (token counting, cost calculation, markup table, credit deduction per AI call, enforcement of monthly_token_limit)
-- **P1**: SaaS Stage 4: Admin dashboards (superadmin: revenue/credit charts, org_admin: usage stats per employee, configurable markup coefficient table)
-- **P2**: SaaS Stage 5: Real payment gateway integration (Stripe)
+- **P0**: SaaS Stage 4: Admin dashboards (superadmin: revenue/credit charts, org_admin: usage stats per employee)
+- **P1**: SaaS Stage 5: Real payment gateway integration (Stripe)
 - **P2**: Auto-check for new AI models and admin notification
 - **P2**: Export results to Word/PDF
 - **P2**: Real-time pipeline execution progress
