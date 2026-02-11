@@ -1,7 +1,7 @@
 # PRD — Pipeline Builder App (Noteall)
 
 ## Original Problem Statement
-Web application for building and running data processing pipelines (workflows) for meeting transcription and analysis. Frontend: React/TypeScript with React Flow. Backend: FastAPI + MongoDB. Pipeline execution runs client-side in the browser.
+Web application for building and running data processing pipelines (workflows) for meeting transcription and analysis. Frontend: React/JavaScript with React Flow. Backend: FastAPI + MongoDB. Pipeline execution runs client-side in the browser.
 
 ## Tech Stack
 - **Frontend:** React, JavaScript, React Flow, TanStack Query, Shadcn UI
@@ -12,53 +12,61 @@ Web application for building and running data processing pipelines (workflows) f
 
 ## User Roles
 - `user`, `org_admin`, `admin`, `superadmin`
-- Superadmin: full access to admin routes (user management, model switching)
-- Roles stored in MongoDB `users` collection, field `role`
 - `dmitry.bondarev@gmail.com` auto-promoted to superadmin on startup
 
 ## Node Types (Pipeline Engine)
-### Current (after refactoring, Feb 2026):
-- `ai_prompt` — AI call with prompt template
-- `parse_list` — Parse text into list items
-- `batch_loop` — Iterate over items in batches
-- `aggregate` — Join results
-- `user_input` — Interactive: user fills in form fields (was `template`)
-- `format_template` — Auto: resolves variables from other nodes (was `template` with input_from)
-- `batch_prompt_template` — Auto: template with loop_vars for batch processing (was `template` with loop_vars)
-- `user_edit_list` — Interactive: user edits/selects list items
-- `user_review` — Interactive: user reviews final result
-- `template` — Legacy, backward compatible (maps to user_input behavior)
+- `ai_prompt`, `parse_list`, `batch_loop`, `aggregate`
+- `user_input` (interactive), `format_template` (auto), `batch_prompt_template` (auto)
+- `user_edit_list`, `user_review`
+- `template` (legacy, backward compatible)
 
 ## Completed Work
 - Pipeline execution engine with batch_loop, template nodes
 - Explicit config fields: `prompt_source_node`, `loop_vars`
-- Pipeline validation system (pre-run warnings/errors)
-- Auto-fix for common validation issues
+- Pipeline validation + auto-fix
 - Bug fixes: wizard "0 из 0", empty review step
-- Master prompt update for AI pipeline generator
-- User permission fix: auto-promotion on startup
-- **Template node refactoring** (Feb 2026): Split `template` into `user_input`, `format_template`, `batch_prompt_template` with distinct icons, colors, and config panels. DB migration applied. Backward compat preserved. All tests passed (10/10 backend, 100% frontend).
+- User permission auto-promotion on startup
+- **Template node refactoring** (Feb 2026): Split into 3 subtypes
+- **Landing page** (Feb 2026): Full marketing landing at `/` with:
+  - Hero section with CTA
+  - Key differentiator ("not transcription, meaning extraction")
+  - Features: meeting analysis, document analysis, scenario constructor
+  - How it works (3 steps)
+  - Constructor deep-dive with illustration
+  - Document formats section
+  - Team/collaboration
+  - Pricing
+  - Auth modal (login + register)
+  - Dark theme, responsive (mobile-ready)
+  - Old auth page preserved at `/login`
 
 ## Key Architecture
 ```
 /app/backend/
-  app/core/database.py    - MongoDB connection (Motor)
-  app/core/security.py    - JWT auth, role checks
-  app/models/user.py      - Pydantic user models
-  app/models/pipeline.py  - Pipeline node/edge models
-  app/routes/auth.py      - Login, register, /me
-  app/routes/admin.py     - Superadmin user/model management
-  app/routes/pipelines.py - Pipeline CRUD
-  app/routes/seed.py      - Initial data seeding
   app/main.py             - FastAPI app, startup logic
-  
+  app/core/database.py    - MongoDB connection
+  app/core/security.py    - JWT auth, role checks
+  app/models/             - Pydantic models
+  app/routes/             - API routes
+
 /app/frontend/
-  src/lib/pipelineUtils.js         - Shared pipeline utilities
-  src/components/pipeline/PipelineNode.jsx     - Node visual display + NODE_STYLES
-  src/components/pipeline/NodeConfigPanel.jsx  - Node settings panel
-  src/pages/PipelineEditorPage.jsx             - Pipeline editor with React Flow
-  src/components/project/FullAnalysisTab.jsx   - Pipeline execution wizard
+  src/pages/LandingPage.js              - Marketing landing page
+  src/pages/AuthPage.js                 - Standalone auth page (/login)
+  src/pages/PipelineEditorPage.jsx      - Pipeline editor
+  src/pages/ConstructorPage.js          - Scenarios list
+  src/components/pipeline/              - Pipeline components
+  src/components/project/FullAnalysisTab.jsx - Pipeline wizard
+  src/App.js                            - Routes configuration
 ```
 
+## Routing
+- `/` — Landing page (public, redirects to /meetings if logged in)
+- `/login` — Standalone auth page (public)
+- `/meetings` — Dashboard (protected)
+- `/constructor` — Scenarios (protected)
+- `/pipelines/:id` — Pipeline editor (protected)
+
 ## P2 Backlog
-- Additional pipeline engine improvements as needed
+- Migrate to `app.noteall.ru` subdomain (requires DNS CNAME)
+- Replace generated illustrations with real app screenshots
+- Additional landing page refinements based on user feedback
