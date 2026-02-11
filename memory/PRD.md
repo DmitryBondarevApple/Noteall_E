@@ -102,6 +102,20 @@ Build a comprehensive multi-tenant SaaS application with AI features for meeting
 - **Existing pipeline updated:** `step_4` → `loop_vars: ["item"]`, `step_5` → `prompt_source_node: "step_4_topic_batch_template"`
 - **Testing:** 100% pass rate (backend + frontend)
 
+### 2026-02-12: Pipeline Validation Before Execution (DONE)
+- **Feature:** Pre-execution validation of pipeline structure with errors (blocking) and warnings (informational)
+- **Checks implemented:**
+  1. All `input_from` references point to existing nodes (error)
+  2. `batch_loop` has `prompt_source_node` set (warning if missing)
+  3. `prompt_source_node` references valid template/ai_prompt node (error if invalid type)
+  4. Template with `{{item}}` has `loop_vars: ["item"]` (warning if missing)
+  5. `loop_vars` variables actually exist in template_text (warning if orphaned)
+  6. `ai_prompt` has a prompt defined (error if empty)
+  7. Edge source/target reference existing nodes (error)
+  8. Pipeline has at least one interactive node (warning if fully auto)
+- **UI:** Yellow warnings and red errors displayed above "Запустить сценарий" button. Errors disable the button, warnings don't.
+- **Files:** `FullAnalysisTab.jsx` — `validatePipeline()` function + `validationResult` state
+
 ## Backlog
 - (пусто)
 
