@@ -29,6 +29,7 @@ export default function BillingPage() {
   const [plans, setPlans] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [txnTotal, setTxnTotal] = useState(0);
+  const [myUsage, setMyUsage] = useState(null);
 
   // Superadmin
   const [adminBalances, setAdminBalances] = useState([]);
@@ -43,6 +44,7 @@ export default function BillingPage() {
         billingApi.getBalance().catch(() => ({ data: null })),
         billingApi.getPlans().catch(() => ({ data: [] })),
         billingApi.getTransactions().catch(() => ({ data: { items: [], total: 0 } })),
+        billingApi.getMyUsage().catch(() => ({ data: null })),
       ];
       if (isSuperadmin()) {
         promises.push(billingApi.adminBalances().catch(() => ({ data: [] })));
@@ -53,8 +55,9 @@ export default function BillingPage() {
       const txnData = results[2].data;
       setTransactions(txnData?.items || txnData || []);
       setTxnTotal(txnData?.total || 0);
-      if (isSuperadmin() && results[3]) {
-        setAdminBalances(results[3].data || []);
+      setMyUsage(results[3].data);
+      if (isSuperadmin() && results[4]) {
+        setAdminBalances(results[4].data || []);
       }
     } catch {
       toast.error('Ошибка загрузки данных биллинга');
