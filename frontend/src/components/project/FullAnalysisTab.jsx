@@ -279,6 +279,14 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
           knownOutputs.add(key);
         }
       }
+      // Batch loop scripts produce promptVars at runtime — scan script for promptVars keys
+      if (n.data.node_type === 'batch_loop' && n.data.script) {
+        const pvMatches = n.data.script.match(/promptVars\s*[=:]\s*\{([^}]+)\}/);
+        if (pvMatches) {
+          const keys = pvMatches[1].match(/(\w+)\s*:/g) || [];
+          for (const k of keys) knownOutputs.add(k.replace(':', '').trim());
+        }
+      }
     }
     const vars = new Map();
     for (const n of orderedNodes) {
