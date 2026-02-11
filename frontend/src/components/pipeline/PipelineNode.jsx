@@ -152,7 +152,7 @@ export function PipelineNode({ data, selected }) {
             По {data.batch_size} за раз
           </div>
         )}
-        {(data.node_type === 'parse_list' || data.node_type === 'aggregate' || data.node_type === 'batch_loop' || data.node_type === 'template') && (
+        {(data.node_type === 'parse_list' || data.node_type === 'aggregate' || data.node_type === 'batch_loop' || data.node_type === 'template' || data.node_type === 'format_template' || data.node_type === 'batch_prompt_template') && (
           <div className="text-[9px] text-sky-600 mt-0.5 font-mono truncate">
             {data.script ? '{ скрипт }' : '{ по умолчанию }'}
           </div>
