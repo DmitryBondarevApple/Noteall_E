@@ -771,6 +771,11 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
 
     if (type === 'user_review') {
       const input = getNodeInput(stage.primaryNode.id, outputs);
+      console.log('[DEBUG prepareStageUI user_review] input type:', typeof input, 'isNull:', input === null, 'isUndefined:', input === undefined);
+      console.log('[DEBUG prepareStageUI user_review] dataDeps:', dataDeps[stage.primaryNode.id]);
+      if (typeof input === 'string') {
+        console.log('[DEBUG prepareStageUI user_review] input string length:', input.length, 'preview:', input.substring(0, 200));
+      }
       let content = '';
       if (typeof input === 'string') {
         content = input;
