@@ -189,7 +189,7 @@ function autoFixPipeline(nodes, edges) {
       let found = false;
       for (const depId of deps) {
         const depNode = nodeMap.get(depId);
-        if (depNode && depNode.data.node_type === 'template') {
+        if (depNode && ['template', 'user_input', 'format_template', 'batch_prompt_template'].includes(depNode.data.node_type)) {
           data.prompt_source_node = depId;
           fixed = true;
           found = true;
