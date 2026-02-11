@@ -750,10 +750,10 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
         const depIds = dataDeps[stage.primaryNode.id] || [];
         const parts = depIds.map((id) => outputs[id]).filter(Boolean);
         if (parts.length >= 2) {
-          // First dep = summary source, second = detailed analysis
-          const subject = outputs['meeting_subject'] || outputs['subject'] || 'Анализ';
-          const summary = parts[0];
-          const detailed = parts.slice(1).join('\n\n');
+          // Last dep = short summary, first dep(s) = detailed analysis
+          const subject = outputs['meeting_subject'] || outputs['subject'] || outputs['key_subject'] || 'Анализ';
+          const detailed = parts.slice(0, -1).join('\n\n');
+          const summary = parts[parts.length - 1];
           content = `# Резюме встречи: ${subject}\n\n## Краткое саммари\n\n${summary}\n\n---\n\n## Подробный анализ по темам\n\n${detailed}`;
         } else {
           content = parts.join('\n\n');
