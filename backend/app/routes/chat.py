@@ -130,11 +130,17 @@ async def analyze_raw(
     else:
         user_msg_content = user_content
 
-    messages = [
-        {"role": "user", "content": f"Вот транскрипт встречи:\n\n{transcript['content']}"},
-        {"role": "assistant", "content": "Спасибо, я прочитал транскрипт. Готов помочь с анализом."},
-        {"role": "user", "content": user_msg_content}
-    ]
+    # If transcript text is already embedded in the prompt, skip context messages
+    if data.skip_transcript_context:
+        messages = [
+            {"role": "user", "content": user_msg_content}
+        ]
+    else:
+        messages = [
+            {"role": "user", "content": f"Вот транскрипт встречи:\n\n{transcript['content']}"},
+            {"role": "assistant", "content": "Спасибо, я прочитал транскрипт. Готов помочь с анализом."},
+            {"role": "user", "content": user_msg_content}
+        ]
     
     # Check billing limits
     org_id = user.get("org_id")
