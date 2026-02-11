@@ -56,7 +56,7 @@ class TestAiChatSystemPrompt:
         assert "input_from" in content, "SYSTEM_PROMPT should mention input_from"
         assert "Первый узел НЕ ИМЕЕТ input_from" in content, "Should explain first node has no input_from"
         assert "Все остальные узлы ОБЯЗАТЕЛЬНО должны иметь input_from" in content, "Should require input_from for other nodes"
-        assert "input_from: [\"step_1\"]" in content, "Should show example of input_from array"
+        assert '"input_from": ["step_1"]' in content, "Should show example of input_from array"
         print("PASS: SYSTEM_PROMPT contains correct input_from rules")
 
 
