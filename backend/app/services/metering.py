@@ -68,6 +68,9 @@ def usd_to_credits(usd: float) -> float:
 
 async def check_user_monthly_limit(user: dict) -> bool:
     """Check if user has exceeded their monthly token limit. Returns True if OK."""
+    # Superadmins bypass all limits
+    if user.get("role") == "superadmin":
+        return True
     limit = user.get("monthly_token_limit", 0)
     if limit == 0:
         return True  # No limit
@@ -88,8 +91,11 @@ async def check_user_monthly_limit(user: dict) -> bool:
     return used < limit
 
 
-async def check_org_balance(org_id: str) -> bool:
+async def check_org_balance(org_id: str, user: dict = None) -> bool:
     """Check if org has positive credit balance."""
+    # Superadmins bypass balance checks
+    if user and user.get("role") == "superadmin":
+        return True
     bal = await db.credit_balances.find_one({"org_id": org_id}, {"_id": 0})
     if not bal:
         return False
