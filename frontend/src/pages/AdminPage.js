@@ -312,6 +312,103 @@ export default function AdminPage() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Models Tab */}
+          <TabsContent value="models">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Управление моделями</CardTitle>
+                    <CardDescription>
+                      Текущая модель и проверка обновлений OpenAI
+                    </CardDescription>
+                  </div>
+                  <Button
+                    variant="outline"
+                    className="gap-2"
+                    onClick={handleCheckModels}
+                    disabled={checking}
+                    data-testid="check-models-btn"
+                  >
+                    {checking ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                    Проверить обновления
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Current model */}
+                <div className="flex items-center gap-4 p-4 rounded-lg bg-slate-50 border">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+                    <Check className="w-5 h-5 text-emerald-600" />
+                  </div>
+                  <div>
+                    <div className="text-sm text-muted-foreground">Активная модель</div>
+                    <div className="text-lg font-semibold" data-testid="active-model-name">
+                      {modelInfo?.active_model || 'gpt-5.2'}
+                    </div>
+                  </div>
+                  {modelInfo?.last_check && (
+                    <div className="ml-auto text-sm text-muted-foreground">
+                      Последняя проверка: {format(new Date(modelInfo.last_check), 'dd MMM yyyy HH:mm', { locale: ru })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Check results */}
+                {checkResult && (
+                  <div className="space-y-3">
+                    {checkResult.newer_models?.length > 0 && (
+                      <div className="p-4 rounded-lg border border-amber-200 bg-amber-50">
+                        <div className="font-medium text-amber-800 mb-2">
+                          Доступны новые модели:
+                        </div>
+                        <div className="space-y-2">
+                          {checkResult.newer_models.map((model) => (
+                            <div key={model} className="flex items-center justify-between p-2 rounded bg-white border">
+                              <span className="font-mono text-sm">{model}</span>
+                              <Button
+                                size="sm"
+                                onClick={() => handleSwitchModel(model)}
+                                disabled={switching}
+                                data-testid={`switch-model-${model}`}
+                              >
+                                {switching ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
+                                Переключить
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="p-4 rounded-lg border bg-slate-50">
+                      <div className="font-medium mb-2">Все доступные GPT модели ({checkResult.available_models?.length || 0}):</div>
+                      <div className="flex flex-wrap gap-2">
+                        {checkResult.available_models?.map((model) => (
+                          <Badge
+                            key={model}
+                            variant={model === modelInfo?.active_model ? 'default' : 'outline'}
+                            className={model === modelInfo?.active_model ? 'bg-emerald-600' : 'cursor-pointer hover:bg-slate-100'}
+                            onClick={() => model !== modelInfo?.active_model && handleSwitchModel(model)}
+                          >
+                            {model}
+                            {model === modelInfo?.active_model && ' (активна)'}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {!checkResult && (
+                  <div className="text-center py-6 text-muted-foreground">
+                    Нажмите "Проверить обновления" для получения списка моделей
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </main>
     </div>
