@@ -503,7 +503,12 @@ export default function BillingPage() {
                           </TableHeader>
                           <TableBody>
                             {adminBalances.map(b => (
-                              <TableRow key={b.org_id} data-testid={`admin-balance-${b.org_id}`}>
+                              <TableRow
+                                key={b.org_id}
+                                className="cursor-pointer hover:bg-slate-50"
+                                onClick={() => setSelectedOrgId(b.org_id)}
+                                data-testid={`admin-balance-${b.org_id}`}
+                              >
                                 <TableCell className="font-medium">{b.org_name}</TableCell>
                                 <TableCell className="text-right font-semibold tabular-nums">
                                   {b.balance.toLocaleString('ru-RU', { maximumFractionDigits: 2 })}
