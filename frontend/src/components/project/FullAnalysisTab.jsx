@@ -449,7 +449,7 @@ function resolveTemplateVars(tplText, depIds, currentOutputs, loopVars) {
 
 // ==================== MAIN COMPONENT ====================
 
-export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }) {
+export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult, autoRun, fastTrackPipelineId, fastTrackTopic, onAutoRunComplete }) {
   // Pipeline selection
   const [pipelines, setPipelines] = useState([]);
   const [selectedPipelineId, setSelectedPipelineId] = useState('');
