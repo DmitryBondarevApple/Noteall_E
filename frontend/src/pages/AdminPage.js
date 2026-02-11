@@ -165,6 +165,38 @@ export default function AdminPage() {
     }
   };
 
+  const handleSaveMarkupTiers = async () => {
+    if (!editingTiers) return;
+    setSavingTiers(true);
+    try {
+      await billingApi.updateMarkupTiers(editingTiers);
+      setMarkupTiers(editingTiers);
+      setEditingTiers(null);
+      toast.success('Таблица наценок обновлена');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Ошибка сохранения');
+    } finally {
+      setSavingTiers(false);
+    }
+  };
+
+  const handleAddTier = () => {
+    const tiers = editingTiers || [...markupTiers];
+    const lastMax = tiers.length > 0 ? tiers[tiers.length - 1].max_cost : 0;
+    setEditingTiers([...tiers, { min_cost: lastMax, max_cost: lastMax * 10 || 1, multiplier: 2.0 }]);
+  };
+
+  const handleRemoveTier = (idx) => {
+    const tiers = editingTiers || [...markupTiers];
+    setEditingTiers(tiers.filter((_, i) => i !== idx));
+  };
+
+  const handleTierChange = (idx, field, value) => {
+    const tiers = [...(editingTiers || markupTiers)];
+    tiers[idx] = { ...tiers[idx], [field]: parseFloat(value) || 0 };
+    setEditingTiers(tiers);
+  };
+
   const handleCheckModels = async () => {
     setChecking(true);
     try {
