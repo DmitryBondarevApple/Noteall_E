@@ -830,7 +830,7 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
   const handleSaveResult = useCallback(async () => {
     setIsSaving(true);
     try {
-      const subject = nodeOutputs['meeting_subject'] || nodeOutputs['subject'] || 'Анализ встречи';
+      const subject = nodeOutputs['meeting_subject'] || nodeOutputs['subject'] || nodeOutputs['key_subject'] || 'Анализ встречи';
       await chatApi.saveFullAnalysis(projectId, {
         subject: typeof subject === 'string' ? subject : 'Анализ встречи',
         content: reviewContent,
