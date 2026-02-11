@@ -320,7 +320,8 @@ async def import_pipeline(file: UploadFile = File(...), user=Depends(get_current
     # Auto-fix input_from from edges if missing
     from app.utils import fix_nodes_input_from
     nodes = data.get("nodes", [])
-    fix_nodes_input_from(nodes, data.get("edges", []))
+    edges = data.get("edges", [])
+    fix_nodes_input_from(nodes, edges)
 
     pipeline_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
