@@ -479,6 +479,7 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
       }
 
       // Also substitute any remaining {{var}} from outputs
+      console.log(`[DEBUG ai_prompt VARS] node=${node.id}, prompt length before subst=${prompt.length}`);
       const varMatches = prompt.match(/\{\{(\w+)\}\}/g) || [];
       for (const m of varMatches) {
         const varName = m.replace(/[{}]/g, '');
