@@ -75,6 +75,15 @@
 - Superadmin: markup tier management in Admin panel (Наценки tab)
 - Metering integrated into: ai_chat, pipeline_generate, analyze_prompt, analyze_raw, generate_script, doc_stream, pipeline_node, pipeline_batch, transcript_processing
 
+### Org Detail Card & Admin Topup (Feb 2026)
+- Clickable org rows in Platform (Billing) and All Orgs (Admin) tabs
+- OrgDetailModal with 4 tabs: Статистика, Пользователи, Транзакции, Пополнить
+- Stats: AI requests, tokens, avg request cost, monthly spending chart, top users by spend
+- Users: name, email, role, token limit, registration date
+- Transactions: full payment/deduction history
+- Superadmin manual topup: arbitrary amount + comment for any org
+- New endpoints: GET /api/billing/admin/org/{org_id}, POST /api/billing/admin/topup
+
 ### Admin & Usage Dashboards (Feb 2026)
 - SUPERADMIN platform tab: revenue ($), deductions, monthly requests/tokens, org/user counts
 - ORG_ADMIN team tab: per-employee AI usage (requests, tokens, credits, progress bar for limits)
