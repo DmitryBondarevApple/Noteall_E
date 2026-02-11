@@ -63,6 +63,11 @@ export default function AdminPage() {
   const [limitDialog, setLimitDialog] = useState(null);
   const [limitValue, setLimitValue] = useState('');
 
+  // Markup tiers
+  const [markupTiers, setMarkupTiers] = useState([]);
+  const [editingTiers, setEditingTiers] = useState(null);
+  const [savingTiers, setSavingTiers] = useState(false);
+
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
