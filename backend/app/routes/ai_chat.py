@@ -8,7 +8,8 @@ from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from pydantic import BaseModel
 from app.core.database import db
 from app.core.security import get_current_user
-from app.services.gpt import call_gpt_chat
+from app.services.gpt import call_gpt_chat, call_gpt_chat_metered
+from app.services.metering import check_user_monthly_limit, check_org_balance, deduct_credits_and_record
 from app.services.s3 import s3_enabled, upload_bytes, presigned_url, download_bytes
 from app.models.ai_chat import AiChatSessionResponse, AiChatSessionListItem, AiChatMessage
 
