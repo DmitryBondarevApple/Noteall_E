@@ -333,6 +333,7 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
           return { source: e.source, target: e.target, data: { edgeType } };
         });
         setPipelineData({ ...pl, _nodes: nodes, _edges: edges });
+        setPipelineVarInputs({});
 
         const ordered = resolveExecutionOrder(nodes, edges);
         setOrderedNodes(ordered);
