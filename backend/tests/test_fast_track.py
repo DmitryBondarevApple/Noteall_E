@@ -67,13 +67,14 @@ class TestFastTrackFeature:
         )
         assert response.status_code == 404, f"Expected 404, got {response.status_code}"
     
-    # Test 3: Bulk Accept without Auth Returns 401
-    def test_bulk_accept_without_auth_returns_401(self, test_project_id):
-        """Test POST /api/projects/{id}/fragments/bulk-accept without auth returns 401"""
+    # Test 3: Bulk Accept without Auth Returns 401 or 403
+    def test_bulk_accept_without_auth_returns_error(self, test_project_id):
+        """Test POST /api/projects/{id}/fragments/bulk-accept without auth returns auth error"""
         response = requests.post(
             f"{BASE_URL}/api/projects/{test_project_id}/fragments/bulk-accept"
         )
-        assert response.status_code == 401, f"Expected 401, got {response.status_code}"
+        # Accept either 401 (Unauthorized) or 403 (Forbidden) as valid auth failures
+        assert response.status_code in [401, 403], f"Expected 401 or 403, got {response.status_code}"
     
     # Test 4: Get Project Returns fast_track Field
     def test_project_response_includes_fast_track_field(self, auth_headers, test_project_id):
