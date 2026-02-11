@@ -18,6 +18,12 @@ Build a comprehensive multi-tenant SaaS application with AI features for meeting
 
 ## Bug Fixes & Improvements
 
+### 2026-02-11: Refactoring input_from logic (DONE)
+- Extracted duplicated `input_from` derivation from edges into shared utilities
+- Backend: `app/utils/__init__.py` — `build_input_from_map()`, `fix_nodes_input_from()`
+- Frontend: `src/lib/pipelineUtils.js` — `buildInputFromMap()`, `resolveInputFrom()`
+- Refactored: `pipelines.py`, `documents.py`, `PipelineEditorPage.jsx`, `PipelinesPage.jsx`
+
 ### 2026-02-11: Magic Link Invitations (DONE)
 - **Feature:** One-time magic link invitations for adding employees to an organization
 - **Backend:** New `/api/invitations/` routes (create, list, validate, revoke)
@@ -42,4 +48,4 @@ Build a comprehensive multi-tenant SaaS application with AI features for meeting
 - Test user: bugtest@test.com / bugtest123
 
 ## Backlog
-- Refactoring: Centralize `input_from` derivation from `edges` into a shared utility (currently duplicated in AiChatPanel.jsx, ConstructorPage.jsx, PipelinesPage.jsx, pipelines.py)
+- (пусто)
