@@ -173,6 +173,10 @@ export default function AdminPage() {
               <BookOpen className="w-4 h-4" />
               Общие промпты
             </TabsTrigger>
+            <TabsTrigger value="models" className="gap-2" data-testid="admin-models-tab">
+              <Cpu className="w-4 h-4" />
+              Модели
+            </TabsTrigger>
           </TabsList>
 
           {/* Users Tab */}
