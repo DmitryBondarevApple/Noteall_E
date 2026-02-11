@@ -497,6 +497,7 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
         setOrderedNodes(ordered);
         setStages(buildWizardStages(ordered));
         setDataDeps(buildDataDeps(nodes, edges));
+        setValidationResult(validatePipeline(nodes, edges));
       } catch (err) {
         console.error('Failed to load pipeline:', err);
       }
