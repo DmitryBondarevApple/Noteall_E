@@ -134,6 +134,42 @@ export default function AppLayout({ children }) {
                 )}
               </>
             )}
+
+            {isOrgAdmin() && (
+              <>
+                {collapsed ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Link to="/billing">
+                        <button
+                          className={cn(
+                            'w-full flex items-center justify-center rounded-lg text-sm font-medium h-9 transition-colors',
+                            isActive('/billing') ? 'bg-indigo-500/20 text-indigo-300' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                          )}
+                          data-testid="nav-billing"
+                        >
+                          <CreditCard className="w-4 h-4" />
+                        </button>
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="font-medium">Биллинг</TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <Link to="/billing">
+                    <button
+                      className={cn(
+                        'w-full flex items-center gap-2.5 px-3 rounded-lg text-sm font-medium h-9 transition-colors',
+                        isActive('/billing') ? 'bg-indigo-500/20 text-indigo-300' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                      )}
+                      data-testid="nav-billing"
+                    >
+                      <CreditCard className="w-4 h-4" />
+                      <span>Биллинг</span>
+                    </button>
+                  </Link>
+                )}
+              </>
+            )}
           </nav>
 
           {/* Bottom section */}
