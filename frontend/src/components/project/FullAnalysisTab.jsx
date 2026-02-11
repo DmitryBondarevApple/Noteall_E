@@ -514,7 +514,7 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
       knownOutputs.add(n.id);
       if (n.data.label) knownOutputs.add(n.data.label);
 
-      if (n.data.node_type === 'template' && n.data.variable_config) {
+      if (['template', 'user_input'].includes(n.data.node_type) && n.data.variable_config) {
         for (const key of Object.keys(n.data.variable_config)) {
           knownOutputs.add(key);
         }
