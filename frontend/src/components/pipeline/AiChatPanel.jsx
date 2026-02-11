@@ -444,7 +444,7 @@ export default function AiChatPanel({ open, onClose, pipelineId, onPipelineGener
                 </div>
               )}
               {messages.map((msg, i) => (
-                <ChatMessage key={i} msg={msg} onApplyPipeline={onPipelineGenerated} />
+                <ChatMessage key={i} msg={msg} onApplyPipeline={onPipelineGenerated} usage={usageMap[i]} />
               ))}
               {sending && (
                 <div className="flex gap-2.5">
