@@ -30,7 +30,7 @@ async def call_gpt52(
     reasoning_effort: str = "high",
     messages: list = None,
 ) -> str:
-    """Call GPT model with reasoning"""
+    """Call GPT-5.2 with reasoning"""
     try:
         msgs = [{"role": "system", "content": system_message}]
         if messages:
@@ -39,11 +39,11 @@ async def call_gpt52(
             msgs.append({"role": "user", "content": user_message})
 
         response = await client.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-5.2",
             messages=msgs,
             temperature=0.3,
         )
         return response.choices[0].message.content
     except Exception as e:
-        logger.error(f"GPT error: {e}")
+        logger.error(f"GPT-5.2 error: {e}")
         raise e
