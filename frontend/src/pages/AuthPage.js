@@ -174,6 +174,17 @@ export default function AuthPage() {
                     />
                   </div>
                   <div className="space-y-2">
+                    <Label htmlFor="register-org">Организация</Label>
+                    <Input
+                      id="register-org"
+                      data-testid="register-org-input"
+                      type="text"
+                      placeholder="Название компании (необязательно)"
+                      value={registerData.organizationName}
+                      onChange={(e) => setRegisterData({ ...registerData, organizationName: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="register-email">Email</Label>
                     <Input
                       id="register-email"
