@@ -239,12 +239,16 @@ export default function PipelineEditorPage() {
     (async () => {
       try {
         const res = await pipelinesApi.get(pipelineId);
-        const pipeline = res.data;
-        setPipelineName(pipeline.name);
-        setPipelineDescription(pipeline.description || '');
-        setIsPublic(pipeline.is_public);
+        const pipelineData = res.data;
+        setPipeline(pipelineData);
+        setPipelineName(pipelineData.name);
+        setPipelineDescription(pipelineData.description || '');
+        setIsPublic(pipelineData.is_public);
+        if (pipelineData.generation_prompt) {
+          setAiEditPrompt(pipelineData.generation_prompt);
+        }
 
-        const loadedNodes = pipeline.nodes.map((n) => ({
+        const loadedNodes = pipelineData.nodes.map((n) => ({
           id: n.node_id,
           type: 'pipelineNode',
           position: { x: n.position_x || 0, y: n.position_y || 0 },
