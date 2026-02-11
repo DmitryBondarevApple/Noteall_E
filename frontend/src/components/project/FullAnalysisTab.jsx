@@ -453,11 +453,28 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
       return response.data.response_text;
     }
 
-    if (type === 'parse_list' || type === 'aggregate' || type === 'template') {
-      const result = executeScript(node, {
-        input,
-        vars: currentOutputs,
-      });
+    if (type === 'parse_list') {
+      if (node.data.script) {
+        const result = executeScript(node, { input, vars: currentOutputs });
+        if (Array.isArray(result.output)) return result.output;
+        if (!result.error && result.output != null) return result.output;
+      }
+      // Default: parse text into list of items (handles Python scripts or missing scripts)
+      return defaultParseList(typeof input === 'string' ? input : String(input || ''));
+    }
+
+    if (type === 'aggregate') {
+      if (node.data.script) {
+        const result = executeScript(node, { input, vars: currentOutputs });
+        return result.output;
+      }
+      // Default: join array or pass through string
+      if (Array.isArray(input)) return input.join('\n\n');
+      return input || '';
+    }
+
+    if (type === 'template') {
+      const result = executeScript(node, { input, vars: currentOutputs });
       return result.output;
     }
 
