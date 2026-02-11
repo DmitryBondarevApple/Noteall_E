@@ -1,4 +1,5 @@
 import uuid
+import logging
 from datetime import datetime, timezone
 from typing import List, Optional
 from pydantic import BaseModel
@@ -9,6 +10,8 @@ from app.models.chat import ChatRequestCreate, ChatRequestResponse, ChatResponse
 from app.services.gpt import call_gpt52, call_gpt52_metered
 from app.services.metering import check_user_monthly_limit, check_org_balance, deduct_credits_and_record
 from app.routes.attachments import build_attachment_context
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["chat"])
 
