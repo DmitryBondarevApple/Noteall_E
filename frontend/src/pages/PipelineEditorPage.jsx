@@ -34,6 +34,7 @@ import { NodeConfigPanel } from '../components/pipeline/NodeConfigPanel';
 import { PipelineStepPreview } from '../components/pipeline/PipelineStepPreview';
 import { pipelinesApi } from '../lib/api';
 import { toast } from 'sonner';
+import AiChatPanel from '../components/pipeline/AiChatPanel';
 import {
   ArrowLeft,
   Save,
