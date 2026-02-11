@@ -39,6 +39,11 @@
 ### S3 Storage (Feb 2026)
 - All uploads to Timeweb S3
 
+### Navigation: Go Back (Feb 2026)
+- Edit pipeline button on DocProjectPage next to Run button
+- "Return to project" button in PipelineEditorPage when navigated from a document project
+- Back arrow also returns to source page (project or pipelines list)
+
 ### Core Features
 - Meeting transcription, speaker identification, AI analysis
 - Document Agent with automated pipeline runner
@@ -63,7 +68,6 @@
 - `settings`: {key: "active_model", value: "gpt-5.2"}
 
 ## Backlog
-- **P1**: "Go Back" from execution to scenario selection page
 - **P2**: Auto-check for new AI models and admin notification
 - **P2**: Export results to Word/PDF
 - **P2**: Real-time pipeline execution progress
