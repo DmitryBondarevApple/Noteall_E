@@ -252,6 +252,10 @@ export const billingApi = {
     axios.get(`${API}/billing/transactions`, { params: { limit, skip } }),
   topup: (planId) => axios.post(`${API}/billing/topup`, { plan_id: planId }),
   adminBalances: () => axios.get(`${API}/billing/admin/balances`),
+  getMarkupTiers: () => axios.get(`${API}/billing/admin/markup-tiers`),
+  updateMarkupTiers: (tiers) => axios.put(`${API}/billing/admin/markup-tiers`, { tiers }),
+  getMyUsage: () => axios.get(`${API}/billing/usage/my`),
+  adminUsage: (orgId) => axios.get(`${API}/billing/admin/usage`, { params: orgId ? { org_id: orgId } : {} }),
 };
 
 // Seed
