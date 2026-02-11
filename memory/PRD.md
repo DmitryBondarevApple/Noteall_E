@@ -19,34 +19,35 @@ Build a comprehensive multi-tenant SaaS application with AI features for meeting
 
 ### Stage 2: Billing & Credit System (DONE)
 - Credit balances per organization
-- Transactions history
-- Tariff plans
+- Transactions history, tariff plans
 - Welcome credits (100) on registration
 
 ### Stage 3: AI Usage Metering (DONE)
 - Token counting with tiktoken
 - Tiered markup system
 - Credit deduction for all AI calls
-- Monthly token limits per user
 
 ### Stage 4: Admin & User Dashboards (DONE)
-- Org admin dashboard (team usage)
-- Superadmin platform dashboard
+- Org admin dashboard, superadmin platform dashboard
 - Credit balance widget in sidebar
 - Organization detail modal
 
-## Bug Fixes
-### 2026-02-11: AI Assistant in Script Builder (FIXED)
-- **Bug:** "Error sending message from AI assistant in script builder"
-- **Root cause:** Organizations had 0 credit balance after billing system was added
-- **Fix:** 
-  1. Added 100 welcome credits on new org registration
-  2. Topped up all existing orgs with 0 balance
-  3. Improved 402 error handling in frontend
+## Bug Fixes & Improvements
+
+### 2026-02-11: AI Assistant Bug Fix
+- **Root cause:** Organizations had 0 credit balance blocking AI calls
+- **Fix:** Welcome credits on registration + existing orgs topped up
+
+### 2026-02-11: Insufficient Credits Modal
+- **Feature:** Global modal popup when any AI call fails due to insufficient credits (402)
+- **Implementation:** 
+  - `CreditsContext.js` — global context with axios 402 interceptor
+  - `InsufficientCreditsModal.jsx` — modal with "Перейти в Биллинг" button
+  - Applied across ALL AI call points: AiChatPanel, AnalysisTab, ResultsTab, FullAnalysisTab, NodeConfigPanel, DocProjectPage
 
 ## Key Credentials
 - Superadmin: admin@voiceworkspace.com / admin123
 - Test user: bugtest@test.com / bugtest123
 
 ## Backlog
-- No pending tasks. All planned stages completed.
+- No pending tasks
