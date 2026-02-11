@@ -175,7 +175,9 @@ export function NodeConfigPanel({ node, allNodes, edges, onUpdate, onDelete, onC
       setAiPrompt('');
       toast.success('Скрипт сгенерирован');
     } catch (err) {
-      toast.error('Ошибка генерации скрипта');
+      if (err.response?.status !== 402) {
+        toast.error('Ошибка генерации скрипта');
+      }
     } finally {
       setGenerating(false);
     }

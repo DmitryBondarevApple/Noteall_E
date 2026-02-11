@@ -116,7 +116,9 @@ export function AnalysisTab({
       setAdditionalText('');
       toast.success('Анализ завершен');
     } catch (error) {
-      toast.error('Ошибка анализа');
+      if (error.response?.status !== 402) {
+        toast.error('Ошибка анализа');
+      }
     } finally {
       setAnalyzing(false);
     }
