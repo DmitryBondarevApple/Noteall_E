@@ -234,6 +234,9 @@ const STEP_ICONS = {
   batch_loop: Repeat,
   aggregate: Layers,
   template: Variable,
+  user_input: PenLine,
+  format_template: FileCode2,
+  batch_prompt_template: Braces,
   user_edit_list: UserPen,
   user_review: Eye,
 };
