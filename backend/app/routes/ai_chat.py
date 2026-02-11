@@ -258,7 +258,7 @@ async def send_message(
     if org_id:
         if not await check_user_monthly_limit(user):
             raise HTTPException(status_code=402, detail="Превышен месячный лимит токенов")
-        if not await check_org_balance(org_id):
+        if not await check_org_balance(org_id, user):
             raise HTTPException(status_code=402, detail="Недостаточно кредитов. Пополните баланс.")
 
     # Call GPT
