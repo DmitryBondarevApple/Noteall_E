@@ -854,6 +854,10 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
       }
     }
 
+    console.log('[DEBUG proceedToNextStage] currentStageIdx:', currentStageIdx, 'currentStage:', currentStage.id, 'type:', currentStage.type);
+    console.log('[DEBUG proceedToNextStage] userOutput type:', typeof userOutput, 'isArray:', Array.isArray(userOutput), 'length:', Array.isArray(userOutput) ? userOutput.length : 'N/A');
+    console.log('[DEBUG proceedToNextStage] autoNodesAfter:', currentStage.autoNodesAfter.map(n => n.id));
+
     setIsProcessing(true);
     setBatchProgress(0);
 
@@ -874,10 +878,19 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
       }
 
       const nextStage = stages[nextIdx];
+      console.log('[DEBUG proceedToNextStage] nextStage:', nextStage.id, 'type:', nextStage.type);
+      console.log('[DEBUG proceedToNextStage] nextStage.autoNodesBefore:', nextStage.autoNodesBefore.map(n => `${n.id}(${n.data.node_type})`));
 
       // Run auto nodes BEFORE next stage
       if (nextStage.autoNodesBefore.length > 0) {
         outputs = await runAutoNodes(nextStage.autoNodesBefore, outputs);
+      }
+
+      console.log('[DEBUG proceedToNextStage] AFTER autoNodesBefore, output keys:', Object.keys(outputs));
+      for (const key of Object.keys(outputs)) {
+        const val = outputs[key];
+        const preview = typeof val === 'string' ? val.substring(0, 100) : (Array.isArray(val) ? `Array(${val.length})` : typeof val);
+        console.log(`[DEBUG outputs] ${key}: ${preview}`);
       }
 
       // If next stage is a non-interactive pause stage, execute its primary node
