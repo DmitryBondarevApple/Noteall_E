@@ -140,6 +140,7 @@ function validatePipeline(nodes, edges) {
   // 6. Check for at least one interactive node
   const hasInteractive = nodes.some(n =>
     ['user_edit_list', 'user_review'].includes(n.data.node_type) ||
+    n.data.node_type === 'user_input' ||
     (n.data.node_type === 'template' && !(n.data.input_from?.length > 0))
   );
   if (!hasInteractive) {
