@@ -49,3 +49,7 @@ Build a comprehensive multi-tenant SaaS application with AI features for meeting
 
 ## Backlog
 - (пусто)
+
+## Test Coverage
+- `backend/tests/test_pipeline_utils.py` — 13 unit tests for `build_input_from_map`, `fix_nodes_input_from`
+- `frontend/src/lib/pipelineUtils.test.js` — 12 unit tests for `buildInputFromMap`, `resolveInputFrom`
