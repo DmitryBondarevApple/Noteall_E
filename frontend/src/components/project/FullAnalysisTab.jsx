@@ -595,18 +595,23 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
       setBatchProgress(Math.round(((iteration + 1) / totalBatches) * 100));
     }
 
-    // Final script call to get aggregated output
+    // Final: aggregate results
     if (!pausedRef.current) {
-      const finalContext = {
-        input: items,
-        iteration: totalBatches,
-        batchSize: effectiveSize,
-        results,
-        vars: outputs,
-      };
-      const finalResult = executeScript(loopNode, finalContext);
-      outputs[loopNode.id] = finalResult.output || results.join('\n\n');
-      if (loopNode.data.label) outputs[loopNode.data.label] = finalResult.output || results.join('\n\n');
+      if (loopNode.data.script) {
+        const finalContext = {
+          input: items,
+          iteration: totalBatches,
+          batchSize: effectiveSize,
+          results,
+          vars: outputs,
+        };
+        const finalResult = executeScript(loopNode, finalContext);
+        outputs[loopNode.id] = finalResult.output || results.join('\n\n');
+        if (loopNode.data.label) outputs[loopNode.data.label] = finalResult.output || results.join('\n\n');
+      } else {
+        outputs[loopNode.id] = results.join('\n\n');
+        if (loopNode.data.label) outputs[loopNode.data.label] = results.join('\n\n');
+      }
 
       // Mark the AI node as done too (its output is the combined results)
       if (aiNode) {
