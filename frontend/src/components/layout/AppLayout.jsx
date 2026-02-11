@@ -17,6 +17,7 @@ import {
   PanelLeftClose,
   PanelLeft,
   CalendarDays,
+  CreditCard,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -27,7 +28,7 @@ const navItems = [
 ];
 
 export default function AppLayout({ children }) {
-  const { user, logout, isAdmin } = useAuth();
+  const { user, logout, isAdmin, isOrgAdmin } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
