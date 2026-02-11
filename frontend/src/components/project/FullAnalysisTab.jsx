@@ -499,8 +499,7 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
         prompt = prompt.replace(/\{\{\w+\}\}/g, input);
       }
 
-      // Check if {{text}} was resolved (transcript is embedded in prompt)
-      const textWasSubstituted = currentOutputs.text && prompt.includes(currentOutputs.text);
+      console.log(`[DEBUG ai_prompt] node=${node.id}, prompt length=${prompt.length}, textWasSubstituted=${textWasSubstituted}, skip_transcript_context=${textWasSubstituted}`);
 
       const response = await chatApi.analyzeRaw(projectId, {
         system_message: systemMsg,
@@ -509,6 +508,7 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
         attachment_ids: attachmentIdsRef.current.length > 0 ? attachmentIdsRef.current : undefined,
         skip_transcript_context: textWasSubstituted,
       });
+      console.log(`[DEBUG ai_prompt] node=${node.id}, response_text length=${response.data.response_text?.length}, first 200 chars:`, response.data.response_text?.substring(0, 200));
       return response.data.response_text;
     }
 
@@ -519,7 +519,9 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
         if (!result.error && result.output != null) return result.output;
       }
       // Default: parse text into list of items (handles Python scripts or missing scripts)
-      return defaultParseList(typeof input === 'string' ? input : String(input || ''));
+      const parsed = defaultParseList(typeof input === 'string' ? input : String(input || ''));
+      console.log(`[DEBUG parse_list] node=${node.id}, input type=${typeof input}, input length=${typeof input === 'string' ? input.length : 'N/A'}, parsed items=${parsed.length}`);
+      return parsed;
     }
 
     if (type === 'aggregate') {
