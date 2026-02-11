@@ -137,6 +137,119 @@ async def duplicate_pipeline(pipeline_id: str, user=Depends(get_current_user)):
     return PipelineResponse(**new_doc)
 
 
+@router.post("/generate", response_model=PipelineResponse, status_code=201)
+async def generate_pipeline(data: GenerateRequest, user=Depends(get_current_user)):
+    """AI-ассистент: генерация сценария по промпту"""
+
+    system_prompt = """Ты — AI-ассистент платформы Noteall. Твоя задача — создавать сценарии анализа документов и транскриптов встреч.
+
+Сценарий — это граф из узлов (nodes) и связей (edges). Каждый узел имеет тип и конфигурацию.
+
+ДОСТУПНЫЕ ТИПЫ УЗЛОВ:
+1. "ai_prompt" — AI-промпт. Отправляет текст в GPT для анализа. Параметры: inline_prompt (текст промпта), system_message (системное сообщение).
+2. "parse_list" — Скрипт парсинга. Разбирает текст на список элементов. Параметр: script (Python-выражение для парсинга, например "items = text.split('\\n')").
+3. "batch_loop" — Батч-цикл. Обрабатывает каждый элемент списка через подключённый AI-промпт. Параметр: batch_size (размер батча, по умолчанию 3).
+4. "aggregate" — Агрегация. Собирает результаты батч-обработки в единый текст.
+5. "template" — Шаблон/Переменная. Задаёт шаблон текста с переменными {{var}}. Параметр: template_text.
+6. "user_edit_list" — Редактирование списка пользователем. Позволяет пользователю отредактировать список перед продолжением.
+7. "user_review" — Просмотр результата. Показывает финальный результат пользователю.
+
+ПРАВИЛА ПОСТРОЕНИЯ ГРАФА:
+- Первый узел получает исходный текст (транскрипт или документ) автоматически.
+- Узлы связаны через edges: {source: "node_id", target: "node_id"}.
+- Для fan-out (один узел → несколько): создай несколько edges от одного source.
+- Для fan-in (несколько → один): укажи input_from: ["node_id_1", "node_id_2"] у целевого узла.
+- Располагай узлы на canvas: position_x (горизонталь, шаг ~300), position_y (вертикаль, шаг ~150).
+
+ФОРМАТ ОТВЕТА — строго JSON:
+{
+  "name": "Название сценария",
+  "description": "Краткое описание",
+  "nodes": [
+    {
+      "node_id": "уникальный_id",
+      "node_type": "ai_prompt",
+      "label": "Название узла",
+      "inline_prompt": "Текст промпта...",
+      "position_x": 0,
+      "position_y": 0
+    }
+  ],
+  "edges": [
+    {"source": "node_id_1", "target": "node_id_2"}
+  ]
+}
+
+Создавай практичные, рабочие сценарии. Промпты в узлах должны быть подробными и на русском языке.
+Отвечай ТОЛЬКО валидным JSON без markdown-обёртки."""
+
+    try:
+        result = await call_gpt52(
+            system_message=system_prompt,
+            user_message=data.prompt,
+            reasoning_effort="high"
+        )
+
+        # Parse JSON from response
+        result = result.strip()
+        if result.startswith("```"):
+            result = result.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+
+        pipeline_data = json.loads(result)
+
+        if not isinstance(pipeline_data, dict) or "nodes" not in pipeline_data:
+            raise ValueError("Invalid pipeline structure")
+
+        pipeline_id = data.pipeline_id or str(uuid.uuid4())
+        now = datetime.now(timezone.utc).isoformat()
+
+        # If updating existing pipeline
+        if data.pipeline_id:
+            existing = await db.pipelines.find_one({"id": data.pipeline_id, "user_id": user["id"]})
+            if not existing:
+                raise HTTPException(status_code=404, detail="Pipeline not found")
+
+            await db.pipelines.update_one(
+                {"id": data.pipeline_id},
+                {"$set": {
+                    "name": pipeline_data.get("name", existing.get("name", "Сценарий")),
+                    "description": pipeline_data.get("description", ""),
+                    "nodes": pipeline_data.get("nodes", []),
+                    "edges": pipeline_data.get("edges", []),
+                    "generation_prompt": data.prompt,
+                    "updated_at": now,
+                }}
+            )
+            updated = await db.pipelines.find_one({"id": data.pipeline_id}, {"_id": 0})
+            return PipelineResponse(**updated)
+
+        # Create new pipeline
+        pipeline_doc = {
+            "id": pipeline_id,
+            "name": pipeline_data.get("name", "AI-сценарий"),
+            "description": pipeline_data.get("description", ""),
+            "nodes": pipeline_data.get("nodes", []),
+            "edges": pipeline_data.get("edges", []),
+            "generation_prompt": data.prompt,
+            "user_id": user["id"],
+            "is_public": False,
+            "created_at": now,
+            "updated_at": now,
+        }
+
+        await db.pipelines.insert_one(pipeline_doc)
+        return PipelineResponse(**pipeline_doc)
+
+    except json.JSONDecodeError as e:
+        logger.error(f"AI response parse error: {e}\nResponse: {result[:500]}")
+        raise HTTPException(status_code=500, detail="AI вернул некорректный формат. Попробуйте переформулировать запрос.")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Pipeline generation error: {e}")
+        raise HTTPException(status_code=500, detail=f"Ошибка генерации: {str(e)}")
+
+
 @router.get("/{pipeline_id}/export")
 async def export_pipeline(pipeline_id: str, user=Depends(get_current_user)):
     """Export pipeline as JSON"""
