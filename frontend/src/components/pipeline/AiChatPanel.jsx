@@ -11,6 +11,7 @@ import {
   Plus,
   Trash2,
   MessageSquare,
+  Workflow,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
