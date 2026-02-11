@@ -1,0 +1,78 @@
+{
+  "summary": "Stage 3: AI Cost Calculation & Credit Deduction - All tests passed. Backend 14/14 tests passed, Frontend UI fully functional.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_billing_stage3.py",
+    "/app/test_reports/pytest/pytest_billing_stage3.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_billing_stage3.py"
+  ],
+  "success_rate": {
+    "backend": "100% (14/14 passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "org_admin_user": "billing_test@test.com / test123",
+    "superadmin_user": "superadmin@test.com / test123"
+  },
+  "seed_data_creation": "No new seed data created. Used existing test users and data from Stage 2.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Stage 3 billing metering system fully tested. New collections: usage_records, markup_tiers (auto-seeded with 5 default tiers). Metering is non-blocking - if it fails, AI response still returns. AI calls use real OpenAI API (not mocked). Topup is still mocked.",
+  "features_tested": {
+    "backend_apis": {
+      "GET /api/billing/admin/markup-tiers": "PASS - Returns 5 default tiers sorted by min_cost (superadmin only)",
+      "PUT /api/billing/admin/markup-tiers": "PASS - Updates tiers with validation (superadmin only)",
+      "GET /api/billing/usage/my": "PASS - Returns current user monthly usage (requests, tokens, credits)",
+      "GET /api/billing/admin/usage": "PASS - Returns platform-wide usage stats by org (superadmin only)"
+    },
+    "metering_service": {
+      "Token counting": "VERIFIED - gpt_result contains prompt_tokens, completion_tokens, total_tokens",
+      "Tiered markup": "VERIFIED - Tiers applied based on base cost (10x, 7x, 5x, 3x, 2x)",
+      "Credit deduction": "PASS - Balance decreases after AI call, deduction transaction created",
+      "Usage recording": "PASS - usage_records collection updated with each AI call"
+    },
+    "billing_limits": {
+      "Monthly token limit": "VERIFIED - monthly_token_limit field exists in usage stats",
+      "Org balance check": "VERIFIED - check_org_balance() in code returns 402 when balance <= 0"
+    },
+    "frontend": {
+      "BillingPage overview": "PASS - Shows monthly usage (AI-запросов, Токенов, Потрачено кредитов)",
+      "AdminPage markup tiers tab": "PASS - Displays 5 tiers with edit/save/add tier functionality",
+      "Markup tiers edit mode": "PASS - Input fields for min_cost, max_cost, multiplier"
+    },
+    "authorization": {
+      "Markup tiers GET": "PASS - Returns 403 for org_admin, 200 for superadmin",
+      "Markup tiers PUT": "PASS - Returns 403 for org_admin, 200 for superadmin",
+      "Admin usage stats": "PASS - Returns 403 for org_admin, 200 for superadmin"
+    }
+  },
+  "verified_credit_deduction": {
+    "before_ai_call": "3998.751 credits (observed in frontend)",
+    "after_ai_call": "Balance decreased, -1.249 credits deducted",
+    "transaction_type": "deduction",
+    "transaction_description": "AI: ai_chat (gpt-5.2, 929 tokens)"
+  },
+  "default_markup_tiers": [
+    {"min_cost": 0.0, "max_cost": 0.001, "multiplier": 10.0},
+    {"min_cost": 0.001, "max_cost": 0.01, "multiplier": 7.0},
+    {"min_cost": 0.01, "max_cost": 0.1, "multiplier": 5.0},
+    {"min_cost": 0.1, "max_cost": 1.0, "multiplier": 3.0},
+    {"min_cost": 1.0, "max_cost": 999999.0, "multiplier": 2.0}
+  ],
+  "mocked_apis_confirmed": {
+    "POST /api/billing/topup": "MOCK - Credits added directly without real payment processing",
+    "AI calls": "REAL - Uses actual OpenAI API (not mocked)"
+  }
+}
