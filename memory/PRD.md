@@ -83,12 +83,24 @@ Build a comprehensive multi-tenant SaaS application with AI features for meeting
 - **Root causes:**
   1. `runBatchLoop` prioritized child `aiNode` (step_7: short summary) over `promptTemplate` (from step_4: batch template) — the batch loop was using the wrong prompt
   2. step_7 was incorrectly marked as "consumed" by the batch loop, so it never ran its actual task (generating a short summary)
-  3. `resolveTemplateVars` used `String.replace()` with regex, vulnerable to `$` characters in AI-generated text
+  3. `resolveTemplateVars` Phase 3 (positional fallback) incorrectly resolved `{{item}}` to the entire topics array, preventing `{ __template, __items }` format for batch loops
+  4. `resolveTemplateVars` used `String.replace()` with regex, vulnerable to `$` characters in AI-generated text
 - **Fix:**
   1. Reversed priority in batch loop: `promptTemplate` takes precedence over `aiNode`
   2. Only mark `aiNode` as consumed when it was actually used (no `promptTemplate`)
-  3. Replaced regex `.replace()` with `.split().join()` in `resolveTemplateVars` for safe substitution
+  3. Skip arrays in resolveTemplateVars Phase 2/3 — arrays are batch items, not template values
+  4. Replaced regex `.replace()` with `.split().join()` for safe substitution
 - **File:** `FullAnalysisTab.jsx`
+
+### 2026-02-12: Pipeline Constructor Architectural Improvements (DONE)
+- **Problem:** Pipeline execution relied on implicit heuristics, causing bugs. The batch_loop guessed its AI node by searching "first ai_prompt after itself". Template variables had no semantic distinction between static values and iteration variables.
+- **Changes:**
+  1. **Backend model:** Added `prompt_source_node: Optional[str]` to batch_loop and `loop_vars: Optional[List[str]]` to template nodes (`pipeline.py`)
+  2. **Execution engine:** `runBatchLoop` uses `prompt_source_node` for explicit prompt sourcing (fallback to heuristic); `resolveTemplateVars` skips `loop_vars` during resolution (`FullAnalysisTab.jsx`)
+  3. **Constructor UI:** Added "Источник промпта" dropdown for batch_loop nodes; added "Итерационные переменные (loop_vars)" input for template nodes (`NodeConfigPanel.jsx`)
+  4. **AI Master Prompt:** Comprehensive documentation of all node types, variable semantics (user/context/iteration/output), graph rules, and batch analysis pattern example (`ai_chat.py`)
+- **Existing pipeline updated:** `step_4` → `loop_vars: ["item"]`, `step_5` → `prompt_source_node: "step_4_topic_batch_template"`
+- **Testing:** 100% pass rate (backend + frontend)
 
 ## Backlog
 - (пусто)
