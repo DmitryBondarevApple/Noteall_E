@@ -187,7 +187,7 @@ Speaker 1 — Сабина
             "nodes": [
                 {
                     "node_id": "input_subject",
-                    "node_type": "template",
+                    "node_type": "user_input",
                     "label": "Тема встречи",
                     "template_text": "{{meeting_subject}}",
                     "step_title": "Настройка",
