@@ -244,9 +244,6 @@ export default function PipelineEditorPage() {
         setPipelineName(pipelineData.name);
         setPipelineDescription(pipelineData.description || '');
         setIsPublic(pipelineData.is_public);
-        if (pipelineData.generation_prompt) {
-          setAiEditPrompt(pipelineData.generation_prompt);
-        }
 
         const loadedNodes = pipelineData.nodes.map((n) => ({
           id: n.node_id,
