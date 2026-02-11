@@ -56,6 +56,9 @@ import {
   Trash2,
   Download,
   Bot,
+  PenLine,
+  Braces,
+  FileCode2,
 } from 'lucide-react';
 
 const NODE_TYPE_OPTIONS = [
