@@ -96,7 +96,10 @@ export const chatApi = {
 export const adminApi = {
   listUsers: () => axios.get(`${API}/admin/users`),
   updateRole: (userId, role) => axios.put(`${API}/admin/users/${userId}/role?role=${role}`),
-  listAllPrompts: () => axios.get(`${API}/admin/prompts`)
+  listAllPrompts: () => axios.get(`${API}/admin/prompts`),
+  getModel: () => axios.get(`${API}/admin/model`),
+  checkModels: () => axios.post(`${API}/admin/model/check`),
+  switchModel: (model) => axios.post(`${API}/admin/model/switch?model=${encodeURIComponent(model)}`),
 };
 
 // Export
