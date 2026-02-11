@@ -63,6 +63,7 @@ export default function ProjectPage() {
   const [processing, setProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState('transcript');
   const [selectedReasoningEffort, setSelectedReasoningEffort] = useState('high');
+  const [fastTrackAutoRun, setFastTrackAutoRun] = useState(false);
 
   // Helper to get transcript by type
   const getTranscript = (type) => transcripts.find(t => t.version_type === type);
