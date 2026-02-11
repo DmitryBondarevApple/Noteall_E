@@ -450,6 +450,7 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
   const executeNode = useCallback(async (node, currentOutputs) => {
     const type = node.data.node_type;
     const input = getNodeInput(node.id, currentOutputs);
+    console.log(`[DEBUG executeNode] node=${node.id}, type=${type}, input type=${typeof input}, input length=${typeof input === 'string' ? input.length : Array.isArray(input) ? input.length : 'N/A'}`);
 
     if (type === 'ai_prompt') {
       // Build prompt with variable substitution
