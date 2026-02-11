@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-function ChatMessage({ msg, onApplyPipeline }) {
+function ChatMessage({ msg, onApplyPipeline, usage }) {
   const isUser = msg.role === 'user';
 
   // Parse assistant messages for JSON code blocks
@@ -124,6 +124,14 @@ function ChatMessage({ msg, onApplyPipeline }) {
         )}
         {msg.content && (
           <div className="whitespace-pre-wrap break-words">{renderContent(msg.content)}</div>
+        )}
+        {!isUser && usage && (
+          <div className="mt-1.5 flex items-center gap-1.5 text-[10px] text-slate-400" data-testid="chat-usage-badge">
+            <Zap className="w-3 h-3" />
+            <span>{usage.total_tokens} токенов</span>
+            <span className="opacity-60">·</span>
+            <span>{usage.credits_used} кр.</span>
+          </div>
         )}
       </div>
     </div>
