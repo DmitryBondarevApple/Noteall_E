@@ -138,6 +138,7 @@ async def delete_session(session_id: str, user=Depends(get_current_user)):
 async def send_message(
     session_id: str,
     content: str = Form(""),
+    pipeline_context: str = Form(""),
     image: Optional[UploadFile] = File(None),
     user=Depends(get_current_user),
 ):
@@ -220,10 +221,19 @@ async def send_message(
         else:
             openai_messages.append({"role": "user", "content": current_parts})
 
+    # Build system prompt with optional pipeline context
+    system = SYSTEM_PROMPT
+    if pipeline_context:
+        try:
+            ctx = json.loads(pipeline_context)
+            system += "\n\nТЕКУЩИЙ СЦЕНАРИЙ ПОЛЬЗОВАТЕЛЯ (JSON):\n```json\n" + json.dumps(ctx, ensure_ascii=False, indent=2) + "\n```\nУчитывай структуру этого сценария при ответе. Если пользователь просит изменить сценарий — верни полный обновлённый JSON."
+        except json.JSONDecodeError:
+            pass
+
     # Call GPT
     try:
         ai_response = await call_gpt_chat(
-            system_message=SYSTEM_PROMPT,
+            system_message=system,
             messages=openai_messages,
         )
     except Exception as e:
