@@ -489,6 +489,32 @@ export default function PipelineEditorPage() {
     toast.success('Сценарий обновлён через AI');
   }, [setNodes, setEdges]);
 
+  // Build pipeline context for AI chat
+  const pipelineContext = useMemo(() => {
+    if (nodes.length === 0) return null;
+    return {
+      name: pipelineName,
+      description: pipelineDescription,
+      nodes: nodes.map((n) => ({
+        node_id: n.id,
+        node_type: n.data.node_type,
+        label: n.data.label,
+        inline_prompt: n.data.inline_prompt || null,
+        system_message: n.data.system_message || null,
+        batch_size: n.data.batch_size || null,
+        template_text: n.data.template_text || null,
+        script: n.data.script || null,
+        input_from: n.data.input_from || null,
+        position_x: Math.round(n.position.x),
+        position_y: Math.round(n.position.y),
+      })),
+      edges: edges.map((e) => ({
+        source: e.source,
+        target: e.target,
+      })),
+    };
+  }, [nodes, edges, pipelineName, pipelineDescription]);
+
   const handleSave = async () => {
     if (!pipelineName.trim()) {
       setEditMetaOpen(true);
