@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { adminApi, promptsApi, orgApi, billingApi } from '../lib/api';
+import { adminApi, promptsApi, orgApi, billingApi, invitationsApi } from '../lib/api';
 import { Button } from '../components/ui/button';
 import AppLayout from '../components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -20,6 +20,7 @@ import {
 import {
   Shield, Users, BookOpen, Search, Cpu, RefreshCw, Check, Loader2,
   Building2, UserPlus, Trash2, Settings2, DollarSign, Plus, X,
+  Link2, Copy, Ban, Clock, CheckCircle2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
