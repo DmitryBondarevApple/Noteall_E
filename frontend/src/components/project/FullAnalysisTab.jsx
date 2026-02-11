@@ -545,12 +545,15 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
         return typeof input === 'string' ? input : (input || '');
       }
       // Resolve variables from currentOutputs and dep outputs
+      console.log(`[DEBUG executeNode template] node=${node.id}, tplText preview=${tplText.substring(0, 100)}, depIds=${node.data.input_from}, input type=${typeof input}, isArray=${Array.isArray(input)}`);
       let result = resolveTemplateVars(tplText, node.data.input_from || [], currentOutputs);
+      console.log(`[DEBUG executeNode template] resolved result preview=${result.substring(0, 200)}`);
 
       // If there are still unresolved vars (like {{item}}) and input is an array,
       // this is a batch prompt template — return both template and items
       const hasUnresolved = /\{\{\w+\}\}/.test(result);
       const inputArray = Array.isArray(input) ? input : null;
+      console.log(`[DEBUG executeNode template] hasUnresolved=${hasUnresolved}, inputArray=${!!inputArray}`);
       if (hasUnresolved && inputArray) {
         return { __template: result, __items: inputArray };
       }
