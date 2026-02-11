@@ -63,16 +63,50 @@ export default function AdminPage() {
 
   const loadData = async () => {
     try {
-      const [usersRes, promptsRes] = await Promise.all([
+      const [usersRes, promptsRes, modelRes] = await Promise.all([
         adminApi.listUsers(),
-        adminApi.listAllPrompts()
+        adminApi.listAllPrompts(),
+        adminApi.getModel().catch(() => ({ data: null })),
       ]);
       setUsers(usersRes.data);
       setPrompts(promptsRes.data);
+      if (modelRes.data) setModelInfo(modelRes.data);
     } catch (error) {
       toast.error('Ошибка загрузки данных');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCheckModels = async () => {
+    setChecking(true);
+    try {
+      const res = await adminApi.checkModels();
+      setCheckResult(res.data);
+      setModelInfo(prev => ({ ...prev, active_model: res.data.active_model, last_check: res.data.last_check }));
+      if (res.data.newer_models?.length > 0) {
+        toast.success(`Найдено ${res.data.newer_models.length} новых моделей`);
+      } else {
+        toast.info('Новых моделей не обнаружено');
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Ошибка проверки');
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  const handleSwitchModel = async (model) => {
+    setSwitching(true);
+    try {
+      const res = await adminApi.switchModel(model);
+      setModelInfo(prev => ({ ...prev, active_model: res.data.active_model }));
+      setCheckResult(prev => prev ? { ...prev, newer_models: prev.newer_models?.filter(m => m !== model) } : null);
+      toast.success(res.data.message);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Ошибка переключения');
+    } finally {
+      setSwitching(false);
     }
   };
 
