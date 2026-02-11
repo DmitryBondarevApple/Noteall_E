@@ -259,8 +259,41 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
   // Track if wizard has meaningful results (to warn on reset)
   const hasResults = currentStageIdx > 0 || reviewContent.length > 0;
 
-  // Computed pipeline structure
-  const [stages, setStages] = useState([]);
+  // Detect unresolved template variables across all ai_prompt nodes
+  // that aren't outputs from other pipeline nodes
+  const unresolvedVars = useMemo(() => {
+    if (!pipelineData || !orderedNodes.length) return [];
+    // Collect all node_ids and labels (these will be in outputs at runtime)
+    const knownOutputs = new Set(['text', 'input']);
+    for (const n of orderedNodes) {
+      knownOutputs.add(n.id);
+      if (n.data.label) knownOutputs.add(n.data.label);
+    }
+    // Also collect variable_config vars from template nodes
+    for (const n of orderedNodes) {
+      if (n.data.node_type === 'template' && n.data.variable_config) {
+        for (const key of Object.keys(n.data.variable_config)) {
+          knownOutputs.add(key);
+        }
+      }
+    }
+    // Scan all prompts for {{var}} patterns
+    const vars = new Map();
+    for (const n of orderedNodes) {
+      const prompt = n.data.inline_prompt || '';
+      const matches = prompt.match(/\{\{(\w+)\}\}/g) || [];
+      for (const m of matches) {
+        const name = m.replace(/[{}]/g, '');
+        if (!knownOutputs.has(name) && !vars.has(name)) {
+          vars.set(name, name);
+        }
+      }
+    }
+    return [...vars.keys()];
+  }, [pipelineData, orderedNodes]);
+
+  // User inputs for unresolved pipeline variables
+  const [pipelineVarInputs, setPipelineVarInputs] = useState({});
   const [dataDeps, setDataDeps] = useState({});
   const [orderedNodes, setOrderedNodes] = useState([]);
 
