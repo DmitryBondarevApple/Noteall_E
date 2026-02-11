@@ -268,34 +268,35 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
 
   const unresolvedVars = useMemo(() => {
     if (!pipelineData || !orderedNodes.length) return [];
+    // Only scan nodes that will run BEFORE the first interactive stage
+    // (user_edit_list, user_review, template with variable_config, or pause_after)
+    // Variables in later nodes are filled by pipeline runtime
     const knownOutputs = new Set(['text', 'input', 'item', 'items', 'iteration', 'results', 'batch_size', 'batchSize']);
+    const vars = new Map();
+
     for (const n of orderedNodes) {
       knownOutputs.add(n.id);
       if (n.data.label) knownOutputs.add(n.data.label);
-    }
-    for (const n of orderedNodes) {
+
       if (n.data.node_type === 'template' && n.data.variable_config) {
         for (const key of Object.keys(n.data.variable_config)) {
           knownOutputs.add(key);
         }
       }
-      // Batch loop scripts produce promptVars at runtime — scan script for promptVars keys
-      if (n.data.node_type === 'batch_loop' && n.data.script) {
-        const pvMatches = n.data.script.match(/promptVars\s*[=:]\s*\{([^}]+)\}/);
-        if (pvMatches) {
-          const keys = pvMatches[1].match(/(\w+)\s*:/g) || [];
-          for (const k of keys) knownOutputs.add(k.replace(':', '').trim());
-        }
-      }
-    }
-    const vars = new Map();
-    for (const n of orderedNodes) {
-      const prompt = n.data.inline_prompt || '';
-      const matches = prompt.match(/\{\{(\w+)\}\}/g) || [];
-      for (const m of matches) {
-        const name = m.replace(/[{}]/g, '');
-        if (!knownOutputs.has(name) && !vars.has(name)) {
-          vars.set(name, name);
+
+      // Stop scanning at first interactive/pause node
+      const isInteractive = ['user_edit_list', 'user_review', 'template'].includes(n.data.node_type) || n.data.pause_after;
+      if (isInteractive) break;
+
+      // Scan ai_prompt for unresolved {{var}}
+      if (n.data.node_type === 'ai_prompt') {
+        const prompt = n.data.inline_prompt || '';
+        const matches = prompt.match(/\{\{(\w+)\}\}/g) || [];
+        for (const m of matches) {
+          const name = m.replace(/[{}]/g, '');
+          if (!knownOutputs.has(name) && !vars.has(name)) {
+            vars.set(name, name);
+          }
         }
       }
     }
