@@ -21,6 +21,7 @@ class RawAnalysisRequest(BaseModel):
     user_message: str
     reasoning_effort: Optional[str] = "high"
     attachment_ids: Optional[List[str]] = None
+    skip_transcript_context: Optional[bool] = False
 
 
 class RawAnalysisResponse(BaseModel):
