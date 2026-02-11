@@ -591,7 +591,7 @@ export function NodeConfigPanel({ node, allNodes, edges, onUpdate, onDelete, onC
               )}
 
               {/* template variable config */}
-              {nodeType === 'template' && (
+              {(nodeType === 'user_input' || nodeType === 'template') && (
                 <TemplateVarConfig
                   templateText={nodeData.template_text || ''}
                   variableConfig={nodeData.variable_config || {}}
