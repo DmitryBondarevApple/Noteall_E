@@ -161,15 +161,19 @@ async def send_message(
             raise HTTPException(status_code=400, detail="Image too large (max 10MB)")
         ext = image.filename.rsplit(".", 1)[-1] if "." in image.filename else "png"
         s3_key = f"chat_images/{session_id}/{uuid.uuid4()}.{ext}"
+        # Prepare base64 for OpenAI Vision
+        image_base64 = base64.b64encode(image_data).decode("utf-8")
+        mime = f"image/{ext}" if ext in ("png", "jpeg", "jpg", "webp", "gif") else "image/png"
         if s3_enabled():
             try:
                 upload_bytes(s3_key, image_data, image.content_type or "image/png")
                 image_s3_key = s3_key
                 image_display_url = presigned_url(s3_key)
             except Exception as e:
-                logger.warning(f"S3 upload failed, image will be sent without persistent storage: {e}")
-        # Prepare base64 for OpenAI Vision
-        image_base64 = base64.b64encode(image_data).decode("utf-8")
+                logger.warning(f"S3 upload failed, using data URL fallback: {e}")
+                image_display_url = f"data:{mime};base64,{image_base64}"
+        else:
+            image_display_url = f"data:{mime};base64,{image_base64}"
 
     # Create user message
     user_msg = {
