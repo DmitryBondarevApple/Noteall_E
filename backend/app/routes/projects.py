@@ -135,16 +135,25 @@ async def upload_file(
         with open(file_path, "wb") as f:
             f.write(content)
     
-    await db.projects.update_one(
-        {"id": project_id},
-        {"$set": {
+    update_fields = {
             "recording_filename": filename,
             "s3_key": s3_key,
             "language": language,
             "reasoning_effort": reasoning_effort,
             "status": "transcribing",
             "updated_at": datetime.now(timezone.utc).isoformat()
-        }}
+    }
+    
+    if fast_track == "true":
+        update_fields["fast_track"] = {
+            "enabled": True,
+            "topic": fast_track_topic or "",
+            "pipeline_id": fast_track_pipeline_id or ""
+        }
+    
+    await db.projects.update_one(
+        {"id": project_id},
+        {"$set": update_fields}
     )
     
     asyncio.create_task(process_transcription(project_id, filename, language, reasoning_effort))
