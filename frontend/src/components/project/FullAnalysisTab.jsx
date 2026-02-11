@@ -414,11 +414,15 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
         prompt = prompt.replace(/\{\{input\}\}/g, input);
       }
 
+      // Check if {{text}} was resolved (transcript is embedded in prompt)
+      const textWasSubstituted = currentOutputs.text && prompt.includes(currentOutputs.text);
+
       const response = await chatApi.analyzeRaw(projectId, {
         system_message: systemMsg,
         user_message: prompt,
         reasoning_effort: node.data.reasoning_effort || 'high',
         attachment_ids: attachmentIdsRef.current.length > 0 ? attachmentIdsRef.current : undefined,
+        skip_transcript_context: textWasSubstituted,
       });
       return response.data.response_text;
     }
