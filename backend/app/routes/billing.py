@@ -275,9 +275,6 @@ async def get_my_usage(user=Depends(get_current_user)):
     return stats
 
 
-from pydantic import BaseModel as _BM
-
-
 @router.get("/admin/usage")
 async def admin_usage_stats(org_id: str = None, admin=Depends(get_superadmin_user)):
     """Get usage stats per org or platform-wide."""
