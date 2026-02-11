@@ -747,9 +747,11 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
         ? processedTranscript
         : processedTranscript?.content || '';
     }
+    console.log('[DEBUG startWizard] text length:', initialOutputs.text?.length, 'text type:', typeof initialOutputs.text, 'processedTranscript type:', typeof processedTranscript);
     for (const [key, value] of Object.entries(pipelineVarInputs)) {
       if (value) initialOutputs[key] = value;
     }
+    console.log('[DEBUG startWizard] initialOutputs keys:', Object.keys(initialOutputs));
 
     // Run auto nodes before first stage
     const firstStage = stages[0];
