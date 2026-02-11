@@ -14,7 +14,7 @@ import {
 import {
   ArrowLeft, FileText, Upload, Link2, Trash2, Paperclip, File, Image, FileType,
   Globe, Loader2, Play, MoreHorizontal, Clock, CheckCircle2, ChevronDown, ChevronRight,
-  Copy, AlertCircle,
+  Copy, AlertCircle, Pencil,
 } from 'lucide-react';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
