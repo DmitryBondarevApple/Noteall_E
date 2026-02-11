@@ -7,7 +7,7 @@ import requests
 import os
 import time
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://credit-system-dev.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://employee-onboard-2.preview.emergentagent.com')
 
 # Test credentials
 ORG_ADMIN_EMAIL = "billing_test@test.com"
