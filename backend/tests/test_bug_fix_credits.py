@@ -389,11 +389,19 @@ class TestExistingOrgsTopup:
         # Check transactions to see if topup occurred
         txn_res = bugtest_client.get(f"{BASE_URL}/api/billing/transactions")
         assert txn_res.status_code == 200
-        txns = txn_res.json()
+        txn_data = txn_res.json()
+        # API returns {"items": [...], "total": N}
+        txns = txn_data.get("items", [])
         
         # Look for any topup transactions
         topups = [t for t in txns if t.get("type") == "topup"]
         print(f"Found {len(topups)} topup transactions for bugtest user's org")
+        
+        # Verify the welcome/topup credit exists
+        welcome_txn = next((t for t in topups if "Приветственные" in t.get("description", "")), None)
+        if welcome_txn:
+            print(f"Found welcome credit topup: {welcome_txn['amount']} credits")
+            assert welcome_txn["amount"] == 100.0
 
 
 if __name__ == "__main__":
