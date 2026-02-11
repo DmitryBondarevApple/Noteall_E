@@ -344,6 +344,16 @@ export default function AiChatPanel({ open, onClose, pipelineId, onPipelineGener
         </div>
       </div>
 
+      {/* Pipeline context indicator */}
+      {pipelineContext && (
+        <div className="px-4 py-2 bg-emerald-50 border-b flex items-center gap-2 shrink-0" data-testid="pipeline-context-badge">
+          <Workflow className="w-3.5 h-3.5 text-emerald-600" />
+          <span className="text-xs text-emerald-700 font-medium">
+            Сценарий подключён ({pipelineContext.nodes?.length || 0} узлов)
+          </span>
+        </div>
+      )}
+
       {view === 'sessions' ? (
         /* Sessions List */
         <ScrollArea className="flex-1">
