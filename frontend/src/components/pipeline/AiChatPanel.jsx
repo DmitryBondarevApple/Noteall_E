@@ -129,7 +129,7 @@ function ChatMessage({ msg, onApplyPipeline }) {
   );
 }
 
-export default function AiChatPanel({ open, onClose, pipelineId, onPipelineGenerated }) {
+export default function AiChatPanel({ open, onClose, pipelineId, onPipelineGenerated, pipelineContext }) {
   const [sessions, setSessions] = useState([]);
   const [activeSessionId, setActiveSessionId] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -268,7 +268,7 @@ export default function AiChatPanel({ open, onClose, pipelineId, onPipelineGener
     scrollToBottom();
 
     try {
-      const res = await aiChatApi.sendMessage(sessionId, userContent, imageFile);
+      const res = await aiChatApi.sendMessage(sessionId, userContent, imageFile, pipelineContext || null);
       const { user_message, assistant_message, pipeline_data } = res.data;
 
       // Replace optimistic user msg and add assistant msg
