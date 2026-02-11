@@ -44,6 +44,16 @@
 - "Return to project" button in PipelineEditorPage when navigated from a document project
 - Back arrow also returns to source page (project or pipelines list)
 
+### Organizations & Roles (Feb 2026)
+- `organizations` collection: {id, name, owner_id, created_at, updated_at}
+- Roles: `superadmin` (platform), `org_admin` (org-level), `user` (regular)
+- Registration auto-creates organization (optional org name field)
+- Pre-invitation flow: org_admin invites by email → user joins org on registration
+- Org-admin: manage team, set roles (user/org_admin), set monthly token limits per user
+- Superadmin: view all orgs/users, change any user's role
+- Admin panel with tabs: Организация, Все пользователи, Все организации, Промпты, Модели
+- Migration: existing users assigned to personal orgs, admin@voiceworkspace.com → superadmin
+
 ### Core Features
 - Meeting transcription, speaker identification, AI analysis
 - Document Agent with automated pipeline runner
@@ -51,6 +61,16 @@
 - Folder structures, branding (Noteall)
 
 ## Key API Endpoints
+- POST /api/auth/register — Register with optional organization_name
+- POST /api/auth/login — Login, returns user with org_id, org_name
+- GET /api/organizations/my — Get current user's organization
+- GET /api/organizations/my/users — List org members (org_admin+)
+- POST /api/organizations/my/invite — Invite user by email (org_admin+)
+- PUT /api/organizations/my/users/{id}/role — Change user role in org
+- PUT /api/organizations/my/users/{id}/limit — Set monthly token limit
+- DELETE /api/organizations/my/users/{id} — Remove user from org
+- GET /api/organizations/all — List all orgs (superadmin only)
+- PUT /api/admin/users/{id}/role — Change any user's role (superadmin only)
 - POST /api/ai-chat/sessions — Create chat session
 - GET /api/ai-chat/sessions — List sessions (optionally by pipeline_id)
 - GET /api/ai-chat/sessions/{id} — Get session with messages
@@ -61,13 +81,20 @@
 - POST /api/pipelines/import/json — Import pipeline from JSON
 
 ## DB Schema
-- `users`: {email, password, role, name}
+- `users`: {id, email, password, name, role, org_id, monthly_token_limit, created_at}
+- `organizations`: {id, name, owner_id, created_at, updated_at}
+- `org_invitations`: {id, org_id, email, invited_by, accepted, created_at}
 - `projects`: {name, user_id, documents, attachments}
 - `pipelines`: {name, user_id, nodes, edges, generation_prompt}
 - `ai_chat_sessions`: {id, user_id, pipeline_id, messages: [{role, content, image_url, image_s3_key, timestamp}], created_at, updated_at}
 - `settings`: {key: "active_model", value: "gpt-5.2"}
 
 ## Backlog
+- **P0**: SaaS Stage 2: Credit system & balance (org-level credits, transactions, top-up)
+- **P0**: SaaS Stage 3: AI request metering (token counting, cost calculation, markup table)
+- **P0**: SaaS Stage 4: Pricing plan ($20/month, 1000 credits)
+- **P0**: SaaS Stage 5: Superadmin dashboard (revenue, credit usage charts)
+- **P0**: SaaS Stage 6: Org-admin/user credit UI (balance widget, usage stats per employee)
 - **P2**: Auto-check for new AI models and admin notification
 - **P2**: Export results to Word/PDF
 - **P2**: Real-time pipeline execution progress
