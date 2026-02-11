@@ -567,23 +567,31 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
 
   const runAutoNodes = useCallback(async (nodes, currentOutputs) => {
     let outputs = { ...currentOutputs };
+    console.log('[DEBUG runAutoNodes] processing nodes:', nodes.map(n => `${n.id}(${n.data.node_type})`));
     for (const node of nodes) {
       if (pausedRef.current) return outputs;
       // Skip nodes already consumed by a batch loop
-      if (nodesConsumedByLoop.current.has(node.id)) continue;
+      if (nodesConsumedByLoop.current.has(node.id)) {
+        console.log('[DEBUG runAutoNodes] SKIPPING consumed node:', node.id);
+        continue;
+      }
 
       setProcessingLabel(node.data.step_title || node.data.label);
 
       if (node.data.node_type === 'batch_loop') {
-        // Handle batch loop
+        console.log('[DEBUG runAutoNodes] running batch_loop:', node.id);
         outputs = await runBatchLoop(node, outputs);
+        console.log('[DEBUG runAutoNodes] batch_loop done, output keys:', Object.keys(outputs).filter(k => !currentOutputs[k]));
       } else {
+        console.log('[DEBUG runAutoNodes] executing node:', node.id, 'type:', node.data.node_type);
         const result = await executeNode(node, outputs);
         outputs[node.id] = result;
         // Also store by label for variable reference
         if (node.data.label) {
           outputs[node.data.label] = result;
         }
+        const preview = typeof result === 'string' ? result.substring(0, 150) : (Array.isArray(result) ? `Array(${result.length})` : (result && typeof result === 'object' ? JSON.stringify(result).substring(0, 150) : typeof result));
+        console.log(`[DEBUG runAutoNodes] node ${node.id} result: ${preview}`);
       }
     }
     return outputs;
