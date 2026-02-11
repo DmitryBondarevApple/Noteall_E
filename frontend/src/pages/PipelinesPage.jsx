@@ -141,6 +141,15 @@ export function PipelinesContent() {
       <div className="flex items-center justify-between mb-6">
         <div />
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            className="gap-2 rounded-full"
+            onClick={() => setAiModalOpen(true)}
+            data-testid="ai-assistant-btn"
+          >
+            <Bot className="w-4 h-4" />
+            AI-ассистент
+          </Button>
           <label>
             <input
               type="file"
