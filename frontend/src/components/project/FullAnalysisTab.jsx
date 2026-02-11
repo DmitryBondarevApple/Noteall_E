@@ -134,7 +134,10 @@ function buildWizardStages(orderedNodes) {
 
   for (const node of orderedNodes) {
     const type = node.data.node_type;
-    const isInteractive = ['template', 'user_edit_list', 'user_review'].includes(type);
+    // Template nodes with input_from are auto-processed (not user-interactive)
+    const isInteractive =
+      ['user_edit_list', 'user_review'].includes(type) ||
+      (type === 'template' && !(node.data.input_from && node.data.input_from.length > 0));
     const pauseAfter = !!node.data.pause_after;
 
     if (isInteractive) {
