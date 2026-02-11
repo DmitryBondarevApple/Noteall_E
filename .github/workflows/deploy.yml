@@ -17,9 +17,10 @@ jobs:
           password: ${{ secrets.VPS_PASSWORD }}
           script: |
             cd /opt/voice-workspace
+            git fetch origin main
+            git reset --hard origin/main
             OLD_HASH=$(md5sum backend/requirements.txt frontend/package.json 2>/dev/null | md5sum)
-            git pull origin main
-            NEW_HASH=$(md5sum backend/requirements.txt frontend/package.json 2>/dev/null | md5sum)
+            NEW_HASH=$(git show origin/main:backend/requirements.txt origin/main:frontend/package.json 2>/dev/null | md5sum)
             if [ "$OLD_HASH" != "$NEW_HASH" ]; then
               echo "Dependencies changed, rebuilding without cache..."
               docker compose build --no-cache
