@@ -157,9 +157,9 @@ export function PipelinesContent() {
         <div />
         <div className="flex items-center gap-2">
           <Button
-            variant="outline"
+            variant={aiChatOpen ? 'default' : 'outline'}
             className="gap-2 rounded-full"
-            onClick={() => setAiModalOpen(true)}
+            onClick={() => setAiChatOpen(!aiChatOpen)}
             data-testid="ai-assistant-btn"
           >
             <Bot className="w-4 h-4" />
