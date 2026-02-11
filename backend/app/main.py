@@ -18,6 +18,7 @@ from app.routes import (
     documents_router,
     meeting_folders_router,
     ai_chat_router,
+    organizations_router,
 )
 from app.core.database import client
 
