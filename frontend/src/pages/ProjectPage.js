@@ -324,7 +324,7 @@ export default function ProjectPage() {
             <TabsContent value="full-analysis" forceMount className="data-[state=inactive]:hidden">
               <FullAnalysisTab
                 projectId={projectId}
-                processedTranscript={getTranscript('processed')}
+                processedTranscript={getTranscript('processed') || getTranscript('raw')}
                 onSaveResult={(result) => {
                   loadData();
                   toast.success('Анализ сохранён в результаты');
