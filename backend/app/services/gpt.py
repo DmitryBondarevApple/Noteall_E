@@ -1,71 +1,54 @@
 import logging
-from openai import AsyncOpenAI
-from app.core.config import OPENAI_API_KEY
+import uuid
+from emergentintegrations.llm.chat import LlmChat, UserMessage
+from app.core.config import EMERGENT_LLM_KEY
 
 logger = logging.getLogger(__name__)
 
 
 async def call_gpt4o(system_message: str, user_message: str) -> str:
-    """Call GPT-4o via user's OpenAI API for initial processing"""
+    """Call GPT-4o via Emergent LLM Key"""
     try:
-        client = AsyncOpenAI(api_key=OPENAI_API_KEY)
-        
-        response = await client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": system_message},
-                {"role": "user", "content": user_message}
-            ],
-            temperature=0.3,
-        )
-        
-        return response.choices[0].message.content
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=str(uuid.uuid4()),
+            system_message=system_message,
+        ).with_model("openai", "gpt-4o")
+
+        msg = UserMessage(text=user_message)
+        response = await chat.send_message(msg)
+        return response
     except Exception as e:
         logger.error(f"GPT-4o error: {e}")
         raise e
 
 
 async def call_gpt52(
-    system_message: str, 
-    user_message: str = None, 
-    reasoning_effort: str = "high", 
-    messages: list = None
+    system_message: str,
+    user_message: str = None,
+    reasoning_effort: str = "high",
+    messages: list = None,
 ) -> str:
-    """
-    Call GPT-5.2 via OpenAI API.
-    Either pass user_message for simple 2-message call, or messages for full multi-turn conversation.
-    """
+    """Call GPT-5.2 via Emergent LLM Key"""
     try:
-        client = AsyncOpenAI(api_key=OPENAI_API_KEY)
-        
-        if messages is None:
-            messages = [
-                {"role": "system", "content": system_message},
-                {"role": "user", "content": user_message}
-            ]
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=str(uuid.uuid4()),
+            system_message=system_message,
+        ).with_model("openai", "gpt-5.2")
+
+        if messages:
+            # Multi-turn: send messages one by one, return last response
+            last_response = ""
+            for m in messages:
+                if m.get("role") == "user":
+                    msg = UserMessage(text=m["content"])
+                    last_response = await chat.send_message(msg)
+            return last_response
         else:
-            messages = [{"role": "system", "content": system_message}] + messages
-        
-        params = {
-            "model": "gpt-5.2",
-            "messages": messages,
-        }
-        
-        effort_config = {
-            "auto": {"temperature": 0.5},
-            "minimal": {"temperature": 0.7, "max_completion_tokens": 2000},
-            "low": {"temperature": 0.5, "max_completion_tokens": 4000},
-            "medium": {"temperature": 0.3, "max_completion_tokens": 8000},
-            "high": {"temperature": 0.2, "max_completion_tokens": 16000},
-            "xhigh": {"temperature": 0.1, "max_completion_tokens": 32000},
-        }
-        
-        config = effort_config.get(reasoning_effort, effort_config["high"])
-        params.update(config)
-        
-        response = await client.chat.completions.create(**params)
-        
-        return response.choices[0].message.content
+            msg = UserMessage(text=user_message)
+            response = await chat.send_message(msg)
+            return response
     except Exception as e:
         logger.error(f"GPT-5.2 error: {e}")
         raise e
