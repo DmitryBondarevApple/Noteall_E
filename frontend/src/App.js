@@ -37,7 +37,8 @@ const PublicRoute = ({ children }) => {
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<PublicRoute><AuthPage /></PublicRoute>} />
+      <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
+      <Route path="/login" element={<PublicRoute><AuthPage /></PublicRoute>} />
       <Route path="/invite/:token" element={<InviteRegisterPage />} />
       <Route path="/meetings" element={<ProtectedRoute><MeetingsPage /></ProtectedRoute>} />
       <Route path="/meetings/speakers" element={<ProtectedRoute><SpeakerDirectoryPage /></ProtectedRoute>} />
