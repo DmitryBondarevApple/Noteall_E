@@ -526,11 +526,14 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
 
         setProcessingLabel(`${loopNode.data.label}: ${iteration + 1}/${totalBatches}`);
 
+        const textInPrompt = outputs.text && prompt.includes(outputs.text);
+
         const response = await chatApi.analyzeRaw(projectId, {
           system_message: systemMsg,
           user_message: prompt,
           reasoning_effort: aiNode.data.reasoning_effort || 'high',
           attachment_ids: attachmentIdsRef.current.length > 0 ? attachmentIdsRef.current : undefined,
+          skip_transcript_context: textInPrompt,
         });
 
         results.push(response.data.response_text);
