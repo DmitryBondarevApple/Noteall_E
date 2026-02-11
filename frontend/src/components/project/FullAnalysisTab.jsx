@@ -532,16 +532,26 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
         return outputs;
       }
 
-      const context = {
-        input: items,
-        iteration,
-        batchSize: effectiveSize,
-        results,
-        vars: outputs,
-      };
-
-      // Execute batch_loop script to get promptVars
-      const scriptResult = executeScript(loopNode, context);
+      let scriptResult;
+      if (loopNode.data.script) {
+        const context = {
+          input: items,
+          iteration,
+          batchSize: effectiveSize,
+          results,
+          vars: outputs,
+        };
+        scriptResult = executeScript(loopNode, context);
+      } else {
+        // Default batch behavior: slice items by batch_size
+        const start = iteration * effectiveSize;
+        const end = Math.min(start + effectiveSize, items.length);
+        const batch = items.slice(start, end);
+        scriptResult = {
+          done: false,
+          promptVars: { item: batch.join('\n') },
+        };
+      }
 
       if (scriptResult.done) {
         outputs[loopNode.id] = scriptResult.output;
