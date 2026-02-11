@@ -62,6 +62,14 @@ async def health_check():
     return {"status": "healthy", "version": "2.0.0"}
 
 
+@app.get("/api/model-info")
+async def model_info():
+    from app.core.database import db
+    settings = await db.settings.find_one({"key": "active_model"}, {"_id": 0})
+    model = settings["value"] if settings else "gpt-5.2"
+    return {"model": model}
+
+
 @app.on_event("startup")
 async def startup_db_client():
     logger.info("Starting Voice Workspace API v2.0.0")
