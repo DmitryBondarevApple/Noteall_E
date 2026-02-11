@@ -372,7 +372,7 @@ export function NodeConfigPanel({ node, allNodes, edges, onUpdate, onDelete, onC
                 <SelectContent>
                   <SelectItem value="_auto">Автоопределение</SelectItem>
                   {allNodes
-                    .filter((n) => n.id !== node.id && ['template', 'ai_prompt'].includes(n.data?.node_type))
+                    .filter((n) => n.id !== node.id && ['template', 'user_input', 'format_template', 'batch_prompt_template', 'ai_prompt'].includes(n.data?.node_type))
                     .map((n) => (
                       <SelectItem key={n.id} value={n.id}>
                         {n.data?.label || n.id}
