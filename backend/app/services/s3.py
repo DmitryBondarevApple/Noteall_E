@@ -29,14 +29,18 @@ def s3_enabled() -> bool:
 def upload_bytes(key: str, data: bytes, content_type: str = "application/octet-stream") -> str:
     """Upload bytes to S3. Returns the S3 key."""
     client = _get_client()
-    client.put_object(
-        Bucket=S3_BUCKET,
-        Key=key,
-        Body=data,
-        ContentType=content_type,
-    )
-    logger.info(f"S3 upload: {key} ({len(data)} bytes)")
-    return key
+    try:
+        client.put_object(
+            Bucket=S3_BUCKET,
+            Key=key,
+            Body=data,
+            ContentType=content_type,
+        )
+        logger.info(f"S3 upload: {key} ({len(data)} bytes)")
+        return key
+    except ClientError as e:
+        logger.error(f"S3 upload failed for {key}: {e}")
+        raise
 
 
 def download_bytes(key: str) -> bytes:
