@@ -783,7 +783,7 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
       setNodeOutputs(initialOutputs);
       prepareStageUI(firstStage, initialOutputs);
     }
-  }, [stages, resetWizard, runAutoNodes, processedTranscript, pipelineVarInputs]);
+  }, [stages, resetWizard, runAutoNodes, processedTranscript, pipelineVarInputs, prepareStageUI]);
 
   // Proceed to the next stage after user confirms current one
   const proceedToNextStage = useCallback(async (userOutput) => {
