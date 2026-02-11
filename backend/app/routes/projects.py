@@ -202,15 +202,30 @@ async def process_transcript_with_gpt(
     return {"message": "Processing started", "status": "processing"}
 
 
-async def _run_gpt_processing(project_id: str, raw_content: str, master_prompt: dict, reasoning_effort: str):
+async def _run_gpt_processing(project_id: str, raw_content: str, master_prompt: dict, reasoning_effort: str, org_id: str = None, user_id: str = None):
     """Background task for GPT processing"""
     logger.info(f"[{project_id}] Starting manual GPT processing with master prompt: '{master_prompt.get('name')}'")
     try:
-        processed_text = await call_gpt52(
+        gpt_result = await call_gpt52_metered(
             system_message=master_prompt["content"],
             user_message=raw_content,
             reasoning_effort=reasoning_effort
         )
+        processed_text = gpt_result.content
+
+        # Deduct credits
+        if org_id and user_id:
+            try:
+                await deduct_credits_and_record(
+                    org_id=org_id,
+                    user_id=user_id,
+                    model=gpt_result.model,
+                    prompt_tokens=gpt_result.prompt_tokens,
+                    completion_tokens=gpt_result.completion_tokens,
+                    source="transcript_processing",
+                )
+            except Exception as e:
+                logger.error(f"Metering error: {e}")
         
         logger.info(f"[{project_id}] GPT processing complete, result: {len(processed_text)} chars")
         
