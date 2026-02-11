@@ -19,6 +19,7 @@ import {
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import OrgDetailModal from '../components/billing/OrgDetailModal';
 
 function MetricCard({ label, value, sub, icon: Icon, color = 'bg-slate-50', iconColor = 'text-slate-600' }) {
   return (
