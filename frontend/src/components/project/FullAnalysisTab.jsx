@@ -565,12 +565,21 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
     resetWizard();
     setCurrentStageIdx(0);
 
+    // Pre-populate outputs: transcript as {{text}} + user-entered variables
+    const initialOutputs = {};
+    if (processedTranscript) {
+      initialOutputs.text = processedTranscript;
+    }
+    for (const [key, value] of Object.entries(pipelineVarInputs)) {
+      if (value) initialOutputs[key] = value;
+    }
+
     // Run auto nodes before first stage
     const firstStage = stages[0];
     if (firstStage.autoNodesBefore.length > 0) {
       setIsProcessing(true);
       try {
-        const outputs = await runAutoNodes(firstStage.autoNodesBefore, {});
+        const outputs = await runAutoNodes(firstStage.autoNodesBefore, initialOutputs);
         setNodeOutputs(outputs);
       } catch (err) {
         if (err.response?.status !== 402) {
@@ -580,8 +589,10 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
         setIsProcessing(false);
         setProcessingLabel('');
       }
+    } else {
+      setNodeOutputs(initialOutputs);
     }
-  }, [stages, resetWizard, runAutoNodes]);
+  }, [stages, resetWizard, runAutoNodes, processedTranscript, pipelineVarInputs]);
 
   // Proceed to the next stage after user confirms current one
   const proceedToNextStage = useCallback(async (userOutput) => {
