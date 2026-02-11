@@ -136,11 +136,14 @@ export const aiChatApi = {
   listSessions: (pipelineId) => axios.get(`${API}/ai-chat/sessions`, { params: pipelineId ? { pipeline_id: pipelineId } : {} }),
   getSession: (sessionId) => axios.get(`${API}/ai-chat/sessions/${sessionId}`),
   deleteSession: (sessionId) => axios.delete(`${API}/ai-chat/sessions/${sessionId}`),
-  sendMessage: (sessionId, content, imageFile) => {
+  sendMessage: (sessionId, content, imageFile, pipelineContext) => {
     const formData = new FormData();
     formData.append('content', content || '');
     if (imageFile) {
       formData.append('image', imageFile);
+    }
+    if (pipelineContext) {
+      formData.append('pipeline_context', JSON.stringify(pipelineContext));
     }
     return axios.post(`${API}/ai-chat/sessions/${sessionId}/message`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
