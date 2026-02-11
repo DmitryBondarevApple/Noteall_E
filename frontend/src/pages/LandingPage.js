@@ -180,16 +180,23 @@ export default function LandingPage() {
 
       {/* ═══════ KEY DIFFERENTIATOR ═══════ */}
       <Section className="py-20 md:py-28 px-6" id="differentiator">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-base md:text-lg font-semibold text-cyan-400 mb-4 tracking-wide uppercase">Ключевое отличие</h2>
-          <p className="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight mb-6">
-            Это не сервис транскрибации.
-            <br />
-            Это инструмент <span className="text-cyan-400">извлечения смыслов</span>.
-          </p>
-          <p className="text-slate-400 text-lg max-w-2xl mx-auto leading-relaxed">
-            На выходе — не стенограмма, а полное саммари без потерь в удобном структурированном виде. Вы сами определяете подробность, акценты и любые параметры анализа под свои задачи.
-          </p>
+        <div className="max-w-5xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-base md:text-lg font-semibold text-cyan-400 mb-4 tracking-wide uppercase">Ключевое отличие</h2>
+              <p className="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight mb-6">
+                Это не сервис транскрибации.
+                <br />
+                Это инструмент <span className="text-cyan-400">извлечения смыслов</span>.
+              </p>
+              <p className="text-slate-400 text-lg leading-relaxed">
+                На выходе — не стенограмма, а полное саммари без потерь в удобном структурированном виде. Вы сами определяете подробность, акценты и любые параметры анализа под свои задачи.
+              </p>
+            </div>
+            <div className="rounded-xl overflow-hidden shadow-2xl shadow-cyan-500/5">
+              <img src="/screenshots/meeting.png" alt="Meeting Analysis" className="w-full" loading="lazy" />
+            </div>
+          </div>
         </div>
       </Section>
 
