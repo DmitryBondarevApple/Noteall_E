@@ -54,11 +54,24 @@
 - Admin panel with tabs: Организация, Все пользователи, Все организации, Промпты, Модели
 - Migration: existing users assigned to personal orgs, admin@voiceworkspace.com → superadmin
 
+### Billing & Credit System (Feb 2026)
+- Organization-level credit balances
+- Tariff plan: $20/month for 1000 credits (1 credit = $0.02 USD)
+- Mock topup: credits added without real payment gateway
+- Transaction history log (topups/deductions)
+- Billing page with balance card, tariff plans, purchase dialog, transaction history
+- Superadmin: view all organizations' balances (tab in billing)
+- Navigation: "Биллинг" sidebar link for org_admin and superadmin users
+
 ### Core Features
 - Meeting transcription, speaker identification, AI analysis
 - Document Agent with automated pipeline runner
 - Constructor: visual pipeline editor + prompts
 - Folder structures, branding (Noteall)
+
+- `credit_balances`: {org_id, balance (float), updated_at}
+- `transactions`: {id, org_id, user_id, type (topup|deduction), amount, description, created_at}
+- `tariff_plans`: {id, name, price_usd, credits, is_active, created_at}
 
 ## Key API Endpoints
 - POST /api/auth/register — Register with optional organization_name
@@ -71,6 +84,11 @@
 - DELETE /api/organizations/my/users/{id} — Remove user from org
 - GET /api/organizations/all — List all orgs (superadmin only)
 - PUT /api/admin/users/{id}/role — Change any user's role (superadmin only)
+- GET /api/billing/plans — List active tariff plans
+- GET /api/billing/balance — Get org credit balance
+- POST /api/billing/topup — Mock purchase credits (org_admin+)
+- GET /api/billing/transactions — Transaction history with pagination
+- GET /api/billing/admin/balances — All org balances (superadmin only)
 - POST /api/ai-chat/sessions — Create chat session
 - GET /api/ai-chat/sessions — List sessions (optionally by pipeline_id)
 - GET /api/ai-chat/sessions/{id} — Get session with messages
@@ -90,11 +108,9 @@
 - `settings`: {key: "active_model", value: "gpt-5.2"}
 
 ## Backlog
-- **P0**: SaaS Stage 2: Credit system & balance (org-level credits, transactions, top-up)
-- **P0**: SaaS Stage 3: AI request metering (token counting, cost calculation, markup table)
-- **P0**: SaaS Stage 4: Pricing plan ($20/month, 1000 credits)
-- **P0**: SaaS Stage 5: Superadmin dashboard (revenue, credit usage charts)
-- **P0**: SaaS Stage 6: Org-admin/user credit UI (balance widget, usage stats per employee)
+- **P0**: SaaS Stage 3: AI request metering (token counting, cost calculation, markup table, credit deduction per AI call, enforcement of monthly_token_limit)
+- **P1**: SaaS Stage 4: Admin dashboards (superadmin: revenue/credit charts, org_admin: usage stats per employee, configurable markup coefficient table)
+- **P2**: SaaS Stage 5: Real payment gateway integration (Stripe)
 - **P2**: Auto-check for new AI models and admin notification
 - **P2**: Export results to Word/PDF
 - **P2**: Real-time pipeline execution progress
