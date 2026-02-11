@@ -14,3 +14,4 @@ from app.routes.attachments import router as attachments_router
 from app.routes.documents import router as documents_router
 from app.routes.meeting_folders import router as meeting_folders_router
 from app.routes.ai_chat import router as ai_chat_router
+from app.routes.organizations import router as organizations_router
