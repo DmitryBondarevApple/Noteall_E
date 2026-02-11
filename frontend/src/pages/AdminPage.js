@@ -723,6 +723,11 @@ export default function AdminPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        <OrgDetailModal
+          orgId={selectedOrgId}
+          open={!!selectedOrgId}
+          onClose={() => setSelectedOrgId(null)}
+        />
       </div>
     </AppLayout>
   );
