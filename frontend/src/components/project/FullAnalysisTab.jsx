@@ -300,7 +300,10 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
       }
 
       // Stop scanning at first interactive/pause node
-      const isInteractive = ['user_edit_list', 'user_review', 'template'].includes(n.data.node_type) || n.data.pause_after;
+      const isInteractive =
+        ['user_edit_list', 'user_review'].includes(n.data.node_type) ||
+        (n.data.node_type === 'template' && !(n.data.input_from && n.data.input_from.length > 0)) ||
+        n.data.pause_after;
       if (isInteractive) break;
 
       // Scan ai_prompt for unresolved {{var}}
