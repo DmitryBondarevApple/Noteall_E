@@ -70,6 +70,23 @@ async def register(data: UserCreate):
         }
         await db.organizations.insert_one(org_doc)
 
+        # Initialize credit balance with welcome credits
+        WELCOME_CREDITS = 100.0
+        await db.credit_balances.insert_one({
+            "org_id": org_id,
+            "balance": WELCOME_CREDITS,
+            "updated_at": now,
+        })
+        await db.transactions.insert_one({
+            "id": str(uuid.uuid4()),
+            "org_id": org_id,
+            "user_id": user_id,
+            "type": "topup",
+            "amount": WELCOME_CREDITS,
+            "description": "Приветственные кредиты при регистрации",
+            "created_at": now,
+        })
+
         user_doc = {
             "id": user_id,
             "email": data.email,

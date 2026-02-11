@@ -299,7 +299,13 @@ export default function AiChatPanel({ open, onClose, pipelineId, onPipelineGener
         onPipelineGenerated(pipeline_data);
       }
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Ошибка отправки сообщения');
+      const detail = err.response?.data?.detail;
+      const status = err.response?.status;
+      if (status === 402) {
+        toast.error(detail || 'Недостаточно кредитов. Перейдите в раздел "Биллинг" для пополнения.');
+      } else {
+        toast.error(detail || 'Ошибка отправки сообщения');
+      }
       // Remove optimistic message on error
       setMessages((prev) => prev.slice(0, -1));
     } finally {
