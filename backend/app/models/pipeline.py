@@ -81,5 +81,6 @@ class PipelineResponse(BaseModel):
     edges: List[PipelineEdge]
     user_id: Optional[str] = None
     is_public: bool
+    generation_prompt: Optional[str] = None
     created_at: str
     updated_at: str
