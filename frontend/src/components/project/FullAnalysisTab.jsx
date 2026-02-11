@@ -419,6 +419,13 @@ export function FullAnalysisTab({ projectId, processedTranscript, onSaveResult }
         }
       }
 
+      // For nodes with input_from, make input data available as {{text}} and {{input}}
+      // This supports AI-generated pipelines where {{text}} refers to the node's input data
+      if (node.data.input_from?.length > 0 && typeof input === 'string') {
+        prompt = prompt.replace(/\{\{text\}\}/g, input);
+        prompt = prompt.replace(/\{\{input\}\}/g, input);
+      }
+
       // Also substitute any remaining {{var}} from outputs
       const varMatches = prompt.match(/\{\{(\w+)\}\}/g) || [];
       for (const m of varMatches) {
