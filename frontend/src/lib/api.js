@@ -265,7 +265,9 @@ export const billingApi = {
   getPlans: () => axios.get(`${API}/billing/plans`),
   getTransactions: (limit = 50, skip = 0) =>
     axios.get(`${API}/billing/transactions`, { params: { limit, skip } }),
-  topup: (planId) => axios.post(`${API}/billing/topup`, { plan_id: planId }),
+  topup: (planId, customCredits) => axios.post(`${API}/billing/topup`, { plan_id: planId || null, custom_credits: customCredits || null }),
+  getExchangeRate: () => axios.get(`${API}/billing/exchange-rate`),
+  calculateCustom: (credits) => axios.post(`${API}/billing/calculate-custom`, { credits }),
   adminBalances: () => axios.get(`${API}/billing/admin/balances`),
   getMarkupTiers: () => axios.get(`${API}/billing/admin/markup-tiers`),
   updateMarkupTiers: (tiers) => axios.put(`${API}/billing/admin/markup-tiers`, { tiers }),
