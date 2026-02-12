@@ -81,11 +81,23 @@ async def delete_project(project_id: str, user=Depends(get_current_user)):
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     
+    # Clean up S3 attachments
+    from app.services.s3 import s3_enabled, delete_object
+    attachments = await db.attachments.find({"project_id": project_id}, {"_id": 0, "s3_key": 1}).to_list(500)
+    if s3_enabled():
+        for att in attachments:
+            if att.get("s3_key"):
+                try:
+                    delete_object(att["s3_key"])
+                except Exception:
+                    pass
+    
     await db.projects.delete_one({"id": project_id})
     await db.transcripts.delete_many({"project_id": project_id})
     await db.uncertain_fragments.delete_many({"project_id": project_id})
     await db.speaker_maps.delete_many({"project_id": project_id})
     await db.chat_requests.delete_many({"project_id": project_id})
+    await db.attachments.delete_many({"project_id": project_id})
     
     return {"message": "Project deleted"}
 
