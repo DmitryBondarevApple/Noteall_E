@@ -638,16 +638,25 @@ export default function BillingPage() {
               <div className="space-y-4">
                 <div className="p-4 rounded-lg bg-slate-50 border space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">План</span>
+                    <span className="text-sm text-muted-foreground">Пакет</span>
                     <span className="font-medium">{purchaseDialog.name}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Кредиты</span>
                     <span className="font-semibold text-emerald-600">+{purchaseDialog.credits.toLocaleString('ru-RU')}</span>
                   </div>
+                  {purchaseDialog.discount_pct > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Скидка</span>
+                      <span className="font-semibold text-emerald-600">{purchaseDialog.discount_pct}%</span>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between border-t pt-2 mt-2">
                     <span className="text-sm font-medium">К оплате</span>
-                    <span className="text-lg font-bold">${purchaseDialog.price_usd}</span>
+                    <div className="text-right">
+                      <span className="text-lg font-bold">{(purchaseDialog.price_rub || 0).toLocaleString('ru-RU')} руб</span>
+                      <span className="text-sm text-muted-foreground ml-1.5">(${purchaseDialog.price_usd})</span>
+                    </div>
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground text-center">Демо-режим. Кредиты начислятся без реальной оплаты.</p>
