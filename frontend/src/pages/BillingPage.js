@@ -270,21 +270,28 @@ export default function BillingPage() {
                     </CardTitle>
                     <CardDescription>Пополните баланс кредитов для использования AI-функций</CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {plans.map(plan => (
+                  <CardContent className="space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {plans.sort((a, b) => a.credits - b.credits).map(plan => (
                         <div
                           key={plan.id}
                           className="relative border rounded-xl p-5 hover:border-slate-400 transition-colors"
                           data-testid={`plan-card-${plan.id}`}
                         >
-                          <div className="mb-4">
+                          {plan.discount_pct > 0 && (
+                            <div className="absolute -top-2.5 right-3 px-2.5 py-0.5 rounded-full bg-emerald-500 text-white text-xs font-semibold">
+                              -{plan.discount_pct}%
+                            </div>
+                          )}
+                          <div className="mb-3">
                             <h3 className="text-lg font-semibold">{plan.credits.toLocaleString('ru-RU')} кредитов</h3>
-                            <p className="text-sm text-muted-foreground mt-0.5">{plan.name}</p>
                           </div>
-                          <div className="flex items-baseline gap-1 mb-4">
-                            <span className="text-3xl font-bold">${plan.price_usd}</span>
-                            <span className="text-sm text-muted-foreground">/мес</span>
+                          <div className="mb-1">
+                            <span className="text-2xl font-bold">{(plan.price_rub || 0).toLocaleString('ru-RU')}</span>
+                            <span className="text-sm text-muted-foreground ml-1">руб</span>
+                          </div>
+                          <div className="text-sm text-muted-foreground mb-4">
+                            (${plan.price_usd})
                           </div>
                           <ul className="space-y-1.5 mb-5 text-sm text-muted-foreground">
                             <li className="flex items-center gap-2">
@@ -304,6 +311,63 @@ export default function BillingPage() {
                         </div>
                       ))}
                     </div>
+
+                    {/* Custom amount */}
+                    {isOrgAdmin() && (
+                      <div className="border rounded-xl p-5">
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="text-sm font-semibold">Своя сумма кредитов</h3>
+                          <Button variant="ghost" size="sm" onClick={() => setShowCustom(!showCustom)} data-testid="custom-amount-toggle">
+                            {showCustom ? 'Скрыть' : 'Указать'}
+                          </Button>
+                        </div>
+                        {showCustom && (
+                          <div className="space-y-3">
+                            <div className="flex gap-3">
+                              <Input
+                                type="number"
+                                min={1000}
+                                step={100}
+                                placeholder="Минимум 1000"
+                                value={customCredits}
+                                onChange={(e) => {
+                                  setCustomCredits(e.target.value);
+                                  handleCustomCalc(e.target.value);
+                                }}
+                                data-testid="custom-credits-input"
+                              />
+                              <Button
+                                disabled={!customCalc}
+                                onClick={() => setPurchaseDialog({
+                                  isCustom: true,
+                                  credits: customCalc.credits,
+                                  price_usd: customCalc.price_usd,
+                                  price_rub: customCalc.price_rub,
+                                  discount_pct: customCalc.discount_pct,
+                                  name: `${customCalc.credits.toLocaleString('ru-RU')} кредитов`,
+                                })}
+                                data-testid="custom-buy-btn"
+                              >
+                                Пополнить
+                              </Button>
+                            </div>
+                            {customCalc && (
+                              <div className="flex items-center gap-4 text-sm">
+                                <span className="font-semibold">{customCalc.price_rub.toLocaleString('ru-RU')} руб (${customCalc.price_usd})</span>
+                                {customCalc.discount_pct > 0 && (
+                                  <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold">
+                                    Скидка {customCalc.discount_pct}%
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                            <p className="text-xs text-muted-foreground">
+                              Скидки: от 2 500 кредитов — 10%, от 5 000 — 15%, от 10 000 — 20%
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
