@@ -265,7 +265,7 @@ async def _run_gpt_processing(project_id: str, raw_content: str, master_prompt: 
 
 
 async def process_transcription(project_id: str, filename: str, language: str = "ru", reasoning_effort: str = "high"):
-    """Deepgram transcription pipeline"""
+    """Transcription pipeline"""
     now = datetime.now(timezone.utc).isoformat()
     file_path = Path(UPLOAD_DIR) / filename
     
@@ -275,17 +275,11 @@ async def process_transcription(project_id: str, filename: str, language: str = 
             {"$set": {"status": "transcribing", "updated_at": now}}
         )
         
-        logger.info(f"[{project_id}] Starting Deepgram transcription for {filename}")
+        logger.info(f"[{project_id}] Starting transcription for {filename}")
         
-        # Get audio data — from S3 or local
-        project_doc = await db.projects.find_one({"id": project_id}, {"_id": 0})
-        s3_key = project_doc.get("s3_key") if project_doc else None
-
-        if s3_key and s3_enabled():
-            audio_data = download_bytes(s3_key)
-        else:
-            with open(file_path, "rb") as audio_file:
-                audio_data = audio_file.read()
+        # Read audio from local file
+        with open(file_path, "rb") as audio_file:
+            audio_data = audio_file.read()
         
         # Deepgram transcription - run in executor to not block event loop
         from deepgram import DeepgramClient
