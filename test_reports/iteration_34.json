@@ -1,0 +1,90 @@
+{
+  "summary": "Completed testing of Fast-track feature for meeting transcription processing. All backend API tests (10/10) PASSED. All frontend UI tests PASSED. Fast-track toggle, topic input, and pipeline selector all work correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_fast_track.py",
+    "/app/test_reports/pytest/pytest_fast_track.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_fast_track.py"
+  ],
+  "success_rate": {
+    "backend": "100% (10/10 tests passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "admin_user": "admin@voiceworkspace.com / admin123"
+  },
+  "seed_data_creation": "Created and deleted test project: TEST_FastTrack_UITest (id: 33b57333-f2cb-4dc6-82b9-ab3463d34a41)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Fast-track feature fully tested. The upload section now has a Fast-track toggle with data-testid='fast-track-toggle'. When enabled, it shows topic input (data-testid='fast-track-topic') and pipeline selector (data-testid='fast-track-pipeline-select'). Backend stores fast_track settings in project.fast_track field. The bulk-accept endpoint at POST /api/projects/{id}/fragments/bulk-accept works correctly to auto-accept all pending fragments. ProjectResponse model includes optional fast_track Dict field.",
+  "features_verified": {
+    "bulk_accept_endpoint": {
+      "status": "PASS",
+      "details": "POST /api/projects/{id}/fragments/bulk-accept returns 200 with {accepted: int, total: int}"
+    },
+    "upload_with_fast_track_params": {
+      "status": "PASS",
+      "details": "Upload endpoint accepts fast_track, fast_track_topic, fast_track_pipeline_id form fields"
+    },
+    "project_response_fast_track_field": {
+      "status": "PASS",
+      "details": "ProjectResponse model includes optional fast_track Dict field"
+    },
+    "fast_track_toggle_ui": {
+      "status": "PASS",
+      "details": "Fast-track toggle appears in upload section with data-testid='fast-track-toggle'"
+    },
+    "fast_track_topic_input": {
+      "status": "PASS",
+      "details": "Topic input appears when fast-track enabled with data-testid='fast-track-topic'"
+    },
+    "pipeline_selector": {
+      "status": "PASS",
+      "details": "Pipeline selector loads pipelines list with data-testid='fast-track-pipeline-select'. Shows multiple options including 'Стандартный анализ встречи'"
+    },
+    "fullanalysistab_props": {
+      "status": "PASS",
+      "details": "Code review confirms FullAnalysisTab accepts autoRun, fastTrackPipelineId, fastTrackTopic props in ProjectPage.js line 341-347"
+    }
+  },
+  "test_execution_summary": {
+    "backend_tests": {
+      "file": "/app/backend/tests/test_fast_track.py",
+      "total": 10,
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0,
+      "tests": [
+        "test_bulk_accept_endpoint_returns_200",
+        "test_bulk_accept_invalid_project_returns_404",
+        "test_bulk_accept_without_auth_returns_error",
+        "test_project_response_includes_fast_track_field",
+        "test_create_project_has_expected_fields",
+        "test_list_pipelines_returns_200",
+        "test_fragments_list_returns_200",
+        "test_upload_endpoint_structure",
+        "test_project_model_has_fast_track_in_schema",
+        "test_pipeline_has_id_and_name"
+      ]
+    },
+    "frontend_tests": {
+      "login": "PASS - Login via landing page modal works",
+      "navigation": "PASS - Navigation to project page works",
+      "fast_track_toggle": "PASS - Toggle found and clicks correctly",
+      "topic_input": "PASS - Input appears and accepts text",
+      "pipeline_selector": "PASS - Selector loads options and allows selection"
+    }
+  }
+}
