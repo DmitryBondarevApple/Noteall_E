@@ -30,7 +30,8 @@ class TransactionResponse(BaseModel):
 
 
 class TopupRequest(BaseModel):
-    plan_id: str
+    plan_id: Optional[str] = None
+    custom_credits: Optional[int] = None
 
 
 class AdminBalanceResponse(BaseModel):
