@@ -297,7 +297,7 @@ export default function BillingPage() {
                           <ul className="space-y-1.5 mb-5 text-sm text-muted-foreground">
                             <li className="flex items-center gap-2">
                               <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
-                              ${(plan.price_usd / plan.credits).toFixed(4)} за кредит
+                              {(plan.price_rub / plan.credits).toFixed(2)} руб за кредит
                             </li>
                           </ul>
                           {isOrgAdmin() && (
