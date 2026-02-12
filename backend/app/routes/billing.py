@@ -1,8 +1,10 @@
 import uuid
 import logging
+import httpx
 from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
+from typing import Optional
 from app.core.database import db
 from app.core.security import get_current_user, get_admin_user, get_superadmin_user
 from app.models.billing import (
@@ -16,13 +18,14 @@ from app.models.billing import (
 router = APIRouter(prefix="/billing", tags=["billing"])
 logger = logging.getLogger(__name__)
 
-DEFAULT_PLAN = {
-    "id": "plan_default_1000",
-    "name": "$20 / 1000 кредитов",
-    "price_usd": 20.0,
-    "credits": 1000,
-    "is_active": True,
-}
+BASE_PRICE_PER_CREDIT_USD = 0.02  # $20 / 1000 credits
+
+DEFAULT_PLANS = [
+    {"id": "plan_1000", "name": "1 000 кредитов", "credits": 1000, "discount_pct": 0, "is_active": True},
+    {"id": "plan_2500", "name": "2 500 кредитов", "credits": 2500, "discount_pct": 10, "is_active": True},
+    {"id": "plan_5000", "name": "5 000 кредитов", "credits": 5000, "discount_pct": 15, "is_active": True},
+    {"id": "plan_10000", "name": "10 000 кредитов", "credits": 10000, "discount_pct": 20, "is_active": True},
+]
 
 
 async def ensure_default_plan():
