@@ -61,6 +61,11 @@ export default function BillingPage() {
   const [purchaseDialog, setPurchaseDialog] = useState(null);
   const [purchasing, setPurchasing] = useState(false);
 
+  // Custom topup state
+  const [customCredits, setCustomCredits] = useState('');
+  const [customCalc, setCustomCalc] = useState(null);
+  const [showCustom, setShowCustom] = useState(false);
+
   const loadData = useCallback(async () => {
     try {
       const promises = [
