@@ -29,11 +29,66 @@ DEFAULT_PLANS = [
 
 
 async def ensure_default_plan():
-    """Seed the default tariff plan if not exists."""
-    existing = await db.tariff_plans.find_one({"id": DEFAULT_PLAN["id"]})
-    if not existing:
-        now = datetime.now(timezone.utc).isoformat()
-        await db.tariff_plans.insert_one({**DEFAULT_PLAN, "created_at": now})
+    """Seed all tariff plans."""
+    for plan in DEFAULT_PLANS:
+        existing = await db.tariff_plans.find_one({"id": plan["id"]})
+        if not existing:
+            now = datetime.now(timezone.utc).isoformat()
+            price_usd = round(plan["credits"] * BASE_PRICE_PER_CREDIT_USD * (1 - plan["discount_pct"] / 100), 2)
+            await db.tariff_plans.insert_one({**plan, "price_usd": price_usd, "created_at": now})
+        else:
+            price_usd = round(plan["credits"] * BASE_PRICE_PER_CREDIT_USD * (1 - plan["discount_pct"] / 100), 2)
+            await db.tariff_plans.update_one(
+                {"id": plan["id"]},
+                {"$set": {"discount_pct": plan["discount_pct"], "price_usd": price_usd, "name": plan["name"]}}
+            )
+    # Deactivate old plan
+    await db.tariff_plans.update_one({"id": "plan_default_1000"}, {"$set": {"is_active": False}})
+
+
+def round_up_50(rub_amount):
+    """Round up to the nearest 50 RUB."""
+    import math
+    return int(math.ceil(rub_amount / 50) * 50)
+
+
+def get_discount_pct(credits):
+    """Get discount percent based on credit amount."""
+    if credits >= 10000:
+        return 20
+    if credits >= 5000:
+        return 15
+    if credits >= 2500:
+        return 10
+    return 0
+
+
+async def get_exchange_rate():
+    """Get cached USD/RUB exchange rate from DB."""
+    rate_doc = await db.exchange_rates.find_one({"currency": "USD_RUB"}, {"_id": 0})
+    if rate_doc:
+        return rate_doc.get("rate", 92.5)
+    return 92.5  # fallback
+
+
+async def update_exchange_rate():
+    """Fetch current USD/RUB rate and store in DB."""
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get("https://api.exchangerate-api.com/v4/latest/USD")
+            data = resp.json()
+            rate = data.get("rates", {}).get("RUB", 92.5)
+    except Exception as e:
+        logger.warning(f"Failed to fetch exchange rate: {e}")
+        return
+
+    now = datetime.now(timezone.utc).isoformat()
+    await db.exchange_rates.update_one(
+        {"currency": "USD_RUB"},
+        {"$set": {"rate": rate, "updated_at": now}},
+        upsert=True
+    )
+    logger.info(f"Exchange rate updated: 1 USD = {rate} RUB")
 
 
 async def get_or_create_balance(org_id: str) -> dict:
