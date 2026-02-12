@@ -375,6 +375,14 @@ async def process_transcription(project_id: str, filename: str, language: str = 
         
         logger.info(f"[{project_id}] Transcription complete, ready for manual processing")
         
+        # Delete local audio file after successful transcription
+        try:
+            if file_path.exists():
+                file_path.unlink()
+                logger.info(f"[{project_id}] Deleted local audio file: {filename}")
+        except Exception as cleanup_err:
+            logger.warning(f"[{project_id}] Failed to delete audio file: {cleanup_err}")
+        
     except Exception as e:
         import traceback
         logger.error(f"[{project_id}] Transcription error: {e}")
