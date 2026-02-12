@@ -26,19 +26,15 @@ Web application for building and running data processing pipelines (workflows) f
 - Pipeline validation + auto-fix
 - Bug fixes: wizard "0 из 0", empty review step
 - User permission auto-promotion on startup
-- **Template node refactoring** (Feb 2026): Split into 3 subtypes
-- **Landing page** (Feb 2026): Full marketing landing at `/` with:
-  - Hero section with CTA
-  - Key differentiator ("not transcription, meaning extraction")
-  - Features: meeting analysis, document analysis, scenario constructor
-  - How it works (3 steps)
-  - Constructor deep-dive with illustration
-  - Document formats section
-  - Team/collaboration
-  - Pricing
-  - Auth modal (login + register)
-  - Dark theme, responsive (mobile-ready)
-  - Old auth page preserved at `/login`
+- Template node refactoring: 3 subtypes
+- Landing page with dark theme, real screenshots
+- **Fast-track mode** (Feb 2026):
+  - Toggle in upload section + topic input + pipeline selector
+  - Backend: `POST /api/projects/{id}/fragments/bulk-accept` for auto-accepting AI corrections
+  - Backend: `fast_track` field in project model (enabled, topic, pipeline_id)
+  - ProjectPage auto-processing: detect completion → bulk-accept → switch to analysis tab
+  - FullAnalysisTab auto-mode: auto-select pipeline, auto-start wizard, auto-proceed through interactive steps
+  - Last used pipeline remembered in localStorage
 
 ## Key Architecture
 ```
@@ -46,27 +42,23 @@ Web application for building and running data processing pipelines (workflows) f
   app/main.py             - FastAPI app, startup logic
   app/core/database.py    - MongoDB connection
   app/core/security.py    - JWT auth, role checks
-  app/models/             - Pydantic models
-  app/routes/             - API routes
+  app/models/project.py   - Project model with fast_track field
+  app/routes/fragments.py - Fragments CRUD + bulk-accept
+  app/routes/projects.py  - Projects + upload with fast_track params
 
 /app/frontend/
   src/pages/LandingPage.js              - Marketing landing page
-  src/pages/AuthPage.js                 - Standalone auth page (/login)
-  src/pages/PipelineEditorPage.jsx      - Pipeline editor
-  src/pages/ConstructorPage.js          - Scenarios list
-  src/components/pipeline/              - Pipeline components
-  src/components/project/FullAnalysisTab.jsx - Pipeline wizard
-  src/App.js                            - Routes configuration
+  src/pages/ProjectPage.js              - Project with fast-track auto-processing
+  src/components/project/UploadSection.jsx - Upload with fast-track toggle
+  src/components/project/FullAnalysisTab.jsx - Pipeline wizard with autoRun mode
+  src/lib/api.js                        - API layer with bulkAccept, upload fast_track
 ```
 
-## Routing
-- `/` — Landing page (public, redirects to /meetings if logged in)
-- `/login` — Standalone auth page (public)
-- `/meetings` — Dashboard (protected)
-- `/constructor` — Scenarios (protected)
-- `/pipelines/:id` — Pipeline editor (protected)
+## Key API Endpoints
+- `POST /api/projects/{id}/upload` — Upload with fast_track, fast_track_topic, fast_track_pipeline_id
+- `POST /api/projects/{id}/fragments/bulk-accept` — Auto-accept all pending fragments
+- `GET /api/pipelines` — List available pipelines
 
 ## P2 Backlog
 - Migrate to `app.noteall.ru` subdomain (requires DNS CNAME)
-- Replace generated illustrations with real app screenshots
-- Additional landing page refinements based on user feedback
+- Landing page refinements
