@@ -106,13 +106,50 @@ async def get_or_create_balance(org_id: str) -> dict:
     return bal
 
 
+# ── Exchange Rate ──
+
+@router.get("/exchange-rate")
+async def get_rate(user=Depends(get_current_user)):
+    rate = await get_exchange_rate()
+    rate_doc = await db.exchange_rates.find_one({"currency": "USD_RUB"}, {"_id": 0})
+    return {
+        "rate": rate,
+        "updated_at": rate_doc.get("updated_at") if rate_doc else None,
+    }
+
+
 # ── Tariff Plans ──
 
 @router.get("/plans")
 async def list_plans(user=Depends(get_current_user)):
     await ensure_default_plan()
     plans = await db.tariff_plans.find({"is_active": True}, {"_id": 0}).to_list(100)
+    rate = await get_exchange_rate()
+    for plan in plans:
+        plan["price_rub"] = round_up_50(plan["price_usd"] * rate)
+        plan["discount_pct"] = plan.get("discount_pct", 0)
     return plans
+
+
+# ── Custom Topup Calculation ──
+
+class CustomTopupCalc(BaseModel):
+    credits: int
+
+@router.post("/calculate-custom")
+async def calculate_custom_topup(data: CustomTopupCalc, user=Depends(get_current_user)):
+    if data.credits < 1000:
+        raise HTTPException(status_code=400, detail="Минимум 1000 кредитов")
+    discount = get_discount_pct(data.credits)
+    price_usd = round(data.credits * BASE_PRICE_PER_CREDIT_USD * (1 - discount / 100), 2)
+    rate = await get_exchange_rate()
+    price_rub = round_up_50(price_usd * rate)
+    return {
+        "credits": data.credits,
+        "discount_pct": discount,
+        "price_usd": price_usd,
+        "price_rub": price_rub,
+    }
 
 
 # ── Credit Balance ──
