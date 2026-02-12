@@ -115,14 +115,35 @@ export default function BillingPage() {
     if (!purchaseDialog) return;
     setPurchasing(true);
     try {
-      const res = await billingApi.topup(purchaseDialog.id);
+      const isCustom = purchaseDialog.isCustom;
+      const res = await billingApi.topup(
+        isCustom ? null : purchaseDialog.id,
+        isCustom ? purchaseDialog.credits : null
+      );
       toast.success(res.data.message);
       setPurchaseDialog(null);
+      setShowCustom(false);
+      setCustomCredits('');
+      setCustomCalc(null);
       loadData();
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Ошибка покупки');
     } finally {
       setPurchasing(false);
+    }
+  };
+
+  const handleCustomCalc = async (val) => {
+    const credits = parseInt(val);
+    if (!credits || credits < 1000) {
+      setCustomCalc(null);
+      return;
+    }
+    try {
+      const res = await billingApi.calculateCustom(credits);
+      setCustomCalc(res.data);
+    } catch {
+      setCustomCalc(null);
     }
   };
 
