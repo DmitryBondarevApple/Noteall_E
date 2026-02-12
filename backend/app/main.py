@@ -92,6 +92,27 @@ async def startup_db_client():
         logger.info(f"Promoted {SUPERADMIN_EMAIL} to superadmin")
     elif result.matched_count:
         logger.info(f"{SUPERADMIN_EMAIL} is already superadmin")
+    
+    # Fetch exchange rate on startup
+    from app.routes.billing import update_exchange_rate
+    await update_exchange_rate()
+    
+    # Schedule daily exchange rate update at 3am MSK (00:00 UTC)
+    import asyncio
+    async def rate_updater():
+        while True:
+            now = datetime.now(timezone.utc)
+            # 3am MSK = 00:00 UTC (MSK = UTC+3)
+            target = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            if now >= target:
+                from datetime import timedelta
+                target += timedelta(days=1)
+            wait_secs = (target - now).total_seconds()
+            logger.info(f"Next exchange rate update in {wait_secs/3600:.1f}h")
+            await asyncio.sleep(wait_secs)
+            await update_exchange_rate()
+    
+    asyncio.create_task(rate_updater())
 
 
 @app.on_event("shutdown")
