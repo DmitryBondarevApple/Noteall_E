@@ -228,16 +228,28 @@ async def topup_credits(data: TopupRequest, user=Depends(get_admin_user)):
     if not org_id:
         raise HTTPException(status_code=400, detail="No organization")
 
-    # Find plan
-    plan = await db.tariff_plans.find_one({"id": data.plan_id, "is_active": True}, {"_id": 0})
-    if not plan:
-        raise HTTPException(status_code=404, detail="Tariff plan not found")
+    if data.custom_credits and data.custom_credits >= 1000:
+        # Custom amount topup
+        credits = data.custom_credits
+        discount = get_discount_pct(credits)
+        price_usd = round(credits * BASE_PRICE_PER_CREDIT_USD * (1 - discount / 100), 2)
+        plan_name = f"{credits:,} кредитов (скидка {discount}%)" if discount > 0 else f"{credits:,} кредитов"
+    elif data.plan_id:
+        # Plan-based topup
+        plan = await db.tariff_plans.find_one({"id": data.plan_id, "is_active": True}, {"_id": 0})
+        if not plan:
+            raise HTTPException(status_code=404, detail="Tariff plan not found")
+        credits = plan["credits"]
+        price_usd = plan["price_usd"]
+        plan_name = plan["name"]
+    else:
+        raise HTTPException(status_code=400, detail="Укажите plan_id или custom_credits")
 
     now = datetime.now(timezone.utc).isoformat()
 
     # Update balance
     bal = await get_or_create_balance(org_id)
-    new_balance = bal["balance"] + plan["credits"]
+    new_balance = bal["balance"] + credits
     await db.credit_balances.update_one(
         {"org_id": org_id},
         {"$set": {"balance": new_balance, "updated_at": now}},
@@ -249,16 +261,16 @@ async def topup_credits(data: TopupRequest, user=Depends(get_admin_user)):
         "org_id": org_id,
         "user_id": user["id"],
         "type": "topup",
-        "amount": plan["credits"],
-        "description": f"Покупка: {plan['name']} (${plan['price_usd']})",
+        "amount": credits,
+        "description": f"Покупка: {plan_name} (${price_usd})",
         "created_at": now,
     }
     await db.transactions.insert_one(txn)
 
-    logger.info(f"Topup: org={org_id} plan={plan['id']} credits={plan['credits']} new_balance={new_balance}")
+    logger.info(f"Topup: org={org_id} credits={credits} price=${price_usd} new_balance={new_balance}")
 
     return {
-        "message": f"Начислено {plan['credits']} кредитов",
+        "message": f"Начислено {credits} кредитов",
         "balance": new_balance,
         "transaction_id": txn["id"],
     }
