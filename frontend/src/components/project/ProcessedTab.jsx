@@ -166,7 +166,7 @@ export function ProcessedTab({
         <div>
           <CardTitle>Обработанный текст</CardTitle>
           <CardDescription>
-            Результат обработки мастер-промптом через GPT-5.2
+            Результат обработки мастер-промптом через AI-модель
           </CardDescription>
         </div>
         <div className="flex items-center gap-2">

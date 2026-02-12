@@ -141,7 +141,7 @@ export function TranscriptTab({ transcript, speakers, projectId, onSpeakersUpdat
           <div className="shrink-0">
             <CardTitle>Исходный транскрипт</CardTitle>
             <CardDescription>
-              Результат распознавания от Deepgram (без обработки)
+              Результат распознавания (без обработки)
             </CardDescription>
           </div>
           {speakers.length > 0 && (

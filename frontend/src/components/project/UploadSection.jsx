@@ -123,7 +123,7 @@ export function UploadSection({ projectId, onUploadStart }) {
           </div>
 
           <div className="flex items-center gap-3">
-            <Label className="whitespace-nowrap text-sm">Режим GPT-5.2:</Label>
+            <Label className="whitespace-nowrap text-sm">Режим AI-модели:</Label>
             <Select value={selectedReasoningEffort} onValueChange={setSelectedReasoningEffort}>
               <SelectTrigger className="w-48" data-testid="reasoning-select">
                 <SelectValue placeholder="Выберите режим" />
