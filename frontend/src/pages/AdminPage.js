@@ -395,13 +395,47 @@ export default function AdminPage() {
                 {org && (
                   <Card>
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Building2 className="w-5 h-5" />
-                        {org.name}
-                      </CardTitle>
-                      <CardDescription>
-                        Создана: {format(new Date(org.created_at), 'dd MMM yyyy', { locale: ru })}
-                      </CardDescription>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          {editingOrgName !== null ? (
+                            <div className="flex items-center gap-2">
+                              <Building2 className="w-5 h-5 shrink-0" />
+                              <Input
+                                value={editingOrgName}
+                                onChange={e => setEditingOrgName(e.target.value)}
+                                className="w-64 h-8 text-lg font-semibold"
+                                data-testid="org-name-input"
+                                autoFocus
+                                onKeyDown={e => e.key === 'Enter' && handleSaveOrgName()}
+                              />
+                            </div>
+                          ) : (
+                            <CardTitle className="flex items-center gap-2">
+                              <Building2 className="w-5 h-5" />
+                              {org.name}
+                            </CardTitle>
+                          )}
+                          <CardDescription>
+                            Создана: {format(new Date(org.created_at), 'dd MMM yyyy', { locale: ru })}
+                          </CardDescription>
+                        </div>
+                        <div className="flex gap-2">
+                          {editingOrgName !== null ? (
+                            <>
+                              <Button variant="outline" size="sm" onClick={() => setEditingOrgName(null)}>Отмена</Button>
+                              <Button size="sm" onClick={handleSaveOrgName} disabled={savingOrgName} data-testid="save-org-name-btn" className="gap-1">
+                                {savingOrgName ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                                Сохранить
+                              </Button>
+                            </>
+                          ) : (
+                            <Button variant="outline" size="sm" onClick={() => setEditingOrgName(org.name)} data-testid="edit-org-name-btn" className="gap-1">
+                              <Pencil className="w-3 h-3" />
+                              Переименовать
+                            </Button>
+                          )}
+                        </div>
+                      </div>
                     </CardHeader>
                   </Card>
                 )}
