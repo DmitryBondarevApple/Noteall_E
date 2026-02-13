@@ -275,7 +275,7 @@ async def _run_gpt_processing(project_id: str, raw_content: str, master_prompt: 
         )
 
 
-async def process_transcription(project_id: str, filename: str, language: str = "ru", reasoning_effort: str = "high"):
+async def process_transcription(project_id: str, filename: str, language: str = "ru", reasoning_effort: str = "high", user_id: str = None, org_id: str = None):
     """Transcription pipeline"""
     now = datetime.now(timezone.utc).isoformat()
     file_path = Path(UPLOAD_DIR) / filename
