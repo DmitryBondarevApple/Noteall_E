@@ -49,6 +49,27 @@ async def list_org_users(user=Depends(get_admin_user)):
     ]
 
 
+class OrgNameUpdate(BaseModel):
+    name: str
+
+
+@router.put("/my", response_model=OrganizationResponse)
+async def update_my_org(data: OrgNameUpdate, user=Depends(get_admin_user)):
+    org_id = user.get("org_id")
+    if not org_id:
+        raise HTTPException(status_code=404, detail="No organization")
+    name = data.name.strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Name cannot be empty")
+    now = datetime.now(timezone.utc).isoformat()
+    await db.organizations.update_one(
+        {"id": org_id},
+        {"$set": {"name": name, "updated_at": now}},
+    )
+    org = await db.organizations.find_one({"id": org_id}, {"_id": 0})
+    return OrganizationResponse(**org)
+
+
 @router.post("/my/invite")
 async def invite_user(data: OrgInvite, user=Depends(get_admin_user)):
     org_id = user.get("org_id")

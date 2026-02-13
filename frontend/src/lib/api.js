@@ -112,6 +112,7 @@ export const adminApi = {
 // Organizations
 export const orgApi = {
   getMy: () => axios.get(`${API}/organizations/my`),
+  updateMy: (name) => axios.put(`${API}/organizations/my`, { name }),
   getMyUsers: () => axios.get(`${API}/organizations/my/users`),
   inviteUser: (email) => axios.post(`${API}/organizations/my/invite`, { email }),
   removeUser: (userId) => axios.delete(`${API}/organizations/my/users/${userId}`),
