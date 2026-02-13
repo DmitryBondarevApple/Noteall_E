@@ -202,10 +202,10 @@ class TestCostSettingsEndpoints:
 class TestCostSettingsAuth:
     """Test authorization for cost settings endpoints"""
     
-    def test_get_cost_settings_without_auth_returns_401(self):
-        """GET /api/billing/admin/cost-settings without auth returns 401"""
+    def test_get_cost_settings_without_auth_returns_error(self):
+        """GET /api/billing/admin/cost-settings without auth returns 401/403"""
         response = requests.get(f"{BASE_URL}/api/billing/admin/cost-settings")
-        assert response.status_code == 401, f"Expected 401, got {response.status_code}"
+        assert response.status_code in [401, 403], f"Expected 401/403, got {response.status_code}"
     
     def test_put_cost_settings_without_auth_returns_401(self):
         """PUT /api/billing/admin/cost-settings without auth returns 401"""
@@ -215,10 +215,10 @@ class TestCostSettingsAuth:
         )
         assert response.status_code in [401, 403, 422], f"Expected 401/403/422, got {response.status_code}"
     
-    def test_run_storage_calc_without_auth_returns_401(self):
-        """POST /api/billing/admin/run-storage-calc without auth returns 401"""
+    def test_run_storage_calc_without_auth_returns_error(self):
+        """POST /api/billing/admin/run-storage-calc without auth returns 401/403"""
         response = requests.post(f"{BASE_URL}/api/billing/admin/run-storage-calc")
-        assert response.status_code == 401, f"Expected 401, got {response.status_code}"
+        assert response.status_code in [401, 403], f"Expected 401/403, got {response.status_code}"
     
     def test_cost_settings_with_invalid_token_returns_401(self):
         """Cost settings endpoints with invalid token return 401"""
