@@ -879,6 +879,146 @@ export default function AdminPage() {
                 </Card>
               </TabsContent>
             )}
+
+            {/* Cost Settings Tab (superadmin) */}
+            {isSuperadmin() && (
+              <TabsContent value="costs">
+                <div className="space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle>Себестоимость сервисов</CardTitle>
+                          <CardDescription>
+                            Базовые расценки провайдеров и множители наценки для клиентов. Стоимость автоматически конвертируется в кредиты.
+                          </CardDescription>
+                        </div>
+                        <div className="flex gap-2">
+                          {editingCost ? (
+                            <>
+                              <Button variant="outline" size="sm" onClick={() => setEditingCost(null)}>Отмена</Button>
+                              <Button size="sm" onClick={handleSaveCostSettings} disabled={savingCost} data-testid="save-cost-btn" className="gap-1">
+                                {savingCost ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                                Сохранить
+                              </Button>
+                            </>
+                          ) : (
+                            <Button variant="outline" size="sm" onClick={() => setEditingCost({ ...(costSettings || {}) })} data-testid="edit-cost-btn">
+                              Редактировать
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      {/* Transcription Cost */}
+                      <div className="p-4 rounded-lg border bg-slate-50 space-y-3">
+                        <div className="font-medium flex items-center gap-2">
+                          <Cpu className="w-4 h-4 text-blue-600" />
+                          Транскрибация (Deepgram Nova-3)
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-sm text-muted-foreground block mb-1">Базовая стоимость ($/мин)</label>
+                            {editingCost ? (
+                              <Input
+                                type="number" step="0.0001" min="0" className="w-40"
+                                value={editingCost.transcription_cost_per_minute_usd ?? ''}
+                                onChange={e => setEditingCost({ ...editingCost, transcription_cost_per_minute_usd: parseFloat(e.target.value) || 0 })}
+                                data-testid="transcription-base-cost-input"
+                              />
+                            ) : (
+                              <span className="font-mono text-sm" data-testid="transcription-base-cost">
+                                ${(costSettings?.transcription_cost_per_minute_usd ?? 0.0043).toFixed(4)}/мин
+                              </span>
+                            )}
+                          </div>
+                          <div>
+                            <label className="text-sm text-muted-foreground block mb-1">Множитель для клиента</label>
+                            {editingCost ? (
+                              <Input
+                                type="number" step="0.5" min="1" className="w-40"
+                                value={editingCost.transcription_cost_multiplier ?? ''}
+                                onChange={e => setEditingCost({ ...editingCost, transcription_cost_multiplier: parseFloat(e.target.value) || 1 })}
+                                data-testid="transcription-multiplier-input"
+                              />
+                            ) : (
+                              <Badge variant="secondary" className="font-mono" data-testid="transcription-multiplier">
+                                {(costSettings?.transcription_cost_multiplier ?? 3.0)}x
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        {costSettings && (
+                          <div className="text-sm text-muted-foreground">
+                            Пример: 10 мин аудио = ${(10 * (costSettings.transcription_cost_per_minute_usd || 0.0043)).toFixed(4)} себестоимость
+                            {' '}&rarr; ${(10 * (costSettings.transcription_cost_per_minute_usd || 0.0043) * (costSettings.transcription_cost_multiplier || 3)).toFixed(4)} для клиента
+                            {' '}= {(10 * (costSettings.transcription_cost_per_minute_usd || 0.0043) * (costSettings.transcription_cost_multiplier || 3) / 0.02).toFixed(2)} кредитов
+                          </div>
+                        )}
+                      </div>
+
+                      {/* S3 Storage Cost */}
+                      <div className="p-4 rounded-lg border bg-slate-50 space-y-3">
+                        <div className="font-medium flex items-center gap-2">
+                          <Settings2 className="w-4 h-4 text-emerald-600" />
+                          Хранение файлов (S3)
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-sm text-muted-foreground block mb-1">Базовая стоимость ($/ГБ/мес)</label>
+                            {editingCost ? (
+                              <Input
+                                type="number" step="0.001" min="0" className="w-40"
+                                value={editingCost.s3_storage_cost_per_gb_month_usd ?? ''}
+                                onChange={e => setEditingCost({ ...editingCost, s3_storage_cost_per_gb_month_usd: parseFloat(e.target.value) || 0 })}
+                                data-testid="storage-base-cost-input"
+                              />
+                            ) : (
+                              <span className="font-mono text-sm" data-testid="storage-base-cost">
+                                ${(costSettings?.s3_storage_cost_per_gb_month_usd ?? 0.025).toFixed(3)}/ГБ/мес
+                              </span>
+                            )}
+                          </div>
+                          <div>
+                            <label className="text-sm text-muted-foreground block mb-1">Множитель для клиента</label>
+                            {editingCost ? (
+                              <Input
+                                type="number" step="0.5" min="1" className="w-40"
+                                value={editingCost.s3_storage_cost_multiplier ?? ''}
+                                onChange={e => setEditingCost({ ...editingCost, s3_storage_cost_multiplier: parseFloat(e.target.value) || 1 })}
+                                data-testid="storage-multiplier-input"
+                              />
+                            ) : (
+                              <Badge variant="secondary" className="font-mono" data-testid="storage-multiplier">
+                                {(costSettings?.s3_storage_cost_multiplier ?? 3.0)}x
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        {costSettings && (
+                          <div className="text-sm text-muted-foreground">
+                            Пример: 1 ГБ/мес = ${(costSettings.s3_storage_cost_per_gb_month_usd || 0.025).toFixed(3)} себестоимость
+                            {' '}&rarr; ${((costSettings.s3_storage_cost_per_gb_month_usd || 0.025) * (costSettings.s3_storage_cost_multiplier || 3)).toFixed(3)} для клиента
+                            {' '}= {((costSettings.s3_storage_cost_per_gb_month_usd || 0.025) * (costSettings.s3_storage_cost_multiplier || 3) / 0.02).toFixed(2)} кредитов/мес
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Info block */}
+                      <div className="p-3 rounded-lg border border-blue-200 bg-blue-50 text-sm text-blue-800">
+                        <strong>Как это работает:</strong>
+                        <ul className="mt-1 space-y-1 list-disc list-inside">
+                          <li>Транскрибация — списание после каждой успешной транскрибации аудио</li>
+                          <li>Хранение — ежедневное списание в 3:05 МСК за текущий объём файлов в S3</li>
+                          <li>1 кредит = $0.02. Формула: (базовая цена × множитель) / $0.02 = кредиты</li>
+                        </ul>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+            )}
           </Tabs>
         </main>
 
