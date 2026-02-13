@@ -127,6 +127,12 @@ async def startup_db_client():
             "created_at": now_iso,
         })
         logger.info(f"Created org '{org_name}' for {SUPERADMIN_EMAIL}")
+    elif sa_user and sa_user.get("org_id"):
+        # Ensure org is named correctly
+        await db.organizations.update_one(
+            {"id": sa_user["org_id"], "name": {"$ne": "Bondarev Consulting"}},
+            {"$set": {"name": "Bondarev Consulting"}},
+        )
     
     # Fetch exchange rate on startup
     from app.routes.billing import update_exchange_rate
