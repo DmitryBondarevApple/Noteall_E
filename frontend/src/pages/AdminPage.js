@@ -74,6 +74,7 @@ export default function AdminPage() {
   const [costSettings, setCostSettings] = useState(null);
   const [editingCost, setEditingCost] = useState(null);
   const [savingCost, setSavingCost] = useState(false);
+  const [runningStorageCalc, setRunningStorageCalc] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrgId, setSelectedOrgId] = useState(null);
