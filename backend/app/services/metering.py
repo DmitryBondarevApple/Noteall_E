@@ -66,6 +66,82 @@ def usd_to_credits(usd: float) -> float:
     return usd / 0.02
 
 
+# ── Cost Settings ──
+
+DEFAULT_COST_SETTINGS = {
+    "transcription_cost_per_minute_usd": 0.0043,  # Deepgram Nova-3
+    "transcription_cost_multiplier": 3.0,
+    "s3_storage_cost_per_gb_month_usd": 0.025,
+    "s3_storage_cost_multiplier": 3.0,
+}
+
+
+async def get_cost_settings() -> dict:
+    """Get cost settings from DB or return defaults."""
+    doc = await db.settings.find_one({"key": "cost_settings"}, {"_id": 0})
+    if doc and "value" in doc:
+        settings = {**DEFAULT_COST_SETTINGS, **doc["value"]}
+        return settings
+    return {**DEFAULT_COST_SETTINGS}
+
+
+async def update_cost_settings(updates: dict) -> dict:
+    """Update cost settings in DB."""
+    current = await get_cost_settings()
+    current.update(updates)
+    now = datetime.now(timezone.utc).isoformat()
+    await db.settings.update_one(
+        {"key": "cost_settings"},
+        {"$set": {"key": "cost_settings", "value": current, "updated_at": now}},
+        upsert=True,
+    )
+    return current
+
+
+async def deduct_transcription_cost(org_id: str, user_id: str, duration_seconds: float) -> dict:
+    """Deduct transcription cost from org balance after successful Deepgram transcription."""
+    settings = await get_cost_settings()
+    duration_minutes = duration_seconds / 60.0
+    base_cost_usd = duration_minutes * settings["transcription_cost_per_minute_usd"]
+    final_cost_usd = base_cost_usd * settings["transcription_cost_multiplier"]
+    credits_used = usd_to_credits(final_cost_usd)
+
+    if credits_used <= 0:
+        return {"credits_used": 0}
+
+    now = datetime.now(timezone.utc).isoformat()
+
+    await db.credit_balances.update_one(
+        {"org_id": org_id},
+        {"$inc": {"balance": -credits_used}, "$set": {"updated_at": now}},
+    )
+
+    txn_id = str(uuid.uuid4())
+    await db.transactions.insert_one({
+        "id": txn_id,
+        "org_id": org_id,
+        "user_id": user_id,
+        "type": "deduction",
+        "amount": round(credits_used, 4),
+        "description": f"Транскрибация: {duration_minutes:.1f} мин (${base_cost_usd:.4f} x{settings['transcription_cost_multiplier']})",
+        "created_at": now,
+    })
+
+    logger.info(
+        f"Transcription cost: org={org_id} user={user_id} "
+        f"duration={duration_minutes:.1f}min base=${base_cost_usd:.6f} "
+        f"multiplier={settings['transcription_cost_multiplier']}x "
+        f"final=${final_cost_usd:.6f} credits={credits_used:.4f}"
+    )
+
+    return {
+        "duration_minutes": round(duration_minutes, 2),
+        "base_cost_usd": round(base_cost_usd, 6),
+        "final_cost_usd": round(final_cost_usd, 6),
+        "credits_used": round(credits_used, 4),
+    }
+
+
 async def check_user_monthly_limit(user: dict) -> bool:
     """Check if user has exceeded their monthly token limit. Returns True if OK."""
     # Superadmins bypass all limits
