@@ -358,10 +358,6 @@ export default function AdminPage() {
                     <Building2 className="w-4 h-4" />
                     Все организации
                   </TabsTrigger>
-                  <TabsTrigger value="prompts" className="gap-2" data-testid="admin-prompts-tab">
-                    <BookOpen className="w-4 h-4" />
-                    Промпты
-                  </TabsTrigger>
                   <TabsTrigger value="models" className="gap-2" data-testid="admin-models-tab">
                     <Cpu className="w-4 h-4" />
                     Модели
