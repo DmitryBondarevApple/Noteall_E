@@ -155,7 +155,7 @@ async def upload_file(
         {"$set": update_fields}
     )
     
-    asyncio.create_task(process_transcription(project_id, filename, language, reasoning_effort))
+    asyncio.create_task(process_transcription(project_id, filename, language, reasoning_effort, user["id"], user.get("org_id")))
     
     return {"message": "File uploaded, transcription started", "filename": filename}
 
