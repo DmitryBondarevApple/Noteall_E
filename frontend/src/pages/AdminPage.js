@@ -102,6 +102,7 @@ export default function AdminPage() {
           adminApi.listAllPrompts().catch(() => ({ data: [] })),
           adminApi.getModel().catch(() => ({ data: null })),
           billingApi.getMarkupTiers().catch(() => ({ data: [] })),
+          billingApi.getCostSettings().catch(() => ({ data: null })),
         );
       }
       const results = await Promise.all(promises);
@@ -114,6 +115,7 @@ export default function AdminPage() {
         setPrompts(results[5].data || []);
         if (results[6].data) setModelInfo(results[6].data);
         setMarkupTiers(results[7].data || []);
+        if (results[8].data) setCostSettings(results[8].data);
       }
     } catch (err) {
       toast.error('Ошибка загрузки');
