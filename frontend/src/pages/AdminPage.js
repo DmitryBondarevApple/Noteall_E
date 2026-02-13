@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { adminApi, promptsApi, orgApi, billingApi, invitationsApi } from '../lib/api';
+import { adminApi, orgApi, billingApi, invitationsApi } from '../lib/api';
 import { Button } from '../components/ui/button';
 import AppLayout from '../components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
