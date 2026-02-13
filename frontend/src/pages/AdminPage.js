@@ -699,37 +699,6 @@ export default function AdminPage() {
               </TabsContent>
             )}
 
-            {/* Prompts Tab (superadmin) */}
-            {isSuperadmin() && (
-              <TabsContent value="prompts">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Общие промпты</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Название</TableHead>
-                          <TableHead>Тип</TableHead>
-                          <TableHead>Содержание</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {prompts.filter(p => p.is_public).map(p => (
-                          <TableRow key={p.id}>
-                            <TableCell className="font-medium">{p.name}</TableCell>
-                            <TableCell><Badge variant="outline">{p.prompt_type === 'master' ? 'Мастер' : 'Тематический'}</Badge></TableCell>
-                            <TableCell className="max-w-md"><p className="text-sm text-muted-foreground line-clamp-2">{p.content}</p></TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            )}
-
             {/* Models Tab (superadmin) */}
             {isSuperadmin() && (
               <TabsContent value="models">
