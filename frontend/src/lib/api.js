@@ -273,6 +273,7 @@ export const billingApi = {
   updateMarkupTiers: (tiers) => axios.put(`${API}/billing/admin/markup-tiers`, { tiers }),
   getCostSettings: () => axios.get(`${API}/billing/admin/cost-settings`),
   updateCostSettings: (data) => axios.put(`${API}/billing/admin/cost-settings`, data),
+  runStorageCalc: () => axios.post(`${API}/billing/admin/run-storage-calc`),
   getMyUsage: () => axios.get(`${API}/billing/usage/my`),
   getOrgUsersUsage: () => axios.get(`${API}/billing/usage/org-users`),
   adminUsage: (orgId) => axios.get(`${API}/billing/admin/usage`, { params: orgId ? { org_id: orgId } : {} }),
