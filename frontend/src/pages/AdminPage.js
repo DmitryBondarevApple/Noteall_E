@@ -357,6 +357,10 @@ export default function AdminPage() {
                     <DollarSign className="w-4 h-4" />
                     Наценки
                   </TabsTrigger>
+                  <TabsTrigger value="costs" className="gap-2" data-testid="admin-costs-tab">
+                    <Settings2 className="w-4 h-4" />
+                    Себестоимость
+                  </TabsTrigger>
                 </>
               )}
             </TabsList>
