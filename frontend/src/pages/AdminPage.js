@@ -48,6 +48,8 @@ export default function AdminPage() {
   const [org, setOrg] = useState(null);
   const [orgUsers, setOrgUsers] = useState([]);
   const [inviteEmail, setInviteEmail] = useState('');
+  const [editingOrgName, setEditingOrgName] = useState(null);
+  const [savingOrgName, setSavingOrgName] = useState(false);
   const [inviting, setInviting] = useState(false);
 
   // Superadmin data
