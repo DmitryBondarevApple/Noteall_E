@@ -95,7 +95,7 @@ async def register(data: UserCreate):
     else:
         # New user — create their own org
         org_id = str(uuid.uuid4())
-        org_name = data.organization_name or data.name
+        org_name = data.organization_name or f"{data.name} Company"
         org_doc = {
             "id": org_id,
             "name": org_name,

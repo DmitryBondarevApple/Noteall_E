@@ -94,6 +94,40 @@ async def startup_db_client():
     elif result.matched_count:
         logger.info(f"{SUPERADMIN_EMAIL} is already superadmin")
     
+    # Ensure superadmin has an organization
+    sa_user = await db.users.find_one({"email": SUPERADMIN_EMAIL}, {"_id": 0})
+    if sa_user and not sa_user.get("org_id"):
+        import uuid as _uuid
+        org_id = str(_uuid.uuid4())
+        org_name = "Bondarev Consulting"
+        now_iso = datetime.now(timezone.utc).isoformat()
+        await db.organizations.insert_one({
+            "id": org_id,
+            "name": org_name,
+            "owner_id": sa_user["id"],
+            "created_at": now_iso,
+            "updated_at": now_iso,
+        })
+        await db.users.update_one(
+            {"email": SUPERADMIN_EMAIL},
+            {"$set": {"org_id": org_id}},
+        )
+        await db.credit_balances.insert_one({
+            "org_id": org_id,
+            "balance": 1000.0,
+            "updated_at": now_iso,
+        })
+        await db.transactions.insert_one({
+            "id": str(_uuid.uuid4()),
+            "org_id": org_id,
+            "user_id": sa_user["id"],
+            "type": "topup",
+            "amount": 1000.0,
+            "description": "Начальные кредиты (суперадмин)",
+            "created_at": now_iso,
+        })
+        logger.info(f"Created org '{org_name}' for {SUPERADMIN_EMAIL}")
+    
     # Fetch exchange rate on startup
     from app.routes.billing import update_exchange_rate
     await update_exchange_rate()
