@@ -238,12 +238,12 @@ export default function ProjectPage() {
                   </TabsList>
                 </div>
               
-              {/* Process Button with Reasoning Selector */}
-                {/* Process controls - hidden on very small screens, shown below tabs */}
+              {/* Process Button - hidden after successful processing */}
+                {!getTranscript('processed') && (
                 <div className="hidden sm:flex items-center gap-3">
                   <Select value={selectedReasoningEffort} onValueChange={setSelectedReasoningEffort}>
                     <SelectTrigger className="w-36 lg:w-44 h-9 text-xs" data-testid="tab-reasoning-select">
-                      <SelectValue placeholder="Режим GPT" />
+                      <SelectValue placeholder="Режим" />
                     </SelectTrigger>
                     <SelectContent>
                       {reasoningEffortOptions.map((opt) => (
@@ -273,6 +273,7 @@ export default function ProjectPage() {
                     )}
                   </Button>
                 </div>
+                )}
               </div>
               
               {/* Mobile process controls */}
