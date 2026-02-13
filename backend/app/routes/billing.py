@@ -356,6 +356,14 @@ async def update_admin_cost_settings(data: CostSettingsUpdate, admin=Depends(get
     return settings
 
 
+@router.post("/admin/run-storage-calc")
+async def admin_run_storage_calc(admin=Depends(get_superadmin_user)):
+    """Manually trigger S3 storage cost calculation (superadmin only)."""
+    from app.main import calculate_daily_storage_costs
+    await calculate_daily_storage_costs()
+    return {"message": "Расчёт стоимости хранения выполнен"}
+
+
 @router.put("/admin/markup-tiers")
 async def update_markup_tiers(data: MarkupTierUpdate, admin=Depends(get_superadmin_user)):
     if not data.tiers:
