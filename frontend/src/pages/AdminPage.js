@@ -124,6 +124,21 @@ export default function AdminPage() {
     }
   };
 
+  const handleSaveOrgName = async () => {
+    if (!editingOrgName?.trim()) return;
+    setSavingOrgName(true);
+    try {
+      const res = await orgApi.updateMy(editingOrgName.trim());
+      setOrg(res.data);
+      setEditingOrgName(null);
+      toast.success('Название организации обновлено');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Ошибка сохранения');
+    } finally {
+      setSavingOrgName(false);
+    }
+  };
+
   const handleInvite = async () => {
     if (!inviteEmail.trim()) return;
     setInviting(true);
