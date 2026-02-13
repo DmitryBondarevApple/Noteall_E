@@ -70,6 +70,11 @@ export default function AdminPage() {
   const [editingTiers, setEditingTiers] = useState(null);
   const [savingTiers, setSavingTiers] = useState(false);
 
+  // Cost settings
+  const [costSettings, setCostSettings] = useState(null);
+  const [editingCost, setEditingCost] = useState(null);
+  const [savingCost, setSavingCost] = useState(false);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrgId, setSelectedOrgId] = useState(null);
 
