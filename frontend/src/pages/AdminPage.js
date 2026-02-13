@@ -18,7 +18,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '../components/ui/dialog';
 import {
-  Shield, Users, BookOpen, Search, Cpu, RefreshCw, Check, Loader2,
+  Shield, Users, Search, Cpu, RefreshCw, Check, Loader2,
   Building2, UserPlus, Trash2, Settings2, DollarSign, Plus, X,
   Link2, Copy, Ban, Clock, CheckCircle2,
 } from 'lucide-react';
