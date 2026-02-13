@@ -265,6 +265,18 @@ export default function AdminPage() {
     }
   };
 
+  const handleRunStorageCalc = async () => {
+    setRunningStorageCalc(true);
+    try {
+      await billingApi.runStorageCalc();
+      toast.success('Расчёт стоимости хранения выполнен');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Ошибка расчёта');
+    } finally {
+      setRunningStorageCalc(false);
+    }
+  };
+
   const handleCheckModels = async () => {
     setChecking(true);
     try {
