@@ -249,6 +249,21 @@ export default function AdminPage() {
     }
   };
 
+  const handleSaveCostSettings = async () => {
+    if (!editingCost) return;
+    setSavingCost(true);
+    try {
+      const res = await billingApi.updateCostSettings(editingCost);
+      setCostSettings(res.data);
+      setEditingCost(null);
+      toast.success('Настройки себестоимости обновлены');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Ошибка сохранения');
+    } finally {
+      setSavingCost(false);
+    }
+  };
+
   const handleCheckModels = async () => {
     setChecking(true);
     try {
