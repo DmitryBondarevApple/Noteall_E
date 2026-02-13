@@ -99,7 +99,6 @@ export default function AdminPage() {
         promises.push(
           adminApi.listUsers().catch(() => ({ data: [] })),
           orgApi.listAll().catch(() => ({ data: [] })),
-          adminApi.listAllPrompts().catch(() => ({ data: [] })),
           adminApi.getModel().catch(() => ({ data: null })),
           billingApi.getMarkupTiers().catch(() => ({ data: [] })),
           billingApi.getCostSettings().catch(() => ({ data: null })),
@@ -112,10 +111,9 @@ export default function AdminPage() {
       if (isSuperadmin()) {
         setAllUsers(results[3].data || []);
         setAllOrgs(results[4].data || []);
-        setPrompts(results[5].data || []);
-        if (results[6].data) setModelInfo(results[6].data);
-        setMarkupTiers(results[7].data || []);
-        if (results[8].data) setCostSettings(results[8].data);
+        if (results[5].data) setModelInfo(results[5].data);
+        setMarkupTiers(results[6].data || []);
+        if (results[7].data) setCostSettings(results[7].data);
       }
     } catch (err) {
       toast.error('Ошибка загрузки');
