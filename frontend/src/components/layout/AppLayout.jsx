@@ -264,21 +264,33 @@ export default function AppLayout({ children }) {
               <DropdownMenuTrigger asChild>
                 <button
                   className={cn(
-                    'w-full flex items-center gap-2.5 rounded-lg text-sm h-9 transition-colors text-slate-300 hover:bg-slate-800',
-                    collapsed ? 'justify-center px-0' : 'px-3'
+                    'w-full flex items-center gap-2.5 rounded-lg text-sm transition-colors hover:bg-slate-800',
+                    collapsed ? 'justify-center px-0 h-9' : 'px-3 py-2'
                   )}
                   data-testid="user-menu-btn"
                 >
                   <div className="w-6 h-6 rounded-full bg-slate-600 flex items-center justify-center shrink-0">
                     <span className="text-xs font-medium">{user?.name?.[0]?.toUpperCase()}</span>
                   </div>
-                  {!collapsed && <span className="truncate text-xs">{user?.name}</span>}
+                  {!collapsed && (
+                    <div className="flex flex-col items-start min-w-0">
+                      {user?.org_name && (
+                        <span className="text-[10px] text-slate-500 truncate w-full" data-testid="sidebar-org-name">{user.org_name}</span>
+                      )}
+                      <span className="truncate text-xs text-slate-300">{user?.name}</span>
+                    </div>
+                  )}
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent side="right" align="end" className="w-48">
                 <DropdownMenuItem className="text-muted-foreground text-xs">
                   {user?.email}
                 </DropdownMenuItem>
+                {user?.org_name && (
+                  <DropdownMenuItem className="text-muted-foreground text-xs">
+                    {user.org_name}
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={handleLogout} data-testid="logout-btn">
                   <LogOut className="w-4 h-4 mr-2" />
                   Выйти
