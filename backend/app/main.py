@@ -122,3 +122,117 @@ async def startup_db_client():
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
+
+
+async def calculate_daily_storage_costs():
+    """Calculate and deduct S3 storage costs for all orgs. Runs daily after exchange rate update."""
+    from app.core.database import db
+    from app.services.metering import get_cost_settings, usd_to_credits
+    import uuid as _uuid
+    import calendar
+
+    logger.info("Starting daily S3 storage cost calculation")
+
+    try:
+        settings = await get_cost_settings()
+        cost_per_gb_month = settings["s3_storage_cost_per_gb_month_usd"]
+        multiplier = settings["s3_storage_cost_multiplier"]
+
+        if cost_per_gb_month <= 0 or multiplier <= 0:
+            logger.info("Storage cost calculation skipped: cost or multiplier is 0")
+            return
+
+        now = datetime.now(timezone.utc)
+        days_in_month = calendar.monthrange(now.year, now.month)[1]
+        daily_cost_per_gb = cost_per_gb_month / days_in_month
+
+        # Get all orgs
+        orgs = await db.organizations.find({}, {"_id": 0, "id": 1, "name": 1}).to_list(10000)
+
+        for org in orgs:
+            org_id = org["id"]
+            # Find all users in this org
+            org_users = await db.users.find(
+                {"org_id": org_id}, {"_id": 0, "id": 1}
+            ).to_list(10000)
+            user_ids = [u["id"] for u in org_users]
+            if not user_ids:
+                continue
+
+            total_bytes = 0
+
+            # Sum S3 storage from meeting project attachments
+            att_pipeline = [
+                {"$match": {"s3_key": {"$exists": True, "$ne": None}}},
+                {"$lookup": {
+                    "from": "projects",
+                    "localField": "project_id",
+                    "foreignField": "id",
+                    "as": "project",
+                }},
+                {"$unwind": "$project"},
+                {"$match": {"project.user_id": {"$in": user_ids}}},
+                {"$group": {"_id": None, "total_size": {"$sum": {"$ifNull": ["$size", 0]}}}},
+            ]
+            att_result = await db.attachments.aggregate(att_pipeline).to_list(1)
+            if att_result:
+                total_bytes += att_result[0].get("total_size", 0)
+
+            # Sum S3 storage from document project attachments
+            doc_att_pipeline = [
+                {"$match": {"s3_key": {"$exists": True, "$ne": None}}},
+                {"$lookup": {
+                    "from": "doc_projects",
+                    "localField": "project_id",
+                    "foreignField": "id",
+                    "as": "project",
+                }},
+                {"$unwind": "$project"},
+                {"$match": {"project.user_id": {"$in": user_ids}}},
+                {"$group": {"_id": None, "total_size": {"$sum": {"$ifNull": ["$size", 0]}}}},
+            ]
+            doc_att_result = await db.doc_attachments.aggregate(doc_att_pipeline).to_list(1)
+            if doc_att_result:
+                total_bytes += doc_att_result[0].get("total_size", 0)
+
+            if total_bytes <= 0:
+                continue
+
+            total_gb = total_bytes / (1024 ** 3)
+            base_cost_usd = total_gb * daily_cost_per_gb
+            final_cost_usd = base_cost_usd * multiplier
+            credits_used = usd_to_credits(final_cost_usd)
+
+            if credits_used <= 0.0001:
+                continue
+
+            now_iso = now.isoformat()
+
+            await db.credit_balances.update_one(
+                {"org_id": org_id},
+                {"$inc": {"balance": -credits_used}, "$set": {"updated_at": now_iso}},
+            )
+
+            txn = {
+                "id": str(_uuid.uuid4()),
+                "org_id": org_id,
+                "user_id": "system",
+                "type": "deduction",
+                "amount": round(credits_used, 4),
+                "description": f"Хранение S3: {total_gb:.4f} ГБ (${base_cost_usd:.6f} x{multiplier})",
+                "created_at": now_iso,
+            }
+            await db.transactions.insert_one(txn)
+
+            logger.info(
+                f"Storage cost: org={org_id} ({org['name']}) "
+                f"size={total_gb:.4f}GB base=${base_cost_usd:.6f} "
+                f"multiplier={multiplier}x credits={credits_used:.4f}"
+            )
+
+        logger.info("Daily S3 storage cost calculation complete")
+
+    except Exception as e:
+        logger.error(f"Storage cost calculation error: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
