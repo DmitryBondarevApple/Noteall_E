@@ -99,6 +99,7 @@ async def startup_db_client():
     await update_exchange_rate()
     
     # Schedule daily exchange rate update at 3am MSK (00:00 UTC)
+    # and S3 storage cost calculation at 3:05am MSK (00:05 UTC)
     import asyncio
     async def rate_updater():
         while True:
@@ -106,12 +107,14 @@ async def startup_db_client():
             # 3am MSK = 00:00 UTC (MSK = UTC+3)
             target = now.replace(hour=0, minute=0, second=0, microsecond=0)
             if now >= target:
-                from datetime import timedelta
                 target += timedelta(days=1)
             wait_secs = (target - now).total_seconds()
             logger.info(f"Next exchange rate update in {wait_secs/3600:.1f}h")
             await asyncio.sleep(wait_secs)
             await update_exchange_rate()
+            # Run storage cost calculation 5 minutes after rate update
+            await asyncio.sleep(300)
+            await calculate_daily_storage_costs()
     
     asyncio.create_task(rate_updater())
 
