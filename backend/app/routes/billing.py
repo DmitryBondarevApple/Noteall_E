@@ -723,7 +723,7 @@ async def admin_topup_org(data: AdminTopupRequest, admin=Depends(get_superadmin_
         {"$set": {"balance": new_balance, "updated_at": now}},
     )
 
-    desc = data.description or f"Ручное пополнение (суперадмин)"
+    desc = data.description or "Ручное пополнение (суперадмин)"
     txn = {
         "id": str(uuid.uuid4()),
         "org_id": data.org_id,
