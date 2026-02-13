@@ -209,7 +209,7 @@ export default function ProjectPage() {
               {/* Mobile: scrollable tabs */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-                  <TabsList className="bg-white border p-1 shadow-sm inline-flex min-w-max">
+                  <TabsList className="inline-flex min-w-max">
                     <TabsTrigger value="transcript" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3" data-testid="transcript-tab">
                       <FileText className="w-4 h-4" />
                       <span className="hidden sm:inline">Транскрипт</span>

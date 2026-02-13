@@ -177,7 +177,7 @@ export default function BillingPage() {
 
         <main className="max-w-7xl mx-auto px-6 py-8">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="bg-white border p-1 mb-6">
+            <TabsList className="mb-6">
               <TabsTrigger value="overview" className="gap-2" data-testid="billing-overview-tab">
                 <Wallet className="w-4 h-4" />
                 Обзор

@@ -135,7 +135,7 @@ export function PromptsContent() {
       </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-white border p-1 mb-6">
+          <TabsList className="mb-6">
             <TabsTrigger value="all" data-testid="tab-all">Все</TabsTrigger>
             <TabsTrigger value="public" data-testid="tab-public">Общие</TabsTrigger>
             <TabsTrigger value="my" data-testid="tab-my">Мои</TabsTrigger>

@@ -125,7 +125,7 @@ export default function OrgDetailModal({ orgId, open, onClose }) {
             </div>
 
             <Tabs value={tab} onValueChange={setTab}>
-              <TabsList className="w-full border p-0.5">
+              <TabsList className="w-full">
                 <TabsTrigger value="info" className="flex-1 gap-1.5 text-xs" data-testid="org-detail-info-tab">
                   <BarChart3 className="w-3.5 h-3.5" /> Статистика
                 </TabsTrigger>

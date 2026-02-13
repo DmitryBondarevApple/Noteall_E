@@ -343,7 +343,7 @@ export default function AdminPage() {
 
         <main className="max-w-7xl mx-auto px-6 py-8">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="bg-white border p-1 mb-6">
+            <TabsList className="mb-6">
               <TabsTrigger value="org" className="gap-2" data-testid="admin-org-tab">
                 <Building2 className="w-4 h-4" />
                 Организация
