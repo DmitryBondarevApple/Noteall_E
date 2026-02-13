@@ -2,6 +2,7 @@ import uuid
 import logging
 from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, Depends
+from pydantic import BaseModel
 from app.core.database import db
 from app.core.security import get_current_user, get_admin_user, get_superadmin_user
 from app.models.organization import (
