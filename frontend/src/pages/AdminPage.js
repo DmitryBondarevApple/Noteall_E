@@ -1027,6 +1027,24 @@ export default function AdminPage() {
                           <li>1 кредит = $0.02. Формула: (базовая цена × множитель) / $0.02 = кредиты</li>
                         </ul>
                       </div>
+
+                      {/* Manual trigger */}
+                      <div className="flex items-center gap-3">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleRunStorageCalc}
+                          disabled={runningStorageCalc}
+                          data-testid="run-storage-calc-btn"
+                          className="gap-2"
+                        >
+                          {runningStorageCalc ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                          Запустить расчёт хранения вручную
+                        </Button>
+                        <span className="text-sm text-muted-foreground">
+                          Применит текущие настройки ко всем организациям
+                        </span>
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
