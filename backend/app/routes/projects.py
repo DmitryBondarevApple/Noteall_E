@@ -386,6 +386,15 @@ async def process_transcription(project_id: str, filename: str, language: str = 
         
         logger.info(f"[{project_id}] Transcription complete, ready for manual processing")
         
+        # Deduct transcription cost from org balance
+        if org_id and user_id and duration > 0:
+            try:
+                from app.services.metering import deduct_transcription_cost
+                cost_result = await deduct_transcription_cost(org_id, user_id, duration)
+                logger.info(f"[{project_id}] Transcription cost deducted: {cost_result}")
+            except Exception as cost_err:
+                logger.error(f"[{project_id}] Failed to deduct transcription cost: {cost_err}")
+        
         # Delete local audio file after successful transcription
         try:
             if file_path.exists():
