@@ -316,7 +316,7 @@ async def admin_list_balances(admin=Depends(get_superadmin_user)):
 
 # ── Markup Tiers (Superadmin) ──
 
-from app.services.metering import get_markup_tiers as _get_tiers
+from app.services.metering import get_markup_tiers as _get_tiers, get_cost_settings, update_cost_settings
 
 
 class MarkupTierUpdate(BaseModel):
@@ -327,6 +327,33 @@ class MarkupTierUpdate(BaseModel):
 async def get_markup_tiers(admin=Depends(get_superadmin_user)):
     tiers = await _get_tiers()
     return tiers
+
+
+# ── Cost Settings (Superadmin) ──
+
+@router.get("/admin/cost-settings")
+async def get_admin_cost_settings(admin=Depends(get_superadmin_user)):
+    settings = await get_cost_settings()
+    return settings
+
+
+class CostSettingsUpdate(BaseModel):
+    transcription_cost_per_minute_usd: Optional[float] = None
+    transcription_cost_multiplier: Optional[float] = None
+    s3_storage_cost_per_gb_month_usd: Optional[float] = None
+    s3_storage_cost_multiplier: Optional[float] = None
+
+
+@router.put("/admin/cost-settings")
+async def update_admin_cost_settings(data: CostSettingsUpdate, admin=Depends(get_superadmin_user)):
+    updates = {k: v for k, v in data.model_dump(exclude_unset=True).items() if v is not None}
+    if not updates:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    for key, val in updates.items():
+        if val < 0:
+            raise HTTPException(status_code=400, detail=f"{key} must be >= 0")
+    settings = await update_cost_settings(updates)
+    return settings
 
 
 @router.put("/admin/markup-tiers")
