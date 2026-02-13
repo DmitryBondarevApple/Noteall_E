@@ -53,7 +53,6 @@ export default function AdminPage() {
   // Superadmin data
   const [allUsers, setAllUsers] = useState([]);
   const [allOrgs, setAllOrgs] = useState([]);
-  const [prompts, setPrompts] = useState([]);
 
   // Model state
   const [modelInfo, setModelInfo] = useState(null);
