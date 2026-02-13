@@ -276,11 +276,12 @@ export default function ProjectPage() {
                 )}
               </div>
               
-              {/* Mobile process controls */}
+              {/* Mobile process controls - hidden after successful processing */}
+              {!getTranscript('processed') && (
               <div className="sm:hidden flex items-center gap-2 mt-2">
                 <Select value={selectedReasoningEffort} onValueChange={setSelectedReasoningEffort}>
                   <SelectTrigger className="flex-1 h-9 text-xs" data-testid="tab-reasoning-select-mobile">
-                    <SelectValue placeholder="Режим GPT" />
+                    <SelectValue placeholder="Режим" />
                   </SelectTrigger>
                   <SelectContent>
                     {reasoningEffortOptions.map((opt) => (
@@ -299,6 +300,7 @@ export default function ProjectPage() {
                   {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                 </Button>
               </div>
+              )}
             </div>
 
             {/* Transcript Tab */}
