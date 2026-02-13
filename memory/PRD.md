@@ -23,12 +23,21 @@ Web application for building and running data processing pipelines (workflows) f
   - Custom credit amount (min 1000) with automatic discount tiers
   - Updated purchase dialog with RUB, discount display
   - Backend: `/api/billing/exchange-rate`, `/api/billing/calculate-custom`, updated `/api/billing/plans` with price_rub
+- **Cost Calculation Parameters** (Feb 2026):
+  - Transcription cost: $0.0043/min (Deepgram Nova-3) × configurable multiplier → credits deducted after each transcription
+  - S3 Storage cost: $0.025/GB/month × configurable multiplier → daily deduction at 3:05 MSK
+  - Superadmin UI tab "Себестоимость" on AdminPage for managing both settings
+  - Manual trigger for storage cost calculation
+  - Backend: `/api/billing/admin/cost-settings` (GET/PUT), `/api/billing/admin/run-storage-calc` (POST)
 
 ## Key API Endpoints
 - `GET /api/billing/plans` — Plans with price_rub, discount_pct
 - `GET /api/billing/exchange-rate` — Current USD/RUB rate
 - `POST /api/billing/calculate-custom` — Calculate custom credit amount pricing
 - `POST /api/billing/topup` — Topup by plan_id or custom_credits
+- `GET /api/billing/admin/cost-settings` — Get transcription/storage cost settings
+- `PUT /api/billing/admin/cost-settings` — Update cost settings
+- `POST /api/billing/admin/run-storage-calc` — Manual trigger for daily S3 storage cost job
 
 ## P2 Backlog
 - Migrate to `app.noteall.ru` (DNS CNAME)
