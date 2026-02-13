@@ -1,0 +1,103 @@
+{
+  "summary": "Completed testing of Cost Settings feature (Transcription + S3 Storage cost calculation). All 17 backend API tests PASSED. All frontend UI tests PASSED. Cost settings tab renders correctly with edit functionality and manual storage calc button.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_cost_settings.py",
+    "/app/test_reports/pytest/pytest_cost_settings.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_cost_settings.py"
+  ],
+  "success_rate": {
+    "backend": "100% (17/17 tests passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "superadmin_user": "test_admin_e1@test.com / Test123!"
+  },
+  "seed_data_creation": "None - used existing settings, restored original values after tests",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Cost settings feature fully tested. New cost settings admin tab 'Себестоимость' with data-testid='admin-costs-tab'. Displays transcription (Deepgram Nova-3) base cost $0.0043/min and S3 storage $0.025/GB/month with configurable multipliers. Edit button (data-testid='edit-cost-btn') enables editing. Input fields: transcription-base-cost-input, transcription-multiplier-input, storage-base-cost-input, storage-multiplier-input. Save button (data-testid='save-cost-btn'). Manual storage calc button (data-testid='run-storage-calc-btn') triggers daily storage cost calculation on demand.",
+  "features_verified": {
+    "get_cost_settings_endpoint": {
+      "status": "PASS",
+      "endpoint": "GET /api/billing/admin/cost-settings",
+      "details": "Returns default cost settings with 4 fields"
+    },
+    "put_cost_settings_endpoint": {
+      "status": "PASS",
+      "endpoint": "PUT /api/billing/admin/cost-settings",
+      "details": "Updates cost settings, validates >= 0, rejects negative values"
+    },
+    "run_storage_calc_endpoint": {
+      "status": "PASS",
+      "endpoint": "POST /api/billing/admin/run-storage-calc",
+      "details": "Manually triggers S3 storage cost calculation for all orgs"
+    },
+    "non_superadmin_access_blocked": {
+      "status": "PASS",
+      "details": "Without auth returns 401/403, with invalid token returns 401"
+    },
+    "admin_page_costs_tab_ui": {
+      "status": "PASS",
+      "details": "Tab 'Себестоимость' visible for superadmin, displays all 4 cost settings"
+    },
+    "edit_cost_settings_ui": {
+      "status": "PASS",
+      "details": "Edit button opens input fields, Save button saves changes, Cancel returns to view mode"
+    },
+    "manual_storage_calc_button": {
+      "status": "PASS",
+      "details": "Button triggers calc and shows success toast 'Расчёт стоимости хранения выполнен'"
+    },
+    "negative_values_rejected": {
+      "status": "PASS",
+      "details": "Backend returns 400 for negative values with detail message"
+    }
+  },
+  "test_execution_summary": {
+    "backend_tests": {
+      "file": "/app/backend/tests/test_cost_settings.py",
+      "total": 17,
+      "passed": 17,
+      "failed": 0,
+      "skipped": 0,
+      "classes": [
+        "TestCostSettingsEndpoints (9 tests) - CRUD operations",
+        "TestCostSettingsAuth (4 tests) - Authorization checks",
+        "TestDefaultCostSettings (4 tests) - Default value verification"
+      ]
+    },
+    "frontend_tests": {
+      "login": "PASS - Login as superadmin works",
+      "navigation": "PASS - Navigate to /admin page works",
+      "costs_tab": "PASS - Click on 'Себестоимость' tab works",
+      "cost_display": "PASS - All 4 cost values displayed correctly",
+      "edit_mode": "PASS - Edit button opens input fields",
+      "save_changes": "PASS - Changes saved successfully, toast shown",
+      "restore_values": "PASS - Values restored after test",
+      "storage_calc_button": "PASS - Manual storage calc button triggers successfully"
+    }
+  },
+  "api_response_samples": {
+    "GET_cost_settings": {
+      "transcription_cost_per_minute_usd": 0.0043,
+      "transcription_cost_multiplier": 3.0,
+      "s3_storage_cost_per_gb_month_usd": 0.025,
+      "s3_storage_cost_multiplier": 3.0
+    },
+    "PUT_cost_settings_validation_error": "{\"detail\":\"transcription_cost_per_minute_usd must be >= 0\"}",
+    "POST_run_storage_calc": "{\"message\":\"Расчёт стоимости хранения выполнен\"}"
+  }
+}
