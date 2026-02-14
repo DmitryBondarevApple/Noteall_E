@@ -11,8 +11,8 @@ router = APIRouter(prefix="/projects/{project_id}/transcripts", tags=["transcrip
 
 @router.get("", response_model=List[TranscriptVersionResponse])
 async def get_transcripts(project_id: str, user=Depends(get_current_user)):
-    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
-    if not project:
+    project = await db.projects.find_one({"id": project_id, "deleted_at": None}, {"_id": 0})
+    if not project or not await can_user_access_project(project, user, "meeting_folders"):
         raise HTTPException(status_code=404, detail="Project not found")
     
     transcripts = await db.transcripts.find({"project_id": project_id}, {"_id": 0}).to_list(100)
@@ -26,8 +26,8 @@ async def update_transcript(
     data: TranscriptContentUpdate,
     user=Depends(get_current_user)
 ):
-    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
-    if not project:
+    project = await db.projects.find_one({"id": project_id, "deleted_at": None}, {"_id": 0})
+    if not project or not await can_user_access_project(project, user, "meeting_folders"):
         raise HTTPException(status_code=404, detail="Project not found")
     
     transcript = await db.transcripts.find_one(

@@ -96,8 +96,8 @@ async def analyze_raw(
     Raw analysis endpoint for wizard - doesn't save to history.
     Uses transcript as context but allows custom system/user messages.
     """
-    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
-    if not project:
+    project = await db.projects.find_one({"id": project_id, "deleted_at": None}, {"_id": 0})
+    if not project or not await can_user_access_project(project, user, "meeting_folders"):
         raise HTTPException(status_code=404, detail="Project not found")
     
     # Get processed transcript (or raw if processed not available)
@@ -188,8 +188,8 @@ async def save_full_analysis(
     user=Depends(get_current_user)
 ):
     """Save full analysis result to chat history"""
-    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
-    if not project:
+    project = await db.projects.find_one({"id": project_id, "deleted_at": None}, {"_id": 0})
+    if not project or not await can_user_access_project(project, user, "meeting_folders"):
         raise HTTPException(status_code=404, detail="Project not found")
     
     chat_id = str(uuid.uuid4())
@@ -218,8 +218,8 @@ async def get_analysis_results(
     user=Depends(get_current_user)
 ):
     """Get all analysis results (from master analysis and re-analysis)"""
-    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
-    if not project:
+    project = await db.projects.find_one({"id": project_id, "deleted_at": None}, {"_id": 0})
+    if not project or not await can_user_access_project(project, user, "meeting_folders"):
         raise HTTPException(status_code=404, detail="Project not found")
     
     results = await db.chat_requests.find(
@@ -237,8 +237,8 @@ async def delete_chat_history(
     user=Depends(get_current_user)
 ):
     """Delete a chat history entry"""
-    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
-    if not project:
+    project = await db.projects.find_one({"id": project_id, "deleted_at": None}, {"_id": 0})
+    if not project or not await can_user_access_project(project, user, "meeting_folders"):
         raise HTTPException(status_code=404, detail="Project not found")
     
     result = await db.chat_requests.delete_one({"id": chat_id, "project_id": project_id})
@@ -254,8 +254,8 @@ async def analyze_with_prompt(
     data: ChatRequestCreate,
     user=Depends(get_current_user)
 ):
-    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
-    if not project:
+    project = await db.projects.find_one({"id": project_id, "deleted_at": None}, {"_id": 0})
+    if not project or not await can_user_access_project(project, user, "meeting_folders"):
         raise HTTPException(status_code=404, detail="Project not found")
     
     prompt = await db.prompts.find_one({"id": data.prompt_id}, {"_id": 0})
@@ -374,8 +374,8 @@ async def analyze_with_prompt(
 
 @router.get("/projects/{project_id}/chat-history", response_model=List[ChatRequestResponse])
 async def get_chat_history(project_id: str, user=Depends(get_current_user)):
-    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
-    if not project:
+    project = await db.projects.find_one({"id": project_id, "deleted_at": None}, {"_id": 0})
+    if not project or not await can_user_access_project(project, user, "meeting_folders"):
         raise HTTPException(status_code=404, detail="Project not found")
     
     history = await db.chat_requests.find(
@@ -393,8 +393,8 @@ async def update_chat_response(
     data: ChatResponseUpdate,
     user=Depends(get_current_user)
 ):
-    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
-    if not project:
+    project = await db.projects.find_one({"id": project_id, "deleted_at": None}, {"_id": 0})
+    if not project or not await can_user_access_project(project, user, "meeting_folders"):
         raise HTTPException(status_code=404, detail="Project not found")
     
     chat = await db.chat_requests.find_one({"id": chat_id, "project_id": project_id})

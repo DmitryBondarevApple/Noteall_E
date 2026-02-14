@@ -137,8 +137,8 @@ async def upload_attachment(
     file: UploadFile = File(...),
     user=Depends(get_current_user)
 ):
-    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
-    if not project:
+    project = await db.projects.find_one({"id": project_id, "deleted_at": None}, {"_id": 0})
+    if not project or not await can_user_access_project(project, user, "meeting_folders"):
         raise HTTPException(status_code=404, detail="Project not found")
 
     ext = os.path.splitext(file.filename)[1].lower()
@@ -232,8 +232,8 @@ async def add_url_attachment(
     data: AddUrlRequest,
     user=Depends(get_current_user)
 ):
-    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
-    if not project:
+    project = await db.projects.find_one({"id": project_id, "deleted_at": None}, {"_id": 0})
+    if not project or not await can_user_access_project(project, user, "meeting_folders"):
         raise HTTPException(status_code=404, detail="Project not found")
 
     att_id = str(uuid.uuid4())
@@ -261,8 +261,8 @@ async def list_attachments(
     project_id: str,
     user=Depends(get_current_user)
 ):
-    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
-    if not project:
+    project = await db.projects.find_one({"id": project_id, "deleted_at": None}, {"_id": 0})
+    if not project or not await can_user_access_project(project, user, "meeting_folders"):
         raise HTTPException(status_code=404, detail="Project not found")
 
     items = await db.attachments.find(
@@ -278,8 +278,8 @@ async def delete_attachment(
     attachment_id: str,
     user=Depends(get_current_user)
 ):
-    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
-    if not project:
+    project = await db.projects.find_one({"id": project_id, "deleted_at": None}, {"_id": 0})
+    if not project or not await can_user_access_project(project, user, "meeting_folders"):
         raise HTTPException(status_code=404, detail="Project not found")
 
     att = await db.attachments.find_one({"id": attachment_id, "project_id": project_id}, {"_id": 0})
@@ -302,8 +302,8 @@ async def download_attachment(
     attachment_id: str,
     user=Depends(get_current_user)
 ):
-    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
-    if not project:
+    project = await db.projects.find_one({"id": project_id, "deleted_at": None}, {"_id": 0})
+    if not project or not await can_user_access_project(project, user, "meeting_folders"):
         raise HTTPException(status_code=404, detail="Project not found")
 
     att = await db.attachments.find_one({"id": attachment_id, "project_id": project_id}, {"_id": 0})

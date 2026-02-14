@@ -18,8 +18,8 @@ router = APIRouter(tags=["speakers"])
 
 @router.get("/projects/{project_id}/speakers", response_model=List[SpeakerMapResponse])
 async def get_speakers(project_id: str, user=Depends(get_current_user)):
-    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
-    if not project:
+    project = await db.projects.find_one({"id": project_id, "deleted_at": None}, {"_id": 0})
+    if not project or not await can_user_access_project(project, user, "meeting_folders"):
         raise HTTPException(status_code=404, detail="Project not found")
     
     speakers = await db.speaker_maps.find({"project_id": project_id}, {"_id": 0}).to_list(100)
@@ -33,8 +33,8 @@ async def update_speaker(
     data: SpeakerMapUpdate,
     user=Depends(get_current_user)
 ):
-    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
-    if not project:
+    project = await db.projects.find_one({"id": project_id, "deleted_at": None}, {"_id": 0})
+    if not project or not await can_user_access_project(project, user, "meeting_folders"):
         raise HTTPException(status_code=404, detail="Project not found")
     
     update_fields = {"speaker_name": data.speaker_name}

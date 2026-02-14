@@ -36,8 +36,8 @@ async def update_project_status_if_needed(project_id: str):
 @router.post("/bulk-accept")
 async def bulk_accept_fragments(project_id: str, user=Depends(get_current_user)):
     """Auto-accept all pending/auto_corrected fragments. For fast-track mode."""
-    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
-    if not project:
+    project = await db.projects.find_one({"id": project_id, "deleted_at": None}, {"_id": 0})
+    if not project or not await can_user_access_project(project, user, "meeting_folders"):
         raise HTTPException(status_code=404, detail="Project not found")
     
     # Get all pending fragments
@@ -99,8 +99,8 @@ async def bulk_accept_fragments(project_id: str, user=Depends(get_current_user))
 
 @router.get("", response_model=List[UncertainFragmentResponse])
 async def get_fragments(project_id: str, user=Depends(get_current_user)):
-    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
-    if not project:
+    project = await db.projects.find_one({"id": project_id, "deleted_at": None}, {"_id": 0})
+    if not project or not await can_user_access_project(project, user, "meeting_folders"):
         raise HTTPException(status_code=404, detail="Project not found")
     
     fragments = await db.uncertain_fragments.find({"project_id": project_id}, {"_id": 0}).to_list(1000)
@@ -114,8 +114,8 @@ async def update_fragment(
     data: UncertainFragmentUpdate,
     user=Depends(get_current_user)
 ):
-    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
-    if not project:
+    project = await db.projects.find_one({"id": project_id, "deleted_at": None}, {"_id": 0})
+    if not project or not await can_user_access_project(project, user, "meeting_folders"):
         raise HTTPException(status_code=404, detail="Project not found")
     
     fragment = await db.uncertain_fragments.find_one({"id": fragment_id, "project_id": project_id})
@@ -145,8 +145,8 @@ async def revert_fragment(
     user=Depends(get_current_user)
 ):
     """Revert a confirmed fragment back to pending status and restore [word?] marker in transcript"""
-    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
-    if not project:
+    project = await db.projects.find_one({"id": project_id, "deleted_at": None}, {"_id": 0})
+    if not project or not await can_user_access_project(project, user, "meeting_folders"):
         raise HTTPException(status_code=404, detail="Project not found")
     
     fragment = await db.uncertain_fragments.find_one({"id": fragment_id, "project_id": project_id})
