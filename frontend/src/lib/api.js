@@ -125,6 +125,7 @@ export const orgApi = {
   getMy: () => axios.get(`${API}/organizations/my`),
   updateMy: (name) => axios.put(`${API}/organizations/my`, { name }),
   getMyUsers: () => axios.get(`${API}/organizations/my/users`),
+  getMembers: () => axios.get(`${API}/organizations/my/members`),
   inviteUser: (email) => axios.post(`${API}/organizations/my/invite`, { email }),
   removeUser: (userId) => axios.delete(`${API}/organizations/my/users/${userId}`),
   updateUserRole: (userId, role) => axios.put(`${API}/organizations/my/users/${userId}/role?role=${role}`),
