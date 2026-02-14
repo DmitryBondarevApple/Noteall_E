@@ -24,7 +24,7 @@ import {
 import {
   FolderOpen, FolderClosed, FileText, MoreHorizontal, Trash2, Edit2,
   ChevronRight, ChevronDown, Search, FolderPlus, FilePlus, Loader2,
-  FolderInput, Share2, Lock, Globe, RotateCcw, User,
+  FolderInput, Share2, Lock, Globe, RotateCcw, User, Users,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
