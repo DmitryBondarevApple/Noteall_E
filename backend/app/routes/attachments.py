@@ -12,6 +12,7 @@ from app.core.database import db
 from app.routes.auth import get_current_user
 from app.services.s3 import s3_enabled, upload_bytes, download_bytes, delete_object, presigned_url
 from app.services.pdf_parser import extract_text_from_pdf
+from app.services.access_control import can_user_access_project, can_user_write_project
 
 router = APIRouter()
 

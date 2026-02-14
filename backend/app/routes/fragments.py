@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from app.core.database import db
 from app.core.security import get_current_user
 from app.models.fragment import UncertainFragmentUpdate, UncertainFragmentResponse
+from app.services.access_control import can_user_access_project
 
 router = APIRouter(prefix="/projects/{project_id}/fragments", tags=["fragments"])
 

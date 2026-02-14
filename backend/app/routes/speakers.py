@@ -9,6 +9,7 @@ from app.models.speaker import (
     SpeakerMapCreate, SpeakerMapUpdate, SpeakerMapResponse,
     SpeakerDirectoryCreate, SpeakerDirectoryUpdate, SpeakerDirectoryResponse
 )
+from app.services.access_control import can_user_access_project
 
 router = APIRouter(tags=["speakers"])
 

@@ -10,6 +10,7 @@ from app.models.chat import ChatRequestCreate, ChatRequestResponse, ChatResponse
 from app.services.gpt import call_gpt52, call_gpt52_metered
 from app.services.metering import check_user_monthly_limit, check_org_balance, deduct_credits_and_record
 from app.routes.attachments import build_attachment_context
+from app.services.access_control import can_user_access_project, can_user_write_project
 
 logger = logging.getLogger(__name__)
 
