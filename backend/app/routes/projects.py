@@ -110,22 +110,26 @@ async def list_projects(
 
 @router.get("/{project_id}", response_model=ProjectResponse)
 async def get_project(project_id: str, user=Depends(get_current_user)):
-    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]}, {"_id": 0})
+    project = await db.projects.find_one({"id": project_id, "deleted_at": None}, {"_id": 0})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+    if not await can_user_access_project(project, user, "meeting_folders"):
+        raise HTTPException(status_code=403, detail="Нет доступа к проекту")
     return ProjectResponse(**project)
 
 
 @router.put("/{project_id}", response_model=ProjectResponse)
 async def update_project(project_id: str, data: ProjectUpdate, user=Depends(get_current_user)):
-    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
+    project = await db.projects.find_one({"id": project_id, "deleted_at": None})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    
+    if project.get("owner_id", project.get("user_id")) != user["id"]:
+        raise HTTPException(status_code=403, detail="Только владелец может редактировать проект")
+
     # Use exclude_unset to allow explicit null values (e.g., folder_id: null to move to root)
     update_data = data.model_dump(exclude_unset=True)
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
-    
+
     await db.projects.update_one({"id": project_id}, {"$set": update_data})
     updated = await db.projects.find_one({"id": project_id}, {"_id": 0})
     return ProjectResponse(**updated)
@@ -133,29 +137,93 @@ async def update_project(project_id: str, data: ProjectUpdate, user=Depends(get_
 
 @router.delete("/{project_id}")
 async def delete_project(project_id: str, user=Depends(get_current_user)):
-    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
+    project = await db.projects.find_one({"id": project_id, "deleted_at": None})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    
-    # Clean up S3 attachments
+    if project.get("owner_id", project.get("user_id")) != user["id"]:
+        raise HTTPException(status_code=403, detail="Только владелец может удалить проект")
+
+    now = datetime.now(timezone.utc).isoformat()
+    await db.projects.update_one(
+        {"id": project_id},
+        {"$set": {"deleted_at": now, "deleted_by": user["id"], "updated_at": now}},
+    )
+    return {"message": "Проект перемещён в корзину"}
+
+
+@router.post("/{project_id}/restore")
+async def restore_project(project_id: str, user=Depends(get_current_user)):
+    project = await db.projects.find_one(
+        {"id": project_id, "owner_id": user["id"], "deleted_at": {"$ne": None}}, {"_id": 0}
+    )
+    if not project:
+        raise HTTPException(status_code=404, detail="Проект не найден в корзине")
+    now = datetime.now(timezone.utc).isoformat()
+    # Restore to root if original folder was deleted
+    folder_id = project.get("folder_id")
+    if folder_id:
+        folder = await db.meeting_folders.find_one({"id": folder_id, "deleted_at": None})
+        if not folder:
+            folder_id = None
+    await db.projects.update_one({"id": project_id}, {"$set": {
+        "deleted_at": None, "deleted_by": None,
+        "folder_id": folder_id, "visibility": "private",
+        "updated_at": now,
+    }})
+    return {"message": "Проект восстановлен"}
+
+
+@router.delete("/{project_id}/permanent")
+async def permanent_delete_project(project_id: str, user=Depends(get_current_user)):
+    project = await db.projects.find_one(
+        {"id": project_id, "owner_id": user["id"], "deleted_at": {"$ne": None}}
+    )
+    if not project:
+        raise HTTPException(status_code=404, detail="Проект не найден в корзине")
+
     from app.services.s3 import s3_enabled, delete_object
-    attachments = await db.attachments.find({"project_id": project_id}, {"_id": 0, "s3_key": 1}).to_list(500)
+    attachments = await db.attachments.find(
+        {"project_id": project_id, "s3_key": {"$exists": True, "$ne": None}},
+        {"_id": 0, "s3_key": 1},
+    ).to_list(500)
     if s3_enabled():
         for att in attachments:
-            if att.get("s3_key"):
-                try:
-                    delete_object(att["s3_key"])
-                except Exception:
-                    pass
-    
+            try:
+                delete_object(att["s3_key"])
+            except Exception:
+                pass
     await db.projects.delete_one({"id": project_id})
     await db.transcripts.delete_many({"project_id": project_id})
     await db.uncertain_fragments.delete_many({"project_id": project_id})
     await db.speaker_maps.delete_many({"project_id": project_id})
     await db.chat_requests.delete_many({"project_id": project_id})
     await db.attachments.delete_many({"project_id": project_id})
-    
-    return {"message": "Project deleted"}
+    return {"message": "Проект удалён навсегда"}
+
+
+@router.post("/{project_id}/move")
+async def move_project(project_id: str, data: ProjectMove, user=Depends(get_current_user)):
+    project = await db.projects.find_one({"id": project_id, "deleted_at": None})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    if project.get("owner_id", project.get("user_id")) != user["id"]:
+        raise HTTPException(status_code=403, detail="Только владелец может перемещать проект")
+
+    visibility = "private"
+    if data.folder_id:
+        folder = await db.meeting_folders.find_one(
+            {"id": data.folder_id, "deleted_at": None}, {"_id": 0}
+        )
+        if not folder:
+            raise HTTPException(404, "Целевая папка не найдена")
+        visibility = folder.get("visibility", "private")
+
+    now = datetime.now(timezone.utc).isoformat()
+    await db.projects.update_one({"id": project_id}, {"$set": {
+        "folder_id": data.folder_id, "visibility": visibility, "updated_at": now,
+    }})
+    updated = await db.projects.find_one({"id": project_id}, {"_id": 0})
+    return ProjectResponse(**updated)
 
 
 @router.post("/{project_id}/upload")
