@@ -34,6 +34,7 @@ Web application for building and running data processing pipelines (workflows) f
 - **Bug 1 FIXED:** Public tab data leak — removed enrichFolders race condition useEffect, backend now enriches owner_name in list endpoint, frontend clears state on tab switch
 - **Bug 2 FIXED:** Incomplete sharing UI — added user selection (multi-select with search) in share dialog, new `/api/organizations/my/members` endpoint for org user listing
 - **Enhancement:** "Доступы" shown for already-shared folders (manage existing permissions), "Расшарить" for private folders. Access management dialog allows editing users, access level, and making folder private
+- **Bug 3 FIXED:** Share/Unshare cascade — sharing a folder now cascades `visibility` to ALL descendant subfolders and projects. Previously only root folder was updated, orphaning all children. Data recovery performed for affected folders.
 - **11/11 backend tests + full frontend E2E passed**
 
 ## Key API Endpoints
