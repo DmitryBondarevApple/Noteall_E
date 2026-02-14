@@ -128,6 +128,17 @@ class DocProjectMove(BaseModel):
 
 # ==================== FOLDERS (tree structure) ====================
 
+async def _enrich_doc_owner_names(folders):
+    """Add owner_name to list of doc folders."""
+    owner_ids = list({f.get("owner_id") for f in folders if f.get("owner_id")})
+    if owner_ids:
+        owners = await db.users.find({"id": {"$in": owner_ids}}, {"_id": 0, "id": 1, "name": 1}).to_list(500)
+        owner_map = {o["id"]: o.get("name", "Неизвестный") for o in owners}
+        for f in folders:
+            f["owner_name"] = owner_map.get(f.get("owner_id"), "Неизвестный")
+    return folders
+
+
 @router.get("/doc/folders")
 async def list_folders(
     tab: str = "private",
@@ -145,7 +156,7 @@ async def list_folders(
             },
             {"_id": 0},
         ).sort("deleted_at", -1).to_list(500)
-        return folders
+        return await _enrich_doc_owner_names(folders)
 
     if tab == "public":
         query = {"visibility": "public", "org_id": user.get("org_id"), "deleted_at": None}
@@ -153,20 +164,14 @@ async def list_folders(
             query["parent_id"] = parent_id
         folders = await db.doc_folders.find(query, {"_id": 0}).sort("created_at", 1).to_list(500)
         accessible = [f for f in folders if can_user_access_folder(f, user)]
-        # Enrich with owner_name
-        owner_ids = list({f.get("owner_id") for f in accessible if f.get("owner_id")})
-        if owner_ids:
-            owners = await db.users.find({"id": {"$in": owner_ids}}, {"_id": 0, "id": 1, "name": 1}).to_list(500)
-            owner_map = {o["id"]: o.get("name", "Неизвестный") for o in owners}
-            for f in accessible:
-                f["owner_name"] = owner_map.get(f.get("owner_id"), "Неизвестный")
-        return accessible
+        return await _enrich_doc_owner_names(accessible)
 
     # private (default)
     query = {"owner_id": user["id"], "visibility": {"$ne": "public"}, "deleted_at": None}
     if parent_id is not None:
         query["parent_id"] = parent_id
-    return await db.doc_folders.find(query, {"_id": 0}).sort("created_at", 1).to_list(500)
+    folders = await db.doc_folders.find(query, {"_id": 0}).sort("created_at", 1).to_list(500)
+    return await _enrich_doc_owner_names(folders)
 
 @router.post("/doc/folders", status_code=201)
 async def create_folder(data: FolderCreate, user=Depends(get_current_user)):
