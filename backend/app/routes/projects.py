@@ -146,8 +146,11 @@ async def delete_project(project_id: str, user=Depends(get_current_user)):
     project = await db.projects.find_one({"id": project_id, "deleted_at": None})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    if project.get("owner_id", project.get("user_id")) != user["id"]:
-        raise HTTPException(status_code=403, detail="Только владелец может удалить проект")
+    # Owner can always delete; for public folders, users with write access can delete too
+    is_owner = project.get("owner_id", project.get("user_id")) == user["id"]
+    if not is_owner:
+        if not can_user_write_project(project, user):
+            raise HTTPException(status_code=403, detail="Нет прав на удаление проекта")
 
     now = datetime.now(timezone.utc).isoformat()
     await db.projects.update_one(
