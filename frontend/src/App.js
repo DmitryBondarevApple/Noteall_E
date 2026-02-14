@@ -18,6 +18,7 @@ import ConstructorPage from "./pages/ConstructorPage";
 import PipelineEditorPage from "./pages/PipelineEditorPage";
 import SpeakerDirectoryPage from "./pages/SpeakerDirectoryPage";
 import AdminPage from "./pages/AdminPage";
+import OrgDetailPage from "./pages/OrgDetailPage";
 import BillingPage from "./pages/BillingPage";
 
 const ProtectedRoute = ({ children }) => {
