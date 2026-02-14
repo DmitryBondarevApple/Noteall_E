@@ -35,6 +35,19 @@ function formatSpeakerDisplay(speaker) {
   return speaker.speaker_name || speaker.speaker_label;
 }
 
+/** Short display: "Имя Ф." or just "Имя" for summary badges */
+function formatSpeakerShort(speaker) {
+  if (!speaker) return '';
+  const full = speaker.speaker_name || speaker.speaker_label;
+  // Strip company in parentheses
+  const noCompany = full.replace(/\s*\(.*?\)\s*$/, '').trim();
+  const parts = noCompany.split(/\s+/);
+  if (parts.length >= 2) {
+    return `${parts[0]} ${parts[1][0]}.`;
+  }
+  return parts[0] || full;
+}
+
 /** Parse "Имя Фамилия (Компания)" into parts */
 function parseSpeakerInput(input) {
   const trimmed = input.trim();
