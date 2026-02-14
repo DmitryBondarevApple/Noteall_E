@@ -35,7 +35,8 @@ Web application for building and running data processing pipelines (workflows) f
 - **Bug 2 FIXED:** Incomplete sharing UI — added user selection (multi-select with search) in share dialog, new `/api/organizations/my/members` endpoint for org user listing
 - **Enhancement:** "Доступы" shown for already-shared folders (manage existing permissions), "Расшарить" for private folders. Access management dialog allows editing users, access level, and making folder private
 - **Bug 3 FIXED:** Share/Unshare cascade — sharing a folder now cascades `visibility` to ALL descendant subfolders and projects. Previously only root folder was updated, orphaning all children. Data recovery performed for affected folders.
-- **11/11 backend tests + full frontend E2E passed**
+- **Bug 4 FIXED:** Trash visibility for shared items — trash query now uses `$or: [owner_id, deleted_by]` so projects/folders deleted from public folders by non-owners show in their trash. Also relaxed delete permission for users with write access to public folders.
+- **All tests passed**
 
 ## Key API Endpoints
 - `GET /api/meeting-folders?tab=private|public|trash`
