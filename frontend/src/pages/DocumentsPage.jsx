@@ -55,8 +55,10 @@ export default function DocumentsPage() {
   const [folderDialog, setFolderDialog] = useState({ open: false, parentId: null, editId: null, name: '', description: '', visibility: 'private', accessType: 'readonly' });
   const [projectDialog, setProjectDialog] = useState({ open: false, folderId: null, name: '', description: '' });
   const [moveDialog, setMoveDialog] = useState({ open: false, itemType: null, itemId: null, itemName: '' });
-  const [shareDialog, setShareDialog] = useState({ open: false, folderId: null, folderName: '', accessType: 'readonly' });
+  const [shareDialog, setShareDialog] = useState({ open: false, folderId: null, folderName: '', accessType: 'readonly', sharedWith: [], isManage: false });
   const [saving, setSaving] = useState(false);
+  const [orgMembers, setOrgMembers] = useState([]);
+  const [memberSearch, setMemberSearch] = useState('');
 
   const loadData = useCallback(async () => {
     setLoading(true);
