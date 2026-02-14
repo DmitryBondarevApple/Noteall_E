@@ -103,6 +103,24 @@ class DocFolderMove(BaseModel):
     parent_id: Optional[str] = None
 
 
+async def _get_doc_project_read(project_id: str, user: dict):
+    """Get doc project with read access check."""
+    project = await db.doc_projects.find_one({"id": project_id, "deleted_at": None}, {"_id": 0})
+    if not project or not await can_user_access_project(project, user, "doc_folders"):
+        return None
+    return project
+
+
+async def _get_doc_project_write(project_id: str, user: dict):
+    """Get doc project with write access check."""
+    project = await db.doc_projects.find_one({"id": project_id, "deleted_at": None}, {"_id": 0})
+    if not project or not await can_user_write_project(project, user, "doc_folders"):
+        return None
+    return project
+
+
+
+
 class DocProjectMove(BaseModel):
     folder_id: Optional[str] = None
 
