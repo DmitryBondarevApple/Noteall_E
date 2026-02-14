@@ -65,6 +65,7 @@ app.include_router(ai_chat_router, prefix="/api")
 app.include_router(organizations_router, prefix="/api")
 app.include_router(billing_router, prefix="/api")
 app.include_router(invitations_router, prefix="/api")
+app.include_router(feedback_router, prefix="/api")
 
 
 @app.get("/api/health")
