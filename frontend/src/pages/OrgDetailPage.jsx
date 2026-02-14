@@ -13,7 +13,7 @@ import {
 import {
   Building2, Users, History, BarChart3, Loader2, Zap,
   ArrowUpRight, ArrowDownRight, Plus, TrendingUp, Hash, DollarSign,
-  ArrowLeft, Mic, Brain, HardDrive, Calendar,
+  ArrowLeft, Calendar,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -22,53 +22,9 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
   ResponsiveContainer, PieChart, Pie, Cell, Legend,
 } from 'recharts';
-
-const ROLE_LABELS = { superadmin: 'Суперадмин', org_admin: 'Админ', user: 'Юзер', admin: 'Админ' };
-const PERIOD_OPTIONS = [
-  { value: 'day', label: 'День' },
-  { value: 'week', label: 'Неделя' },
-  { value: 'month', label: 'Месяц' },
-  { value: 'all', label: 'Всё время' },
-];
-const PIE_COLORS = ['#6366f1', '#06b6d4', '#10b981', '#94a3b8'];
-
-function KpiCard({ label, value, sub, icon: Icon, trend, color = 'text-slate-900' }) {
-  return (
-    <Card>
-      <CardContent className="pt-4 pb-3">
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-xs text-muted-foreground">{label}</span>
-          {Icon && <Icon className="w-4 h-4 text-muted-foreground" />}
-        </div>
-        <p className={`text-xl font-bold tracking-tight ${color}`}>{value}</p>
-        {sub && <p className="text-[11px] text-muted-foreground mt-0.5">{sub}</p>}
-        {trend !== undefined && trend !== 0 && (
-          <p className={`text-[11px] mt-0.5 ${trend > 0 ? 'text-red-500' : 'text-emerald-500'}`}>
-            {trend > 0 ? '+' : ''}{trend.toFixed(1)}% vs пред. период
-          </p>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function CategoryBar({ transcription, analysis, storage }) {
-  const total = transcription + analysis + storage;
-  if (total === 0) return <div className="h-2 rounded-full bg-slate-100" />;
-  return (
-    <div className="flex h-2 rounded-full overflow-hidden">
-      {transcription > 0 && (
-        <div className="bg-indigo-500" style={{ width: `${(transcription / total) * 100}%` }} title={`Транскрибация: ${transcription.toFixed(2)}`} />
-      )}
-      {analysis > 0 && (
-        <div className="bg-cyan-500" style={{ width: `${(analysis / total) * 100}%` }} title={`Анализ: ${analysis.toFixed(2)}`} />
-      )}
-      {storage > 0 && (
-        <div className="bg-emerald-500" style={{ width: `${(storage / total) * 100}%` }} title={`Хранение: ${storage.toFixed(2)}`} />
-      )}
-    </div>
-  );
-}
+import {
+  KpiCard, CategoryBar, CategoryLegend, PeriodFilter, PIE_COLORS, ROLE_LABELS,
+} from '../components/analytics/AnalyticsWidgets';
 
 export default function OrgDetailPage() {
   const { orgId } = useParams();
