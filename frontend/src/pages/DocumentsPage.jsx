@@ -288,26 +288,6 @@ export default function DocumentsPage() {
     return getFolderProjects(folderId).some(p => matchesSearch(p.name));
   };
 
-  // Enrich public folders with owner_name
-  useEffect(() => {
-    if (activeTab === 'public' && folders.length > 0) {
-      const enrichFolders = async () => {
-        const enriched = await Promise.all(
-          folders.map(async (f) => {
-            if (f.owner_name) return f;
-            try {
-              const res = await docFoldersApi.get(f.id);
-              return { ...f, owner_name: res.data.owner_name };
-            } catch { return f; }
-          })
-        );
-        setFolders(enriched);
-      };
-      enrichFolders();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, folders.length]);
-
   // Move dialog: load private folders
   const [moveFolders, setMoveFolders] = useState([]);
   useEffect(() => {
