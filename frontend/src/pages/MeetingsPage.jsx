@@ -464,26 +464,6 @@ export default function MeetingsPage() {
     );
   };
 
-  // For public tab, enrich folders with owner_name via get endpoint
-  useEffect(() => {
-    if (activeTab === 'public' && folders.length > 0) {
-      const enrichFolders = async () => {
-        const enriched = await Promise.all(
-          folders.map(async (f) => {
-            if (f.owner_name) return f;
-            try {
-              const res = await meetingFoldersApi.get(f.id);
-              return { ...f, owner_name: res.data.owner_name };
-            } catch { return f; }
-          })
-        );
-        setFolders(enriched);
-      };
-      enrichFolders();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, folders.length]);
-
   // --- Move dialog: load all private folders for move targets ---
   const [moveFolders, setMoveFolders] = useState([]);
   useEffect(() => {
