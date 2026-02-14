@@ -206,14 +206,15 @@ export default function AppLayout({ children }) {
             )}
           </nav>
 
-          {/* Credit Balance Widget */}
-          {creditInfo && (
-            <div className={cn('px-2 pb-2', collapsed ? 'px-1' : 'px-2')}>
-              {collapsed ? (
+          {/* Bottom section */}
+          <div className="border-t border-slate-700/50 px-2 pt-2 pb-2 space-y-2">
+            {/* Credit Balance Widget */}
+            {creditInfo && (
+              collapsed ? (
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Link to="/billing">
-                      <div className="flex flex-col items-center py-2 px-1 rounded-lg bg-slate-800/60 cursor-pointer hover:bg-slate-800 transition-colors" data-testid="sidebar-credit-widget">
+                      <div className="flex flex-col items-center py-1.5 px-1 rounded-md bg-slate-800/60 cursor-pointer hover:bg-slate-800 transition-colors" data-testid="sidebar-credit-widget">
                         <Zap className="w-3.5 h-3.5 text-emerald-400 mb-0.5" />
                         <span className="text-[10px] font-bold text-emerald-400 tabular-nums">
                           {creditInfo.value >= 1000
@@ -230,7 +231,7 @@ export default function AppLayout({ children }) {
                 </Tooltip>
               ) : (
                 <Link to="/billing">
-                  <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-slate-800/60 cursor-pointer hover:bg-slate-800 transition-colors" data-testid="sidebar-credit-widget">
+                  <div className="flex items-center justify-between py-1.5 px-3 rounded-md bg-slate-800/60 cursor-pointer hover:bg-slate-800 transition-colors" data-testid="sidebar-credit-widget">
                     <div className="flex items-center gap-2">
                       <Zap className="w-3.5 h-3.5 text-emerald-400" />
                       <span className="text-xs text-slate-400">
@@ -243,69 +244,83 @@ export default function AppLayout({ children }) {
                     </span>
                   </div>
                 </Link>
-              )}
-            </div>
-          )}
-
-          {/* Bottom section */}
-          <div className="border-t border-slate-700/50 p-2 space-y-1">
-            {/* Suggest Improvement */}
-            {collapsed ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => setFeedbackOpen(true)}
-                    className="w-full flex items-center justify-center rounded-lg text-sm text-slate-400 hover:bg-slate-800 hover:text-slate-200 h-9 transition-colors"
-                    data-testid="feedback-btn"
-                  >
-                    <MessageSquarePlus className="w-4 h-4" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="font-medium">Предложить улучшение</TooltipContent>
-              </Tooltip>
-            ) : (
-              <button
-                onClick={() => setFeedbackOpen(true)}
-                className="w-full flex items-center gap-2.5 px-3 rounded-lg text-sm text-slate-400 hover:bg-slate-800 hover:text-slate-200 h-9 transition-colors"
-                data-testid="feedback-btn"
-              >
-                <MessageSquarePlus className="w-4 h-4" />
-                <span>Предложить улучшение</span>
-              </button>
+              )
             )}
 
-            {/* Collapse toggle */}
-            <button
-              onClick={() => setCollapsed(!collapsed)}
-              className={cn(
-                'w-full flex items-center gap-2.5 rounded-lg text-sm text-slate-400 hover:bg-slate-800 hover:text-slate-200 h-9 transition-colors',
-                collapsed ? 'justify-center px-0' : 'px-3'
+            {/* Action row: Feedback + Collapse */}
+            <div className={cn('flex items-center', collapsed ? 'flex-col gap-1' : 'gap-1')}>
+              {collapsed ? (
+                <>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => setFeedbackOpen(true)}
+                        className="w-full flex items-center justify-center rounded-md text-slate-500 hover:bg-slate-800 hover:text-slate-300 h-8 transition-colors"
+                        data-testid="feedback-btn"
+                      >
+                        <MessageSquarePlus className="w-3.5 h-3.5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="font-medium">Обратная связь</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => setCollapsed(!collapsed)}
+                        className="w-full flex items-center justify-center rounded-md text-slate-500 hover:bg-slate-800 hover:text-slate-300 h-8 transition-colors"
+                        data-testid="sidebar-toggle"
+                      >
+                        <PanelLeft className="w-3.5 h-3.5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="font-medium">Развернуть</TooltipContent>
+                  </Tooltip>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setFeedbackOpen(true)}
+                    className="flex-1 flex items-center gap-2 px-2.5 rounded-md text-xs text-slate-500 hover:bg-slate-800 hover:text-slate-300 h-8 transition-colors"
+                    data-testid="feedback-btn"
+                  >
+                    <MessageSquarePlus className="w-3.5 h-3.5 shrink-0" />
+                    <span>Обратная связь</span>
+                  </button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => setCollapsed(!collapsed)}
+                        className="flex items-center justify-center rounded-md text-slate-500 hover:bg-slate-800 hover:text-slate-300 w-8 h-8 shrink-0 transition-colors"
+                        data-testid="sidebar-toggle"
+                      >
+                        <PanelLeftClose className="w-3.5 h-3.5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="font-medium">Свернуть</TooltipContent>
+                  </Tooltip>
+                </>
               )}
-              data-testid="sidebar-toggle"
-            >
-              {collapsed ? <PanelLeft className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
-              {!collapsed && <span>Свернуть</span>}
-            </button>
+            </div>
 
-            {/* User */}
+            {/* User profile */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
                   className={cn(
-                    'w-full flex items-center gap-2.5 rounded-lg text-sm transition-colors hover:bg-slate-800',
-                    collapsed ? 'justify-center px-0 h-9' : 'px-3 py-2'
+                    'w-full flex items-center gap-2.5 rounded-md transition-colors hover:bg-slate-800',
+                    collapsed ? 'justify-center px-0 h-9' : 'px-2.5 py-2'
                   )}
                   data-testid="user-menu-btn"
                 >
-                  <div className="w-6 h-6 rounded-full bg-slate-600 flex items-center justify-center shrink-0">
-                    <span className="text-xs font-medium">{user?.name?.[0]?.toUpperCase()}</span>
+                  <div className="w-7 h-7 rounded-full bg-slate-700 flex items-center justify-center shrink-0 ring-1 ring-slate-600">
+                    <span className="text-xs font-medium text-slate-300">{user?.name?.[0]?.toUpperCase()}</span>
                   </div>
                   {!collapsed && (
                     <div className="flex flex-col items-start min-w-0">
+                      <span className="truncate text-xs font-medium text-slate-200 w-full">{user?.name}</span>
                       {user?.org_name && (
                         <span className="text-[10px] text-slate-500 truncate w-full" data-testid="sidebar-org-name">{user.org_name}</span>
                       )}
-                      <span className="truncate text-xs text-slate-300">{user?.name}</span>
                     </div>
                   )}
                 </button>
