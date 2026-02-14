@@ -158,8 +158,8 @@ export function TranscriptTab({ transcript, speakers, projectId, onSpeakersUpdat
             </CardDescription>
           </div>
           {speakers.length > 0 && (
-            <div className="flex flex-col items-end gap-1.5 max-w-sm" data-testid="speakers-summary">
-              <div className="flex flex-wrap justify-end items-center gap-1.5">
+            <div className="flex flex-col items-end gap-1" data-testid="speakers-summary">
+              <div className="flex flex-wrap justify-end items-center gap-1">
                 {speakers.map((s, i) => {
                   const color = getSpeakerColor(i);
                   const isUnnamed = s.speaker_name.startsWith('Speaker ');
@@ -167,16 +167,17 @@ export function TranscriptTab({ transcript, speakers, projectId, onSpeakersUpdat
                     <button
                       key={s.id}
                       type="button"
-                      className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border cursor-pointer transition-colors duration-150 ${color.bg} ${color.text} ${color.border} ${isUnnamed ? 'border-dashed opacity-70' : ''}`}
+                      className={`inline-flex items-center px-1.5 py-px rounded text-[11px] font-medium border cursor-pointer transition-colors duration-150 whitespace-nowrap ${color.bg} ${color.text} ${color.border} ${isUnnamed ? 'border-dashed opacity-70' : ''}`}
                       onClick={() => setEditingSpeaker(s)}
+                      title={s.speaker_name}
                       data-testid={`speaker-summary-${s.id}`}
                     >
-                      {s.speaker_name}
+                      {formatSpeakerShort(s)}
                     </button>
                   );
                 })}
               </div>
-              <p className="text-[11px] text-muted-foreground">Нажмите на имя, чтобы назначить спикера</p>
+              <p className="text-[10px] text-muted-foreground">Нажмите, чтобы назначить спикера</p>
             </div>
           )}
         </CardHeader>
