@@ -5,7 +5,8 @@ import logging
 from pathlib import Path
 from datetime import datetime, timezone
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, BackgroundTasks
+from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, BackgroundTasks, Query
 from app.core.database import db
 from app.core.security import get_current_user
 from app.core.config import UPLOAD_DIR, DEEPGRAM_API_KEY
@@ -13,9 +14,18 @@ from app.models.project import ProjectCreate, ProjectUpdate, ProjectResponse
 from app.services.gpt import call_gpt52, call_gpt52_metered
 from app.services.metering import check_user_monthly_limit, check_org_balance, deduct_credits_and_record
 from app.services.text_parser import parse_uncertain_fragments
+from app.services.access_control import (
+    can_user_access_project,
+    can_user_write_project,
+    get_accessible_public_folder_ids,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/projects", tags=["projects"])
+
+
+class ProjectMove(BaseModel):
+    folder_id: Optional[str] = None
 
 # Ensure upload directory exists
 Path(UPLOAD_DIR).mkdir(parents=True, exist_ok=True)
@@ -25,30 +35,76 @@ Path(UPLOAD_DIR).mkdir(parents=True, exist_ok=True)
 async def create_project(data: ProjectCreate, user=Depends(get_current_user)):
     project_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
-    
+
+    visibility = "private"
+    if data.folder_id:
+        folder = await db.meeting_folders.find_one(
+            {"id": data.folder_id, "deleted_at": None}, {"_id": 0}
+        )
+        if folder:
+            visibility = folder.get("visibility", "private")
+            # Check write permission for folder
+            from app.services.access_control import can_user_write_folder
+            if visibility == "public" and not can_user_write_folder(folder, user):
+                raise HTTPException(403, "Нет прав на создание проекта в этой папке")
+            elif visibility != "public" and folder.get("owner_id", folder.get("user_id")) != user["id"]:
+                raise HTTPException(403, "Нет прав на создание проекта в этой папке")
+
     project_doc = {
         "id": project_id,
         "name": data.name,
         "description": data.description or "",
         "user_id": user["id"],
+        "owner_id": user["id"],
+        "visibility": visibility,
         "status": "new",
         "folder_id": data.folder_id,
+        "deleted_at": None,
         "created_at": now,
         "updated_at": now,
         "recording_filename": None,
-        "recording_duration": None
+        "recording_duration": None,
     }
-    
+
     await db.projects.insert_one(project_doc)
     return ProjectResponse(**project_doc)
 
 
 @router.get("", response_model=List[ProjectResponse])
-async def list_projects(folder_id: Optional[str] = None, user=Depends(get_current_user)):
-    query = {"user_id": user["id"]}
+async def list_projects(
+    tab: str = Query("private"),
+    folder_id: Optional[str] = Query(None),
+    user=Depends(get_current_user),
+):
+    if tab == "trash":
+        query = {"owner_id": user["id"], "deleted_at": {"$ne": None}}
+        projects = await db.projects.find(query, {"_id": 0}).sort("deleted_at", -1).to_list(1000)
+        return [ProjectResponse(**p) for p in projects]
+
+    if tab == "public":
+        pub_folder_ids = await get_accessible_public_folder_ids(user, "meeting_folders")
+        if not pub_folder_ids:
+            return []
+        query = {"folder_id": {"$in": pub_folder_ids}, "deleted_at": None}
+        if folder_id is not None:
+            query["folder_id"] = folder_id
+        projects = await db.projects.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+        return [ProjectResponse(**p) for p in projects]
+
+    # private (default)
+    query = {"owner_id": user["id"], "deleted_at": None}
     if folder_id is not None:
         query["folder_id"] = folder_id
-    projects = await db.projects.find(query, {"_id": 0}).to_list(1000)
+    else:
+        # Exclude projects in public folders from private tab
+        pub_folder_ids = await get_accessible_public_folder_ids(user, "meeting_folders")
+        if pub_folder_ids:
+            query["$or"] = [
+                {"folder_id": {"$nin": pub_folder_ids}},
+                {"folder_id": None},
+                {"folder_id": {"$exists": False}},
+            ]
+    projects = await db.projects.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
     return [ProjectResponse(**p) for p in projects]
 
 
