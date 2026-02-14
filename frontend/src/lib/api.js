@@ -116,6 +116,8 @@ export const adminApi = {
   getModel: () => axios.get(`${API}/admin/model`),
   checkModels: () => axios.post(`${API}/admin/model/check`),
   switchModel: (model) => axios.post(`${API}/admin/model/switch?model=${encodeURIComponent(model)}`),
+  getTrashSettings: () => axios.get(`${API}/admin/trash-settings`),
+  updateTrashSettings: (days) => axios.put(`${API}/admin/trash-settings`, { retention_days: days }),
 };
 
 // Organizations
