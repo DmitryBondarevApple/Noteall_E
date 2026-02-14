@@ -94,6 +94,19 @@ class RunPipelineRequest(BaseModel):
     pipeline_id: str
 
 
+class DocFolderShare(BaseModel):
+    shared_with: Optional[List[str]] = None
+    access_type: str = "readonly"
+
+
+class DocFolderMove(BaseModel):
+    parent_id: Optional[str] = None
+
+
+class DocProjectMove(BaseModel):
+    folder_id: Optional[str] = None
+
+
 # ==================== FOLDERS (tree structure) ====================
 
 @router.get("/doc/folders")
