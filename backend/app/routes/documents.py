@@ -11,6 +11,14 @@ from app.routes.auth import get_current_user
 from app.services.gpt import call_gpt52, call_gpt52_metered
 from app.services.metering import check_user_monthly_limit, check_org_balance, deduct_credits_and_record
 from app.services.s3 import s3_enabled, upload_bytes, download_bytes, delete_object, presigned_url
+from app.services.access_control import (
+    can_user_access_folder,
+    can_user_write_folder,
+    can_user_access_project,
+    can_user_write_project,
+    soft_delete_folder,
+    get_accessible_public_folder_ids,
+)
 from app.services.pdf_parser import extract_text_from_pdf
 
 router = APIRouter()
@@ -26,6 +34,9 @@ class FolderCreate(BaseModel):
     name: str
     parent_id: Optional[str] = None
     description: Optional[str] = None
+    visibility: str = "private"
+    shared_with: Optional[List[str]] = None
+    access_type: str = "readonly"
 
 class FolderUpdate(BaseModel):
     name: Optional[str] = None
