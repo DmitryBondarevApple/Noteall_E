@@ -364,8 +364,17 @@ export default function MeetingsPage() {
                         <FolderInput className="w-4 h-4 mr-2" /> Переместить
                       </DropdownMenuItem>
                       {isPublic ? (
-                        <DropdownMenuItem onClick={() => handleUnshare(folder.id)}>
-                          <Lock className="w-4 h-4 mr-2" /> Сделать приватной
+                        <>
+                          <DropdownMenuItem onClick={() => openShareDialog(folder, true)}>
+                            <Users className="w-4 h-4 mr-2" /> Доступы
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleUnshare(folder.id)}>
+                            <Lock className="w-4 h-4 mr-2" /> Сделать приватной
+                          </DropdownMenuItem>
+                        </>
+                      ) : (folder.shared_with && folder.shared_with.length > 0) ? (
+                        <DropdownMenuItem onClick={() => openShareDialog(folder, true)}>
+                          <Users className="w-4 h-4 mr-2" /> Доступы
                         </DropdownMenuItem>
                       ) : (
                         <DropdownMenuItem onClick={() => openShareDialog(folder)}>
