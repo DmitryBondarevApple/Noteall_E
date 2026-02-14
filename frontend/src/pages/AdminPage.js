@@ -406,6 +406,10 @@ export default function AdminPage() {
                     <Settings2 className="w-4 h-4" />
                     Себестоимость
                   </TabsTrigger>
+                  <TabsTrigger value="system" className="gap-2" data-testid="admin-system-tab">
+                    <Trash2 className="w-4 h-4" />
+                    Корзина
+                  </TabsTrigger>
                 </>
               )}
             </TabsList>
