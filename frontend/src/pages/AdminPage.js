@@ -1089,6 +1089,71 @@ export default function AdminPage() {
                 </div>
               </TabsContent>
             )}
+
+            {/* System / Trash Tab (superadmin) */}
+            {isSuperadmin() && (
+              <TabsContent value="system">
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="flex items-center gap-2">
+                          <Trash2 className="w-5 h-5" />
+                          Настройки корзины
+                        </CardTitle>
+                        <CardDescription>
+                          Удалённые папки и проекты хранятся в корзине указанное количество дней, после чего удаляются навсегда.
+                          Очистка запускается автоматически каждый день в 3:10 МСК.
+                        </CardDescription>
+                      </div>
+                      <div className="flex gap-2">
+                        {editingTrash !== null ? (
+                          <>
+                            <Button variant="outline" size="sm" onClick={() => setEditingTrash(null)}>Отмена</Button>
+                            <Button size="sm" onClick={handleSaveTrashSettings} disabled={savingTrash} data-testid="save-trash-settings-btn" className="gap-1">
+                              {savingTrash ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                              Сохранить
+                            </Button>
+                          </>
+                        ) : (
+                          <Button variant="outline" size="sm" onClick={() => setEditingTrash(trashRetention)} data-testid="edit-trash-settings-btn">
+                            Редактировать
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="p-4 rounded-lg border bg-slate-50 space-y-3">
+                      <div className="font-medium flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-orange-500" />
+                        Срок хранения в корзине
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {editingTrash !== null ? (
+                          <>
+                            <Input
+                              type="number" min="1" max="365" className="w-24"
+                              value={editingTrash}
+                              onChange={e => setEditingTrash(parseInt(e.target.value) || 1)}
+                              data-testid="trash-retention-input"
+                            />
+                            <span className="text-sm text-muted-foreground">дней</span>
+                          </>
+                        ) : (
+                          <span className="text-lg font-semibold" data-testid="trash-retention-value">
+                            {trashRetention} {trashRetention === 1 ? 'день' : trashRetention < 5 ? 'дня' : 'дней'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="p-3 rounded-lg border border-amber-200 bg-amber-50 text-sm text-amber-800">
+                      <strong>Внимание:</strong> При уменьшении срока хранения, элементы, которые уже просрочены, будут удалены при следующей очистке.
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
           </Tabs>
         </main>
 
