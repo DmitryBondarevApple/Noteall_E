@@ -110,60 +110,191 @@ class DocProjectMove(BaseModel):
 # ==================== FOLDERS (tree structure) ====================
 
 @router.get("/doc/folders")
-async def list_folders(user=Depends(get_current_user)):
-    folders = await db.doc_folders.find(
-        {"user_id": user["id"]}, {"_id": 0}
-    ).sort("created_at", 1).to_list(500)
-    return folders
+async def list_folders(
+    tab: str = "private",
+    parent_id: Optional[str] = None,
+    user=Depends(get_current_user),
+):
+    if tab == "trash":
+        folders = await db.doc_folders.find(
+            {"owner_id": user["id"], "deleted_at": {"$ne": None}},
+            {"_id": 0},
+        ).sort("deleted_at", -1).to_list(500)
+        return folders
+
+    if tab == "public":
+        query = {"visibility": "public", "org_id": user.get("org_id"), "deleted_at": None}
+        if parent_id is not None:
+            query["parent_id"] = parent_id
+        folders = await db.doc_folders.find(query, {"_id": 0}).sort("created_at", 1).to_list(500)
+        return [f for f in folders if can_user_access_folder(f, user)]
+
+    # private (default)
+    query = {"owner_id": user["id"], "visibility": {"$ne": "public"}, "deleted_at": None}
+    if parent_id is not None:
+        query["parent_id"] = parent_id
+    return await db.doc_folders.find(query, {"_id": 0}).sort("created_at", 1).to_list(500)
 
 @router.post("/doc/folders", status_code=201)
 async def create_folder(data: FolderCreate, user=Depends(get_current_user)):
-    # Validate parent exists if specified
     if data.parent_id:
-        parent = await db.doc_folders.find_one({"id": data.parent_id, "user_id": user["id"]})
+        parent = await db.doc_folders.find_one({"id": data.parent_id, "deleted_at": None}, {"_id": 0})
         if not parent:
             raise HTTPException(status_code=404, detail="Parent folder not found")
+        if parent.get("visibility") == "public":
+            if not can_user_write_folder(parent, user):
+                raise HTTPException(403, "Нет прав на создание в этой папке")
+        elif parent.get("owner_id", parent.get("user_id")) != user["id"]:
+            raise HTTPException(403, "Нет прав на создание в этой папке")
 
     now = datetime.now(timezone.utc).isoformat()
     doc = {
         "id": str(uuid.uuid4()),
         "user_id": user["id"],
+        "owner_id": user["id"],
         "name": data.name,
         "parent_id": data.parent_id,
         "description": data.description,
+        "visibility": data.visibility,
+        "shared_with": data.shared_with if data.shared_with is not None else [],
+        "access_type": data.access_type,
+        "org_id": user.get("org_id"),
+        "is_system": False,
+        "system_type": None,
+        "deleted_at": None,
         "created_at": now,
         "updated_at": now,
     }
     await db.doc_folders.insert_one(doc)
     return {k: v for k, v in doc.items() if k != "_id"}
 
+@router.get("/doc/folders/{folder_id}")
+async def get_folder(folder_id: str, user=Depends(get_current_user)):
+    folder = await db.doc_folders.find_one({"id": folder_id}, {"_id": 0})
+    if not folder:
+        raise HTTPException(404, "Folder not found")
+    if folder.get("visibility") == "public":
+        if not can_user_access_folder(folder, user):
+            raise HTTPException(403, "Нет доступа")
+    elif folder.get("owner_id", folder.get("user_id")) != user["id"]:
+        raise HTTPException(403, "Нет доступа")
+    owner = await db.users.find_one({"id": folder.get("owner_id")}, {"_id": 0, "name": 1, "email": 1})
+    folder["owner_name"] = owner["name"] if owner else "Неизвестный"
+    return folder
+
 @router.put("/doc/folders/{folder_id}")
 async def update_folder(folder_id: str, data: FolderUpdate, user=Depends(get_current_user)):
-    folder = await db.doc_folders.find_one({"id": folder_id, "user_id": user["id"]})
+    folder = await db.doc_folders.find_one({"id": folder_id, "deleted_at": None}, {"_id": 0})
     if not folder:
         raise HTTPException(status_code=404, detail="Folder not found")
+    if folder.get("owner_id", folder.get("user_id")) != user["id"]:
+        raise HTTPException(403, "Только владелец может редактировать папку")
 
     updates = {k: v for k, v in data.dict(exclude_unset=True).items()}
     updates["updated_at"] = datetime.now(timezone.utc).isoformat()
     await db.doc_folders.update_one({"id": folder_id}, {"$set": updates})
-
-    updated = await db.doc_folders.find_one({"id": folder_id}, {"_id": 0})
-    return updated
+    return await db.doc_folders.find_one({"id": folder_id}, {"_id": 0})
 
 @router.delete("/doc/folders/{folder_id}")
 async def delete_folder(folder_id: str, user=Depends(get_current_user)):
-    folder = await db.doc_folders.find_one({"id": folder_id, "user_id": user["id"]})
+    result = await soft_delete_folder(folder_id, user, "doc_folders", "doc_projects")
+    if result is None:
+        raise HTTPException(404, "Folder not found")
+    if result == "forbidden":
+        raise HTTPException(403, "Только владелец может удалить папку")
+    return {"message": "Папка перемещена в корзину"}
+
+@router.post("/doc/folders/{folder_id}/share")
+async def share_folder(folder_id: str, data: DocFolderShare, user=Depends(get_current_user)):
+    folder = await db.doc_folders.find_one({"id": folder_id, "deleted_at": None}, {"_id": 0})
     if not folder:
-        raise HTTPException(status_code=404, detail="Folder not found")
+        raise HTTPException(404, "Folder not found")
+    if folder.get("owner_id", folder.get("user_id")) != user["id"]:
+        raise HTTPException(403, "Только владелец может настраивать доступ")
+    now = datetime.now(timezone.utc).isoformat()
+    await db.doc_folders.update_one({"id": folder_id}, {"$set": {
+        "visibility": "public",
+        "shared_with": data.shared_with if data.shared_with is not None else [],
+        "access_type": data.access_type,
+        "updated_at": now,
+    }})
+    return await db.doc_folders.find_one({"id": folder_id}, {"_id": 0})
 
-    # Check for children
-    children = await db.doc_folders.count_documents({"parent_id": folder_id, "user_id": user["id"]})
-    projects = await db.doc_projects.count_documents({"folder_id": folder_id, "user_id": user["id"]})
-    if children > 0 or projects > 0:
-        raise HTTPException(status_code=400, detail="Папка не пуста. Удалите вложенные элементы.")
+@router.post("/doc/folders/{folder_id}/unshare")
+async def unshare_folder(folder_id: str, user=Depends(get_current_user)):
+    folder = await db.doc_folders.find_one({"id": folder_id, "deleted_at": None}, {"_id": 0})
+    if not folder:
+        raise HTTPException(404, "Folder not found")
+    if folder.get("owner_id", folder.get("user_id")) != user["id"]:
+        raise HTTPException(403, "Только владелец может настраивать доступ")
+    now = datetime.now(timezone.utc).isoformat()
+    await db.doc_folders.update_one({"id": folder_id}, {"$set": {
+        "visibility": "private", "shared_with": [], "updated_at": now,
+    }})
+    return await db.doc_folders.find_one({"id": folder_id}, {"_id": 0})
 
+@router.post("/doc/folders/{folder_id}/move")
+async def move_folder(folder_id: str, data: DocFolderMove, user=Depends(get_current_user)):
+    folder = await db.doc_folders.find_one({"id": folder_id, "deleted_at": None}, {"_id": 0})
+    if not folder:
+        raise HTTPException(404, "Folder not found")
+    if folder.get("owner_id", folder.get("user_id")) != user["id"]:
+        raise HTTPException(403, "Только владелец может перемещать папку")
+    if data.parent_id:
+        parent = await db.doc_folders.find_one({"id": data.parent_id, "deleted_at": None}, {"_id": 0})
+        if not parent:
+            raise HTTPException(404, "Целевая папка не найдена")
+    now = datetime.now(timezone.utc).isoformat()
+    await db.doc_folders.update_one(
+        {"id": folder_id}, {"$set": {"parent_id": data.parent_id, "updated_at": now}}
+    )
+    return await db.doc_folders.find_one({"id": folder_id}, {"_id": 0})
+
+@router.post("/doc/folders/{folder_id}/restore")
+async def restore_folder(folder_id: str, user=Depends(get_current_user)):
+    folder = await db.doc_folders.find_one(
+        {"id": folder_id, "owner_id": user["id"], "deleted_at": {"$ne": None}}, {"_id": 0}
+    )
+    if not folder:
+        raise HTTPException(404, "Папка не найдена в корзине")
+    now = datetime.now(timezone.utc).isoformat()
+    await db.doc_folders.update_one({"id": folder_id}, {"$set": {
+        "deleted_at": None, "deleted_by": None, "parent_id": None, "updated_at": now,
+    }})
+    await db.doc_projects.update_many(
+        {"folder_id": folder_id, "owner_id": user["id"], "deleted_at": {"$ne": None}},
+        {"$set": {"deleted_at": None, "deleted_by": None, "updated_at": now}},
+    )
+    return {"message": "Папка восстановлена"}
+
+@router.delete("/doc/folders/{folder_id}/permanent")
+async def permanent_delete_folder(folder_id: str, user=Depends(get_current_user)):
+    folder = await db.doc_folders.find_one(
+        {"id": folder_id, "owner_id": user["id"], "deleted_at": {"$ne": None}}, {"_id": 0}
+    )
+    if not folder:
+        raise HTTPException(404, "Папка не найдена в корзине")
+    projects = await db.doc_projects.find(
+        {"folder_id": folder_id, "owner_id": user["id"]}, {"_id": 0, "id": 1}
+    ).to_list(10000)
+    from app.services.s3 import delete_object as s3_delete
+    for proj in projects:
+        atts = await db.doc_attachments.find(
+            {"project_id": proj["id"], "s3_key": {"$exists": True, "$ne": None}},
+            {"_id": 0, "s3_key": 1},
+        ).to_list(500)
+        for att in atts:
+            try:
+                s3_delete(att["s3_key"])
+            except Exception:
+                pass
+        await db.doc_attachments.delete_many({"project_id": proj["id"]})
+        await db.doc_streams.delete_many({"project_id": proj["id"]})
+        await db.doc_pins.delete_many({"project_id": proj["id"]})
+        await db.doc_runs.delete_many({"project_id": proj["id"]})
+        await db.doc_projects.delete_one({"id": proj["id"]})
     await db.doc_folders.delete_one({"id": folder_id})
-    return {"message": "Deleted"}
+    return {"message": "Папка удалена навсегда"}
 
 
 # ==================== DOC PROJECTS ====================
