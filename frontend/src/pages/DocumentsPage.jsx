@@ -166,19 +166,37 @@ export default function DocumentsPage() {
   };
 
   // --- Sharing ---
-  const openShareDialog = (folder) => {
-    setShareDialog({ open: true, folderId: folder.id, folderName: folder.name, accessType: folder.access_type || 'readonly' });
+  const openShareDialog = async (folder, isManage = false) => {
+    setShareDialog({
+      open: true, folderId: folder.id, folderName: folder.name,
+      accessType: folder.access_type || 'readonly',
+      sharedWith: folder.shared_with || [],
+      isManage,
+    });
+    setMemberSearch('');
+    try {
+      const res = await orgApi.getMembers();
+      setOrgMembers(res.data);
+    } catch { setOrgMembers([]); }
+  };
+
+  const toggleMember = (userId) => {
+    setShareDialog(prev => {
+      const current = prev.sharedWith.filter(id => id !== 'all');
+      const exists = current.includes(userId);
+      return { ...prev, sharedWith: exists ? current.filter(id => id !== userId) : [...current, userId] };
+    });
   };
 
   const handleShare = async () => {
     setSaving(true);
     try {
       await docFoldersApi.share(shareDialog.folderId, {
-        shared_with: [],
+        shared_with: shareDialog.sharedWith.length > 0 ? shareDialog.sharedWith : [],
         access_type: shareDialog.accessType,
       });
-      toast.success('Папка расшарена для организации');
-      setShareDialog({ open: false, folderId: null, folderName: '', accessType: 'readonly' });
+      toast.success(shareDialog.isManage ? 'Доступы обновлены' : 'Папка расшарена');
+      setShareDialog({ open: false, folderId: null, folderName: '', accessType: 'readonly', sharedWith: [], isManage: false });
       loadData();
     } catch (err) { toast.error(err.response?.data?.detail || 'Ошибка'); }
     finally { setSaving(false); }
