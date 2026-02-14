@@ -372,7 +372,21 @@ export default function AdminPage() {
                 {org && <span className="text-sm text-muted-foreground ml-3">{org.name}</span>}
               </div>
             </div>
-            <RoleBadge role={user?.role} />
+            <div className="flex items-center gap-3">
+              {isOrgAdmin() && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => navigate('/admin/analytics')}
+                  data-testid="org-analytics-btn"
+                >
+                  <BarChart3 className="w-4 h-4" />
+                  Аналитика
+                </Button>
+              )}
+              <RoleBadge role={user?.role} />
+            </div>
           </div>
         </header>
 
