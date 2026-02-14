@@ -3,7 +3,7 @@ import os
 import httpx
 from fastapi import APIRouter, UploadFile, File, Form, Depends
 from typing import Optional
-from app.routes.auth import get_current_user
+from app.core.security import get_current_user
 
 logger = logging.getLogger(__name__)
 
