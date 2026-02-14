@@ -7,11 +7,13 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
+import { Checkbox } from '../ui/checkbox';
 import { Loader2, Send, MessageSquarePlus } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -22,6 +24,7 @@ export default function FeedbackModal({ open, onOpenChange }) {
   const [text, setText] = useState('');
   const [telegram, setTelegram] = useState('');
   const [email, setEmail] = useState(user?.email || '');
+  const [includeScreenshot, setIncludeScreenshot] = useState(true);
   const [sending, setSending] = useState(false);
 
   const handleSubmit = useCallback(async () => {
@@ -30,14 +33,19 @@ export default function FeedbackModal({ open, onOpenChange }) {
       return;
     }
 
-    setSending(true);
+    const shouldScreenshot = includeScreenshot;
+    const feedbackText = text.trim();
+    const feedbackTelegram = telegram.trim();
+    const feedbackEmail = email.trim() || user?.email || '';
+
+    // Close modal first
     onOpenChange(false);
 
-    try {
-      // Small delay to let modal close before taking screenshot
-      await new Promise(r => setTimeout(r, 300));
+    // Wait for modal to fully close before capturing screenshot
+    await new Promise(r => setTimeout(r, 400));
 
-      let screenshotBlob = null;
+    let screenshotBlob = null;
+    if (shouldScreenshot) {
       try {
         const canvas = await html2canvas(document.body, {
           useCORS: true,
@@ -50,11 +58,16 @@ export default function FeedbackModal({ open, onOpenChange }) {
       } catch (e) {
         console.warn('Screenshot capture failed:', e);
       }
+    }
 
+    // Show sending overlay only AFTER screenshot is taken
+    setSending(true);
+
+    try {
       const formData = new FormData();
-      formData.append('text', text.trim());
-      if (telegram.trim()) formData.append('telegram', telegram.trim());
-      formData.append('email', email.trim() || user?.email || '');
+      formData.append('text', feedbackText);
+      if (feedbackTelegram) formData.append('telegram', feedbackTelegram);
+      formData.append('email', feedbackEmail);
       if (screenshotBlob) {
         formData.append('screenshot', screenshotBlob, 'screenshot.png');
       }
@@ -68,6 +81,7 @@ export default function FeedbackModal({ open, onOpenChange }) {
         setText('');
         setTelegram('');
         setEmail(user?.email || '');
+        setIncludeScreenshot(true);
       } else {
         toast.error(resp.data.error || 'Ошибка при отправке');
       }
@@ -77,11 +91,10 @@ export default function FeedbackModal({ open, onOpenChange }) {
     } finally {
       setSending(false);
     }
-  }, [text, telegram, email, user, onOpenChange]);
+  }, [text, telegram, email, includeScreenshot, user, onOpenChange]);
 
   return (
     <>
-      {/* Global sending overlay */}
       {sending && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/30 backdrop-blur-sm">
           <div className="flex items-center gap-3 bg-white rounded-xl px-6 py-4 shadow-xl">
@@ -98,6 +111,7 @@ export default function FeedbackModal({ open, onOpenChange }) {
               <MessageSquarePlus className="w-5 h-5 text-indigo-500" />
               Предложить улучшение
             </DialogTitle>
+            <DialogDescription className="sr-only">Форма обратной связи</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 pt-2">
@@ -137,9 +151,20 @@ export default function FeedbackModal({ open, onOpenChange }) {
               />
             </div>
 
-            <p className="text-xs text-muted-foreground">
-              При отправке будет сделан скриншот текущей страницы
-            </p>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="feedback-screenshot"
+                data-testid="feedback-screenshot-checkbox"
+                checked={includeScreenshot}
+                onCheckedChange={setIncludeScreenshot}
+              />
+              <label
+                htmlFor="feedback-screenshot"
+                className="text-xs text-muted-foreground cursor-pointer select-none"
+              >
+                При отправке сделать скриншот текущей страницы
+              </label>
+            </div>
 
             <div className="flex justify-end gap-2">
               <Button
