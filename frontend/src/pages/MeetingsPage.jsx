@@ -659,15 +659,17 @@ export default function MeetingsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Share Dialog */}
+      {/* Share / Access Dialog */}
       <Dialog open={shareDialog.open} onOpenChange={(open) => !open && setShareDialog({ ...shareDialog, open: false })}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader><DialogTitle>Расшарить папку</DialogTitle></DialogHeader>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{shareDialog.isManage ? 'Управление доступами' : 'Расшарить папку'}</DialogTitle>
+          </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Папка <span className="font-medium text-foreground">"{shareDialog.folderName}"</span> станет доступна всем в организации.
+            Папка <span className="font-medium text-foreground">"{shareDialog.folderName}"</span>
           </p>
-          <div className="flex items-center gap-3 mt-3">
-            <label className="text-sm">Уровень доступа:</label>
+          <div className="flex items-center gap-3 mt-2">
+            <label className="text-sm whitespace-nowrap">Уровень доступа:</label>
             <Select value={shareDialog.accessType} onValueChange={(v) => setShareDialog({ ...shareDialog, accessType: v })}>
               <SelectTrigger className="w-48 h-8" data-testid="share-access-select">
                 <SelectValue />
@@ -678,12 +680,73 @@ export default function MeetingsPage() {
               </SelectContent>
             </Select>
           </div>
-          <div className="flex justify-end gap-2 pt-3">
-            <Button variant="outline" size="sm" onClick={() => setShareDialog({ ...shareDialog, open: false })}>Отмена</Button>
-            <Button size="sm" onClick={handleShare} disabled={saving} data-testid="share-confirm-btn">
-              {saving && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
-              <Share2 className="w-4 h-4 mr-1" /> Расшарить
-            </Button>
+          <div className="mt-3">
+            <label className="text-sm font-medium mb-1.5 block">Пользователи:</label>
+            <div className="relative mb-2">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+              <Input
+                placeholder="Поиск по имени или email..."
+                className="pl-8 h-8 text-sm"
+                value={memberSearch}
+                onChange={(e) => setMemberSearch(e.target.value)}
+                data-testid="share-member-search"
+              />
+            </div>
+            <div className="max-h-[200px] overflow-y-auto space-y-0.5 border rounded-md p-1">
+              {orgMembers
+                .filter(m => {
+                  if (!memberSearch) return true;
+                  const q = memberSearch.toLowerCase();
+                  return (m.name || '').toLowerCase().includes(q) || (m.email || '').toLowerCase().includes(q);
+                })
+                .map(m => {
+                  const isSelected = shareDialog.sharedWith.includes(m.id);
+                  return (
+                    <button
+                      key={m.id}
+                      className={cn(
+                        "w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-sm text-left transition-colors",
+                        isSelected ? "bg-blue-50 text-blue-700" : "hover:bg-slate-50"
+                      )}
+                      onClick={() => toggleMember(m.id)}
+                      data-testid={`share-member-${m.id}`}
+                    >
+                      <div className={cn(
+                        "w-4 h-4 rounded border flex items-center justify-center shrink-0",
+                        isSelected ? "bg-blue-500 border-blue-500 text-white" : "border-slate-300"
+                      )}>
+                        {isSelected && <ChevronDown className="w-3 h-3" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="truncate font-medium">{m.name || m.email}</div>
+                        {m.name && <div className="text-xs text-muted-foreground truncate">{m.email}</div>}
+                      </div>
+                    </button>
+                  );
+                })}
+              {orgMembers.length === 0 && (
+                <p className="text-xs text-muted-foreground text-center py-3">Загрузка...</p>
+              )}
+            </div>
+            {shareDialog.sharedWith.length === 0 && (
+              <p className="text-xs text-muted-foreground mt-1.5">Если не выбрать пользователей — доступ получит вся организация</p>
+            )}
+          </div>
+          <div className="flex justify-between items-center pt-3">
+            <div>
+              {shareDialog.isManage && (
+                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => { setShareDialog({ ...shareDialog, open: false }); handleUnshare(shareDialog.folderId); }} data-testid="share-unshare-btn">
+                  <Lock className="w-3.5 h-3.5 mr-1" /> Сделать приватной
+                </Button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => setShareDialog({ ...shareDialog, open: false })}>Отмена</Button>
+              <Button size="sm" onClick={handleShare} disabled={saving} data-testid="share-confirm-btn">
+                {saving && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
+                {shareDialog.isManage ? 'Сохранить' : <><Share2 className="w-4 h-4 mr-1" /> Расшарить</>}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
