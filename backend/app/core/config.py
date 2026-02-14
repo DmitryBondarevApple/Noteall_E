@@ -26,3 +26,7 @@ S3_SECRET_KEY = os.environ.get("S3_SECRET_KEY")
 S3_ENDPOINT = os.environ.get("S3_ENDPOINT")
 S3_BUCKET = os.environ.get("S3_BUCKET")
 S3_REGION = os.environ.get("S3_REGION")
+
+# Telegram
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")

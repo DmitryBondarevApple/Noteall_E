@@ -1,17 +1,14 @@
 import logging
-import os
 import httpx
 from fastapi import APIRouter, UploadFile, File, Form, Depends
 from typing import Optional
 from app.core.security import get_current_user
 from app.core.database import db
+from app.core.config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/feedback", tags=["feedback"])
-
-TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
-TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 
 
 @router.post("/suggest")
