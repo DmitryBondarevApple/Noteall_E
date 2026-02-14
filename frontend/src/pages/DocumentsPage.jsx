@@ -338,6 +338,14 @@ export default function DocumentsPage() {
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
+                  {folder.owner_name && (
+                    <>
+                      <div className="px-2 py-1.5 text-xs text-muted-foreground flex items-center gap-1.5">
+                        <User className="w-3 h-3" /> {folder.owner_name}
+                      </div>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
                   {isTrash ? (
                     <>
                       <DropdownMenuItem onClick={() => handleRestoreFolder(folder.id)}>
