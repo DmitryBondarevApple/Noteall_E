@@ -755,7 +755,7 @@ export default function AdminPage() {
                           <TableRow
                             key={o.id}
                             className="cursor-pointer hover:bg-slate-50"
-                            onClick={() => setSelectedOrgId(o.id)}
+                            onClick={() => navigate(`/admin/org/${o.id}`)}
                             data-testid={`org-row-${o.id}`}
                           >
                             <TableCell className="font-medium">{o.name}</TableCell>
