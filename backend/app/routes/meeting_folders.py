@@ -46,7 +46,13 @@ async def list_folders(
 ):
     if tab == "trash":
         folders = await db.meeting_folders.find(
-            {"owner_id": user["id"], "deleted_at": {"$ne": None}},
+            {
+                "$or": [
+                    {"owner_id": user["id"]},
+                    {"deleted_by": user["id"]},
+                ],
+                "deleted_at": {"$ne": None},
+            },
             {"_id": 0},
         ).sort("deleted_at", -1).to_list(500)
         return folders
