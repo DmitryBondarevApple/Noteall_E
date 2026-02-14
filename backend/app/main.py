@@ -283,3 +283,102 @@ async def calculate_daily_storage_costs():
         logger.error(f"Storage cost calculation error: {e}")
         import traceback
         logger.error(traceback.format_exc())
+
+
+
+async def _migrate_storage_schema():
+    """One-time migration: add owner_id, visibility, deleted_at to existing data."""
+    from app.core.database import db
+
+    # Migrate projects
+    migrated = await db.projects.update_many(
+        {"owner_id": {"$exists": False}},
+        [{"$set": {
+            "owner_id": "$user_id",
+            "visibility": "private",
+            "deleted_at": None,
+        }}],
+    )
+    if migrated.modified_count:
+        logger.info(f"Migrated {migrated.modified_count} projects (added owner_id/visibility/deleted_at)")
+
+    # Migrate meeting_folders
+    migrated = await db.meeting_folders.update_many(
+        {"owner_id": {"$exists": False}},
+        [{"$set": {
+            "owner_id": "$user_id",
+            "visibility": "private",
+            "shared_with": [],
+            "access_type": "readwrite",
+            "org_id": None,
+            "is_system": False,
+            "system_type": None,
+            "deleted_at": None,
+        }}],
+    )
+    if migrated.modified_count:
+        logger.info(f"Migrated {migrated.modified_count} meeting_folders")
+
+    # Migrate doc_projects
+    migrated = await db.doc_projects.update_many(
+        {"owner_id": {"$exists": False}},
+        [{"$set": {
+            "owner_id": "$user_id",
+            "visibility": "private",
+            "deleted_at": None,
+        }}],
+    )
+    if migrated.modified_count:
+        logger.info(f"Migrated {migrated.modified_count} doc_projects")
+
+    # Migrate doc_folders
+    migrated = await db.doc_folders.update_many(
+        {"owner_id": {"$exists": False}},
+        [{"$set": {
+            "owner_id": "$user_id",
+            "visibility": "private",
+            "shared_with": [],
+            "access_type": "readwrite",
+            "org_id": None,
+            "is_system": False,
+            "system_type": None,
+            "deleted_at": None,
+        }}],
+    )
+    if migrated.modified_count:
+        logger.info(f"Migrated {migrated.modified_count} doc_folders")
+
+    # Backfill org_id for meeting_folders from user data
+    folders_no_org = await db.meeting_folders.find(
+        {"org_id": None, "owner_id": {"$exists": True}}, {"_id": 0, "id": 1, "owner_id": 1}
+    ).to_list(10000)
+    for folder in folders_no_org:
+        user = await db.users.find_one({"id": folder["owner_id"]}, {"_id": 0, "org_id": 1})
+        if user and user.get("org_id"):
+            await db.meeting_folders.update_one(
+                {"id": folder["id"]}, {"$set": {"org_id": user["org_id"]}}
+            )
+
+    # Backfill org_id for doc_folders
+    doc_folders_no_org = await db.doc_folders.find(
+        {"org_id": None, "owner_id": {"$exists": True}}, {"_id": 0, "id": 1, "owner_id": 1}
+    ).to_list(10000)
+    for folder in doc_folders_no_org:
+        user = await db.users.find_one({"id": folder["owner_id"]}, {"_id": 0, "org_id": 1})
+        if user and user.get("org_id"):
+            await db.doc_folders.update_one(
+                {"id": folder["id"]}, {"$set": {"org_id": user["org_id"]}}
+            )
+
+    logger.info("Storage schema migration check complete")
+
+
+async def _run_trash_cleanup():
+    """Run trash cleanup for both meeting and document collections."""
+    from app.services.access_control import cleanup_expired_trash
+    try:
+        await cleanup_expired_trash("meeting_folders", "projects")
+        await cleanup_expired_trash("doc_folders", "doc_projects")
+        logger.info("Trash cleanup complete")
+    except Exception as e:
+        logger.error(f"Trash cleanup error: {e}")
