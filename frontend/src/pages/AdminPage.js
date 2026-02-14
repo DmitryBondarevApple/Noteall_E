@@ -77,6 +77,11 @@ export default function AdminPage() {
   const [savingCost, setSavingCost] = useState(false);
   const [runningStorageCalc, setRunningStorageCalc] = useState(false);
 
+  // Trash settings
+  const [trashRetention, setTrashRetention] = useState(30);
+  const [editingTrash, setEditingTrash] = useState(null);
+  const [savingTrash, setSavingTrash] = useState(false);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrgId, setSelectedOrgId] = useState(null);
 
