@@ -171,6 +171,31 @@ async def _get_descendant_folder_ids(parent_id: str, coll) -> list:
     return result
 
 
+async def cascade_visibility(
+    folder_id: str,
+    visibility: str,
+    folder_collection: str,
+    project_collection: str,
+):
+    """Cascade visibility change to all descendant folders and projects."""
+    coll_folders = db[folder_collection]
+    coll_projects = db[project_collection]
+    now = datetime.now(timezone.utc).isoformat()
+
+    descendant_ids = await _get_descendant_folder_ids(folder_id, coll_folders)
+    if descendant_ids:
+        await coll_folders.update_many(
+            {"id": {"$in": descendant_ids}, "deleted_at": None},
+            {"$set": {"visibility": visibility, "updated_at": now}},
+        )
+
+    all_ids = [folder_id] + descendant_ids
+    await coll_projects.update_many(
+        {"folder_id": {"$in": all_ids}, "deleted_at": None},
+        {"$set": {"visibility": visibility, "updated_at": now}},
+    )
+
+
 async def get_accessible_public_folder_ids(user: dict, folder_collection: str) -> list:
     """Get all public folder IDs accessible to user in their org."""
     query = {"visibility": "public", "org_id": user.get("org_id"), "deleted_at": None}
