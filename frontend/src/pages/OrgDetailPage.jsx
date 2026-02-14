@@ -146,16 +146,16 @@ export default function OrgDetailPage() {
               </div>
             </div>
             {/* Period filter */}
-            <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-0.5" data-testid="period-filter">
+            <div className="flex items-center gap-1 border-b" data-testid="period-filter">
               {PERIOD_OPTIONS.map(opt => (
                 <button
                   key={opt.value}
                   onClick={() => handlePeriodChange(opt.value)}
                   data-testid={`period-${opt.value}`}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                  className={`px-3 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
                     period === opt.value
-                      ? 'bg-white text-slate-900 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-700'
+                      ? 'border-slate-900 text-slate-900'
+                      : 'border-transparent text-slate-400 hover:text-slate-600'
                   }`}
                 >
                   {opt.label}
