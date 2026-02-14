@@ -20,7 +20,7 @@ import {
 import {
   Shield, Users, Search, Cpu, RefreshCw, Check, Loader2,
   Building2, UserPlus, Trash2, Settings2, DollarSign, Plus, X,
-  Link2, Copy, Ban, Clock, CheckCircle2, Pencil,
+  Link2, Copy, Ban, Clock, CheckCircle2, Pencil, BarChart3,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
