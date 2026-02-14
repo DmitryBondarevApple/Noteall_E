@@ -155,3 +155,23 @@ async def switch_model(model: str = None, admin=Depends(get_admin_user)):
 
     logger.info(f"Model switched: {old_model} -> {model}")
     return {"message": f"Модель переключена: {old_model} → {model}", "active_model": model}
+
+
+
+@router.get("/trash-settings")
+async def get_trash_settings(admin=Depends(get_superadmin_user)):
+    """Get trash retention settings."""
+    from app.services.access_control import get_trash_retention_days
+    days = await get_trash_retention_days()
+    return {"retention_days": days}
+
+
+@router.put("/trash-settings")
+async def update_trash_settings(data: dict, admin=Depends(get_superadmin_user)):
+    """Update trash retention period in days."""
+    days = data.get("retention_days", 30)
+    if not isinstance(days, int) or days < 1 or days > 365:
+        raise HTTPException(400, "retention_days должен быть от 1 до 365")
+    from app.services.access_control import set_trash_retention_days
+    await set_trash_retention_days(days)
+    return {"retention_days": days, "message": f"Срок хранения корзины: {days} дней"}
