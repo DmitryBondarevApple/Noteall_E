@@ -589,11 +589,23 @@ class AdminTopupRequest(BaseModel):
 
 
 @router.get("/admin/org/{org_id}")
-async def admin_org_detail(org_id: str, admin=Depends(get_superadmin_user)):
-    """Get detailed org info: users, balance, transactions, monthly usage chart, top users."""
+async def admin_org_detail(org_id: str, period: str = "all", admin=Depends(get_superadmin_user)):
+    """Get detailed org info with time-filtered expenses by category."""
     org = await db.organizations.find_one({"id": org_id}, {"_id": 0})
     if not org:
         raise HTTPException(status_code=404, detail="Organization not found")
+
+    # Calculate date range
+    now = datetime.now(timezone.utc)
+    if period == "day":
+        period_start = now.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+    elif period == "week":
+        from datetime import timedelta as _td
+        period_start = (now - _td(days=7)).isoformat()
+    elif period == "month":
+        period_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0).isoformat()
+    else:
+        period_start = None
 
     # Users
     users = await db.users.find(
@@ -605,10 +617,16 @@ async def admin_org_detail(org_id: str, admin=Depends(get_superadmin_user)):
     from app.routes.billing import get_or_create_balance
     bal = await get_or_create_balance(org_id)
 
-    # Transactions (last 100)
+    # --- Transactions (filtered + all for totals) ---
+    txn_match = {"org_id": org_id}
+    txn_match_period = {"org_id": org_id}
+    if period_start:
+        txn_match_period["created_at"] = {"$gte": period_start}
+
+    # Transactions for display (period-filtered, last 200)
     txns = await db.transactions.find(
-        {"org_id": org_id}, {"_id": 0}
-    ).sort("created_at", -1).limit(100).to_list(100)
+        txn_match_period, {"_id": 0}
+    ).sort("created_at", -1).limit(200).to_list(200)
 
     # Enrich txn user names
     user_ids = list({t.get("user_id") for t in txns if t.get("user_id")})
@@ -619,19 +637,81 @@ async def admin_org_detail(org_id: str, admin=Depends(get_superadmin_user)):
     for t in txns:
         t["user_name"] = user_map.get(t.get("user_id"))
 
-    # Totals
+    # --- ALL-TIME totals (always) ---
     topup_agg = await db.transactions.aggregate([
         {"$match": {"org_id": org_id, "type": "topup"}},
         {"$group": {"_id": None, "total": {"$sum": "$amount"}}},
     ]).to_list(1)
-    deduct_agg = await db.transactions.aggregate([
-        {"$match": {"org_id": org_id, "type": "deduction"}},
-        {"$group": {"_id": None, "total": {"$sum": "$amount"}}},
-    ]).to_list(1)
     total_topups = topup_agg[0]["total"] if topup_agg else 0
-    total_deductions = deduct_agg[0]["total"] if deduct_agg else 0
 
-    # Monthly usage chart (last 12 months)
+    # --- Period-filtered expense breakdown by category ---
+    deduct_match = {"org_id": org_id, "type": "deduction"}
+    if period_start:
+        deduct_match["created_at"] = {"$gte": period_start}
+
+    deductions = await db.transactions.find(deduct_match, {"_id": 0, "amount": 1, "description": 1}).to_list(100000)
+
+    cat_transcription = 0.0
+    cat_analysis = 0.0
+    cat_storage = 0.0
+    cat_other = 0.0
+    for d in deductions:
+        desc = d.get("description", "")
+        amt = d.get("amount", 0)
+        if desc.startswith("Транскрибация:"):
+            cat_transcription += amt
+        elif desc.startswith("AI:"):
+            cat_analysis += amt
+        elif desc.startswith("Хранение S3:"):
+            cat_storage += amt
+        else:
+            cat_other += amt
+
+    total_deductions_period = cat_transcription + cat_analysis + cat_storage + cat_other
+
+    # --- Usage records (AI only) for the period ---
+    usage_match = {"org_id": org_id}
+    if period_start:
+        usage_match["created_at"] = {"$gte": period_start}
+
+    total_reqs_agg = await db.usage_records.aggregate([
+        {"$match": usage_match},
+        {"$group": {
+            "_id": None,
+            "total_requests": {"$sum": 1},
+            "total_credits": {"$sum": "$credits_used"},
+            "total_tokens": {"$sum": "$total_tokens"},
+        }},
+    ]).to_list(1)
+    total_stats = total_reqs_agg[0] if total_reqs_agg else {"total_requests": 0, "total_credits": 0, "total_tokens": 0}
+    total_stats.pop("_id", None)
+    avg_request_cost = round(total_stats["total_credits"] / total_stats["total_requests"], 4) if total_stats["total_requests"] > 0 else 0
+
+    # --- Time series for chart ---
+    # Group deductions by day with category
+    deduct_all_period = await db.transactions.find(
+        deduct_match, {"_id": 0, "amount": 1, "description": 1, "created_at": 1}
+    ).sort("created_at", 1).to_list(100000)
+
+    from collections import defaultdict
+    daily_map = defaultdict(lambda: {"transcription": 0, "analysis": 0, "storage": 0})
+    for d in deduct_all_period:
+        day = d.get("created_at", "")[:10]
+        desc = d.get("description", "")
+        amt = d.get("amount", 0)
+        if desc.startswith("Транскрибация:"):
+            daily_map[day]["transcription"] += amt
+        elif desc.startswith("AI:"):
+            daily_map[day]["analysis"] += amt
+        elif desc.startswith("Хранение S3:"):
+            daily_map[day]["storage"] += amt
+
+    daily_chart = [
+        {"date": day, **{k: round(v, 4) for k, v in cats.items()}}
+        for day, cats in sorted(daily_map.items())
+    ]
+
+    # --- Monthly chart (always all-time) ---
     monthly_pipeline = [
         {"$match": {"org_id": org_id}},
         {"$addFields": {"month": {"$substr": ["$created_at", 0, 7]}}},
@@ -650,15 +730,11 @@ async def admin_org_detail(org_id: str, admin=Depends(get_superadmin_user)):
         for m in monthly_data
     ]
 
-    # Avg monthly spend
-    if monthly_chart:
-        avg_monthly = sum(m["credits"] for m in monthly_chart) / len(monthly_chart)
-    else:
-        avg_monthly = 0
+    avg_monthly = sum(m["credits"] for m in monthly_chart) / len(monthly_chart) if monthly_chart else 0
 
-    # Top users by credit usage
+    # --- Top users (period-filtered) ---
     top_users_pipeline = [
-        {"$match": {"org_id": org_id}},
+        {"$match": usage_match},
         {"$group": {
             "_id": "$user_id",
             "credits": {"$sum": "$credits_used"},
@@ -681,20 +757,6 @@ async def admin_org_detail(org_id: str, admin=Depends(get_superadmin_user)):
         for t in top_users_data
     ]
 
-    # Total AI requests & avg cost
-    total_reqs_agg = await db.usage_records.aggregate([
-        {"$match": {"org_id": org_id}},
-        {"$group": {
-            "_id": None,
-            "total_requests": {"$sum": 1},
-            "total_credits": {"$sum": "$credits_used"},
-            "total_tokens": {"$sum": "$total_tokens"},
-        }},
-    ]).to_list(1)
-    total_stats = total_reqs_agg[0] if total_reqs_agg else {"total_requests": 0, "total_credits": 0, "total_tokens": 0}
-    total_stats.pop("_id", None)
-    avg_request_cost = round(total_stats["total_credits"] / total_stats["total_requests"], 4) if total_stats["total_requests"] > 0 else 0
-
     return {
         "org": org,
         "users": users,
@@ -702,7 +764,14 @@ async def admin_org_detail(org_id: str, admin=Depends(get_superadmin_user)):
         "balance_updated_at": bal["updated_at"],
         "transactions": txns,
         "total_topups": round(total_topups, 2),
-        "total_deductions": round(total_deductions, 4),
+        "total_deductions": round(total_deductions_period, 4),
+        "expenses_by_category": {
+            "transcription": round(cat_transcription, 4),
+            "analysis": round(cat_analysis, 4),
+            "storage": round(cat_storage, 4),
+            "other": round(cat_other, 4),
+        },
+        "daily_chart": daily_chart,
         "monthly_chart": monthly_chart,
         "avg_monthly_spend": round(avg_monthly, 4),
         "top_users": top_users,
@@ -710,6 +779,7 @@ async def admin_org_detail(org_id: str, admin=Depends(get_superadmin_user)):
         "total_tokens": total_stats["total_tokens"],
         "total_credits_spent": round(total_stats["total_credits"], 4),
         "avg_request_cost": avg_request_cost,
+        "period": period,
     }
 
 
