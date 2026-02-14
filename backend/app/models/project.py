@@ -19,6 +19,8 @@ class ProjectResponse(BaseModel):
     name: str
     description: str
     user_id: str
+    owner_id: Optional[str] = None
+    visibility: str = "private"
     status: str
     folder_id: Optional[str] = None
     language: Optional[str] = None
@@ -26,5 +28,6 @@ class ProjectResponse(BaseModel):
     recording_filename: Optional[str] = None
     recording_duration: Optional[float] = None
     fast_track: Optional[Dict[str, Any]] = None
+    deleted_at: Optional[str] = None
     created_at: str
     updated_at: str

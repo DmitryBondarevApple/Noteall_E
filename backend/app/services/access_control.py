@@ -171,6 +171,39 @@ async def _get_descendant_folder_ids(parent_id: str, coll) -> list:
     return result
 
 
+async def get_accessible_public_folder_ids(user: dict, folder_collection: str) -> list:
+    """Get all public folder IDs accessible to user in their org."""
+    query = {"visibility": "public", "org_id": user.get("org_id"), "deleted_at": None}
+    folders = await db[folder_collection].find(query, {"_id": 0}).to_list(10000)
+    return [f["id"] for f in folders if can_user_access_folder(f, user)]
+
+
+async def can_user_access_project(project: dict, user: dict, folder_collection: str) -> bool:
+    """Check if user can read a project (owner or via public folder access)."""
+    if project.get("owner_id", project.get("user_id")) == user["id"]:
+        return True
+    folder_id = project.get("folder_id")
+    if not folder_id:
+        return False
+    folder = await db[folder_collection].find_one({"id": folder_id, "deleted_at": None}, {"_id": 0})
+    if not folder:
+        return False
+    return can_user_access_folder(folder, user)
+
+
+async def can_user_write_project(project: dict, user: dict, folder_collection: str) -> bool:
+    """Check if user can write to a project (owner or readwrite folder)."""
+    if project.get("owner_id", project.get("user_id")) == user["id"]:
+        return True
+    folder_id = project.get("folder_id")
+    if not folder_id:
+        return False
+    folder = await db[folder_collection].find_one({"id": folder_id, "deleted_at": None}, {"_id": 0})
+    if not folder:
+        return False
+    return can_user_write_folder(folder, user)
+
+
 async def cleanup_expired_trash(folder_collection: str, project_collection: str):
     """Permanently delete items that exceeded trash retention period."""
     from datetime import timedelta
