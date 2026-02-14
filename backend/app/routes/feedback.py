@@ -4,6 +4,7 @@ import httpx
 from fastapi import APIRouter, UploadFile, File, Form, Depends
 from typing import Optional
 from app.core.security import get_current_user
+from app.core.database import db
 
 logger = logging.getLogger(__name__)
 
@@ -22,19 +23,25 @@ async def suggest_improvement(
     current_user: dict = Depends(get_current_user),
 ):
     user_name = current_user.get("name", "Неизвестный")
-    org_name = current_user.get("org_name", "—")
     user_email = current_user.get("email", "—")
 
+    org_name = "—"
+    org_id = current_user.get("org_id")
+    if org_id:
+        org = await db.organizations.find_one({"id": org_id}, {"_id": 0, "name": 1})
+        if org:
+            org_name = org["name"]
+
     caption_parts = [
-        f"💡 Предложение улучшения",
-        f"",
+        "Предложение улучшения",
+        "",
         f"От: {user_name}",
         f"Компания: {org_name}",
         f"Email: {email or user_email}",
     ]
     if telegram:
         caption_parts.append(f"Telegram: {telegram}")
-    caption_parts.append(f"")
+    caption_parts.append("")
     caption_parts.append(text)
 
     caption = "\n".join(caption_parts)
