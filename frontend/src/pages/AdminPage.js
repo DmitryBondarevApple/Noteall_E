@@ -109,6 +109,7 @@ export default function AdminPage() {
           adminApi.getModel().catch(() => ({ data: null })),
           billingApi.getMarkupTiers().catch(() => ({ data: [] })),
           billingApi.getCostSettings().catch(() => ({ data: null })),
+          adminApi.getTrashSettings().catch(() => ({ data: { retention_days: 30 } })),
         );
       }
       const results = await Promise.all(promises);
@@ -121,6 +122,7 @@ export default function AdminPage() {
         if (results[5].data) setModelInfo(results[5].data);
         setMarkupTiers(results[6].data || []);
         if (results[7].data) setCostSettings(results[7].data);
+        setTrashRetention(results[8]?.data?.retention_days ?? 30);
       }
     } catch (err) {
       toast.error('Ошибка загрузки');
