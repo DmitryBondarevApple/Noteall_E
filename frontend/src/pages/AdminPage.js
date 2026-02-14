@@ -24,7 +24,6 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import OrgDetailModal from '../components/billing/OrgDetailModal';
 import { ru } from 'date-fns/locale';
 
 const ROLE_LABELS = {
