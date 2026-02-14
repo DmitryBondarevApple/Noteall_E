@@ -136,16 +136,16 @@ def test_update_nonexistent_folder():
     print("✓ Nonexistent folder update returns 404")
 
 def test_delete_folder_not_empty_nested():
-    """DELETE /api/meeting-folders/{id} - fail if folder has children"""
+    """DELETE /api/meeting-folders/{id} - soft deletes folder with children (trash)"""
     assert len(test_data["folder_ids"]) > 0, "No folder created"
     parent_id = test_data["folder_ids"][0]
     response = requests.delete(
         f"{BASE_URL}/api/meeting-folders/{parent_id}",
         headers=get_headers()
     )
-    assert response.status_code == 400, f"Should fail with 400: {response.text}"
-    assert "not empty" in response.json().get("detail", "").lower()
-    print("✓ Delete folder with children returns 400")
+    # Phase 1: soft delete now works even if folder has children
+    assert response.status_code == 200, f"Soft delete failed: {response.text}"
+    print("✓ Delete folder with children moves to trash (soft delete)")
 
 
 # ============ Projects with folder_id Tests ============
