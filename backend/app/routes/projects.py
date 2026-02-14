@@ -237,9 +237,11 @@ async def upload_file(
     fast_track_pipeline_id: str = Form(default=""),
     user=Depends(get_current_user)
 ):
-    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
+    project = await db.projects.find_one({"id": project_id, "deleted_at": None})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+    if not await can_user_write_project(project, user, "meeting_folders"):
+        raise HTTPException(status_code=403, detail="Нет прав на загрузку в этот проект")
     
     supported_languages = ["ru", "en", "de", "fr", "es", "it", "pt", "nl", "pl", "uk"]
     if language not in supported_languages:
@@ -291,9 +293,11 @@ async def process_transcript_with_gpt(
     user=Depends(get_current_user)
 ):
     """Trigger async GPT processing of transcript with master prompt"""
-    project = await db.projects.find_one({"id": project_id, "user_id": user["id"]})
+    project = await db.projects.find_one({"id": project_id, "deleted_at": None})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+    if not await can_user_write_project(project, user, "meeting_folders"):
+        raise HTTPException(status_code=403, detail="Нет прав на обработку этого проекта")
     
     raw_transcript = await db.transcripts.find_one(
         {"project_id": project_id, "version_type": "raw"},
