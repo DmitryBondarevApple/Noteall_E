@@ -616,7 +616,6 @@ async def _build_org_analytics(org_id: str, period: str):
     bal = await get_or_create_balance(org_id)
 
     # --- Transactions (filtered + all for totals) ---
-    txn_match = {"org_id": org_id}
     txn_match_period = {"org_id": org_id}
     if period_start:
         txn_match_period["created_at"] = {"$gte": period_start}
@@ -665,8 +664,6 @@ async def _build_org_analytics(org_id: str, period: str):
         else:
             cat_other += amt
 
-    total_deductions_period = cat_transcription + cat_analysis + cat_storage + cat_other
-
     # --- Usage records (AI only) for the period ---
     usage_match = {"org_id": org_id}
     if period_start:
@@ -686,7 +683,6 @@ async def _build_org_analytics(org_id: str, period: str):
     avg_request_cost = round(total_stats["total_credits"] / total_stats["total_requests"], 4) if total_stats["total_requests"] > 0 else 0
 
     # --- Time series for chart ---
-    # Group deductions by day with category
     deduct_all_period = await db.transactions.find(
         deduct_match, {"_id": 0, "amount": 1, "description": 1, "created_at": 1}
     ).sort("created_at", 1).to_list(100000)
@@ -762,7 +758,6 @@ async def _build_org_analytics(org_id: str, period: str):
         "balance_updated_at": bal["updated_at"],
         "transactions": txns,
         "total_topups": round(total_topups, 2),
-        "total_deductions": round(total_deductions_period, 4),
         "expenses_by_category": {
             "transcription": round(cat_transcription, 4),
             "analysis": round(cat_analysis, 4),
@@ -779,6 +774,21 @@ async def _build_org_analytics(org_id: str, period: str):
         "avg_request_cost": avg_request_cost,
         "period": period,
     }
+
+
+@router.get("/admin/org/{org_id}")
+async def admin_org_detail(org_id: str, period: str = "all", admin=Depends(get_superadmin_user)):
+    """Get detailed org info (superadmin). Delegates to shared helper."""
+    return await _build_org_analytics(org_id, period)
+
+
+@router.get("/org/my-analytics")
+async def org_admin_my_analytics(period: str = "all", user=Depends(get_admin_user)):
+    """Get analytics for the org_admin's own organization."""
+    org_id = user.get("org_id")
+    if not org_id:
+        raise HTTPException(status_code=400, detail="No organization")
+    return await _build_org_analytics(org_id, period)
 
 
 @router.post("/admin/topup")
