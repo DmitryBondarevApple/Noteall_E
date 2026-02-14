@@ -300,30 +300,65 @@ async def permanent_delete_folder(folder_id: str, user=Depends(get_current_user)
 # ==================== DOC PROJECTS ====================
 
 @router.get("/doc/projects")
-async def list_doc_projects(folder_id: Optional[str] = None, user=Depends(get_current_user)):
-    query = {"user_id": user["id"]}
+async def list_doc_projects(
+    tab: str = "private",
+    folder_id: Optional[str] = None,
+    user=Depends(get_current_user),
+):
+    if tab == "trash":
+        query = {"owner_id": user["id"], "deleted_at": {"$ne": None}}
+        projects = await db.doc_projects.find(query, {"_id": 0}).sort("deleted_at", -1).to_list(200)
+        return projects
+
+    if tab == "public":
+        pub_folder_ids = await get_accessible_public_folder_ids(user, "doc_folders")
+        if not pub_folder_ids:
+            return []
+        query = {"folder_id": {"$in": pub_folder_ids}, "deleted_at": None}
+        if folder_id is not None:
+            query["folder_id"] = folder_id
+        return await db.doc_projects.find(query, {"_id": 0}).sort("created_at", -1).to_list(200)
+
+    # private (default)
+    query = {"owner_id": user["id"], "deleted_at": None}
     if folder_id:
         query["folder_id"] = folder_id
-    projects = await db.doc_projects.find(query, {"_id": 0}).sort("created_at", -1).to_list(200)
-    return projects
+    else:
+        pub_folder_ids = await get_accessible_public_folder_ids(user, "doc_folders")
+        if pub_folder_ids:
+            query["$or"] = [
+                {"folder_id": {"$nin": pub_folder_ids}},
+                {"folder_id": None},
+                {"folder_id": {"$exists": False}},
+            ]
+    return await db.doc_projects.find(query, {"_id": 0}).sort("created_at", -1).to_list(200)
 
 @router.post("/doc/projects", status_code=201)
 async def create_doc_project(data: DocProjectCreate, user=Depends(get_current_user)):
-    # Validate folder exists
-    folder = await db.doc_folders.find_one({"id": data.folder_id, "user_id": user["id"]})
+    folder = await db.doc_folders.find_one({"id": data.folder_id, "deleted_at": None}, {"_id": 0})
     if not folder:
         raise HTTPException(status_code=404, detail="Folder not found")
+    # Check write permission
+    if folder.get("visibility") == "public":
+        if not can_user_write_folder(folder, user):
+            raise HTTPException(403, "Нет прав на создание проекта в этой папке")
+    elif folder.get("owner_id", folder.get("user_id")) != user["id"]:
+        raise HTTPException(403, "Нет прав на создание проекта в этой папке")
 
+    visibility = folder.get("visibility", "private")
     now = datetime.now(timezone.utc).isoformat()
     doc = {
         "id": str(uuid.uuid4()),
         "user_id": user["id"],
+        "owner_id": user["id"],
+        "visibility": visibility,
         "folder_id": data.folder_id,
         "name": data.name,
         "description": data.description,
         "system_instruction": data.system_instruction,
         "template_id": data.template_id,
         "status": "draft",
+        "deleted_at": None,
         "created_at": now,
         "updated_at": now,
     }
@@ -332,47 +367,110 @@ async def create_doc_project(data: DocProjectCreate, user=Depends(get_current_us
 
 @router.get("/doc/projects/{project_id}")
 async def get_doc_project(project_id: str, user=Depends(get_current_user)):
-    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]}, {"_id": 0})
+    project = await db.doc_projects.find_one({"id": project_id, "deleted_at": None}, {"_id": 0})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+    if not await can_user_access_project(project, user, "doc_folders"):
+        raise HTTPException(403, "Нет доступа к проекту")
 
-    # Get attachments
     attachments = await db.doc_attachments.find(
         {"project_id": project_id}, {"_id": 0}
     ).sort("created_at", -1).to_list(100)
     project["attachments"] = attachments
-
     return project
 
 @router.put("/doc/projects/{project_id}")
 async def update_doc_project(project_id: str, data: DocProjectUpdate, user=Depends(get_current_user)):
-    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]})
+    project = await db.doc_projects.find_one({"id": project_id, "deleted_at": None})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+    if project.get("owner_id", project.get("user_id")) != user["id"]:
+        raise HTTPException(403, "Только владелец может редактировать проект")
 
     updates = {k: v for k, v in data.dict(exclude_unset=True).items()}
     updates["updated_at"] = datetime.now(timezone.utc).isoformat()
     await db.doc_projects.update_one({"id": project_id}, {"$set": updates})
-
-    updated = await db.doc_projects.find_one({"id": project_id}, {"_id": 0})
-    return updated
+    return await db.doc_projects.find_one({"id": project_id}, {"_id": 0})
 
 @router.delete("/doc/projects/{project_id}")
 async def delete_doc_project(project_id: str, user=Depends(get_current_user)):
-    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]})
+    project = await db.doc_projects.find_one({"id": project_id, "deleted_at": None})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+    if project.get("owner_id", project.get("user_id")) != user["id"]:
+        raise HTTPException(403, "Только владелец может удалить проект")
 
-    # Delete attachments
+    now = datetime.now(timezone.utc).isoformat()
+    await db.doc_projects.update_one(
+        {"id": project_id},
+        {"$set": {"deleted_at": now, "deleted_by": user["id"], "updated_at": now}},
+    )
+    return {"message": "Проект перемещён в корзину"}
+
+@router.post("/doc/projects/{project_id}/restore")
+async def restore_doc_project(project_id: str, user=Depends(get_current_user)):
+    project = await db.doc_projects.find_one(
+        {"id": project_id, "owner_id": user["id"], "deleted_at": {"$ne": None}}, {"_id": 0}
+    )
+    if not project:
+        raise HTTPException(404, "Проект не найден в корзине")
+    now = datetime.now(timezone.utc).isoformat()
+    folder_id = project.get("folder_id")
+    if folder_id:
+        folder = await db.doc_folders.find_one({"id": folder_id, "deleted_at": None})
+        if not folder:
+            folder_id = None
+    await db.doc_projects.update_one({"id": project_id}, {"$set": {
+        "deleted_at": None, "deleted_by": None,
+        "folder_id": folder_id, "visibility": "private",
+        "updated_at": now,
+    }})
+    return {"message": "Проект восстановлен"}
+
+@router.delete("/doc/projects/{project_id}/permanent")
+async def permanent_delete_doc_project(project_id: str, user=Depends(get_current_user)):
+    project = await db.doc_projects.find_one(
+        {"id": project_id, "owner_id": user["id"], "deleted_at": {"$ne": None}}
+    )
+    if not project:
+        raise HTTPException(404, "Проект не найден в корзине")
+
     attachments = await db.doc_attachments.find({"project_id": project_id}, {"_id": 0}).to_list(500)
     for att in attachments:
         if att.get("s3_key"):
-            delete_object(att["s3_key"])
+            try:
+                delete_object(att["s3_key"])
+            except Exception:
+                pass
         elif att.get("file_path") and os.path.exists(att["file_path"]):
             os.remove(att["file_path"])
     await db.doc_attachments.delete_many({"project_id": project_id})
+    await db.doc_streams.delete_many({"project_id": project_id})
+    await db.doc_pins.delete_many({"project_id": project_id})
+    await db.doc_runs.delete_many({"project_id": project_id})
     await db.doc_projects.delete_one({"id": project_id})
-    return {"message": "Deleted"}
+    return {"message": "Проект удалён навсегда"}
+
+@router.post("/doc/projects/{project_id}/move")
+async def move_doc_project(project_id: str, data: DocProjectMove, user=Depends(get_current_user)):
+    project = await db.doc_projects.find_one({"id": project_id, "deleted_at": None})
+    if not project:
+        raise HTTPException(404, "Project not found")
+    if project.get("owner_id", project.get("user_id")) != user["id"]:
+        raise HTTPException(403, "Только владелец может перемещать проект")
+
+    visibility = "private"
+    if data.folder_id:
+        folder = await db.doc_folders.find_one({"id": data.folder_id, "deleted_at": None}, {"_id": 0})
+        if not folder:
+            raise HTTPException(404, "Целевая папка не найдена")
+        visibility = folder.get("visibility", "private")
+
+    now = datetime.now(timezone.utc).isoformat()
+    await db.doc_projects.update_one({"id": project_id}, {"$set": {
+        "folder_id": data.folder_id, "visibility": visibility, "updated_at": now,
+    }})
+    return await db.doc_projects.find_one({"id": project_id}, {"_id": 0})
 
 
 # ==================== DOC ATTACHMENTS ====================
