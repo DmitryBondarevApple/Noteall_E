@@ -82,7 +82,7 @@ export default function AdminPage() {
   const [savingTrash, setSavingTrash] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedOrgId, setSelectedOrgId] = useState(null);
+  const navigate = useNavigate();
 
   // Invitations
   const [invitations, setInvitations] = useState([]);
