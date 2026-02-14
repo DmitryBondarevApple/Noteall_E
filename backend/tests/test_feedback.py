@@ -71,18 +71,18 @@ class TestFeedbackEndpoint:
 
     def test_feedback_with_screenshot_success(self, auth_headers):
         """Test sending feedback with screenshot attachment"""
-        # Create a simple PNG image (1x1 red pixel)
-        png_data = bytes([
-            0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,  # PNG signature
-            0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,  # IHDR chunk
-            0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,  # 1x1 image
-            0x08, 0x02, 0x00, 0x00, 0x00, 0x90, 0x77, 0x53,
-            0xDE, 0x00, 0x00, 0x00, 0x0C, 0x49, 0x44, 0x41,  # IDAT chunk
-            0x54, 0x08, 0xD7, 0x63, 0xF8, 0xCF, 0xC0, 0x00,
-            0x00, 0x00, 0x03, 0x00, 0x01, 0x00, 0x05, 0x19,
-            0xD9, 0x3A, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45,  # IEND chunk
-            0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82
-        ])
+        # Create a valid 10x10 white PNG using PIL/pillow
+        try:
+            from PIL import Image
+            img = Image.new('RGB', (100, 100), color='blue')
+            img_buffer = io.BytesIO()
+            img.save(img_buffer, format='PNG')
+            png_data = img_buffer.getvalue()
+        except ImportError:
+            # Fallback: use a pre-generated valid minimal PNG (8x8 white)
+            import base64
+            png_base64 = "iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAADklEQVQI12P4////GeMMAAPdAf8BWjcAAAAASUVORK5CYII="
+            png_data = base64.b64decode(png_base64)
         
         files = {
             "screenshot": ("test_screenshot.png", io.BytesIO(png_data), "image/png")
