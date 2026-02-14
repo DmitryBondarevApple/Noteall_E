@@ -301,6 +301,7 @@ export const billingApi = {
   adminUsage: (orgId) => axios.get(`${API}/billing/admin/usage`, { params: orgId ? { org_id: orgId } : {} }),
   adminSummary: () => axios.get(`${API}/billing/admin/summary`),
   adminOrgDetail: (orgId, period = 'all') => axios.get(`${API}/billing/admin/org/${orgId}`, { params: { period } }),
+  orgMyAnalytics: (period = 'all') => axios.get(`${API}/billing/org/my-analytics`, { params: { period } }),
   adminTopup: (orgId, amount, description) =>
     axios.post(`${API}/billing/admin/topup`, { org_id: orgId, amount, description }),
 };
