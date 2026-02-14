@@ -50,6 +50,18 @@ async def list_org_users(user=Depends(get_admin_user)):
     ]
 
 
+@router.get("/my/members")
+async def list_org_members(user=Depends(get_current_user)):
+    """Lightweight endpoint for any org member to list other members (for sharing UI)."""
+    org_id = user.get("org_id")
+    if not org_id:
+        raise HTTPException(status_code=404, detail="No organization")
+    users = await db.users.find(
+        {"org_id": org_id}, {"_id": 0, "id": 1, "name": 1, "email": 1}
+    ).to_list(1000)
+    return users
+
+
 class OrgNameUpdate(BaseModel):
     name: str
 
