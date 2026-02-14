@@ -39,6 +39,8 @@ function formatSpeakerDisplay(speaker) {
 function formatSpeakerShort(speaker) {
   if (!speaker) return '';
   const full = speaker.speaker_name || speaker.speaker_label;
+  // Keep "Speaker N" as-is
+  if (full.match(/^Speaker \d+$/)) return full;
   // Strip company in parentheses
   const noCompany = full.replace(/\s*\(.*?\)\s*$/, '').trim();
   const parts = noCompany.split(/\s+/);
