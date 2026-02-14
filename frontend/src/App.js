@@ -19,6 +19,7 @@ import PipelineEditorPage from "./pages/PipelineEditorPage";
 import SpeakerDirectoryPage from "./pages/SpeakerDirectoryPage";
 import AdminPage from "./pages/AdminPage";
 import OrgDetailPage from "./pages/OrgDetailPage";
+import OrgAdminDashboard from "./pages/OrgAdminDashboard";
 import BillingPage from "./pages/BillingPage";
 
 const ProtectedRoute = ({ children }) => {
@@ -51,6 +52,7 @@ function AppRoutes() {
       <Route path="/pipelines/:pipelineId" element={<ProtectedRoute><PipelineEditorPage /></ProtectedRoute>} />
       <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
       <Route path="/admin/org/:orgId" element={<ProtectedRoute><OrgDetailPage /></ProtectedRoute>} />
+      <Route path="/admin/analytics" element={<ProtectedRoute><OrgAdminDashboard /></ProtectedRoute>} />
       <Route path="/billing" element={<ProtectedRoute><BillingPage /></ProtectedRoute>} />
       {/* Redirects for old routes */}
       <Route path="/dashboard" element={<Navigate to="/meetings" replace />} />
