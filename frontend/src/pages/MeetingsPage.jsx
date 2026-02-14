@@ -412,7 +412,7 @@ export default function MeetingsPage() {
               </>
             ) : (
               <>
-                {folder.owner_name && activeTab === 'public' && (
+                {folder.owner_name && (
                   <>
                     <div className="px-2 py-1.5 text-xs text-muted-foreground flex items-center gap-1.5">
                       <User className="w-3 h-3" /> Владелец: {folder.owner_name}
