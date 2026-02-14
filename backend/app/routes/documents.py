@@ -341,7 +341,13 @@ async def list_doc_projects(
     user=Depends(get_current_user),
 ):
     if tab == "trash":
-        query = {"owner_id": user["id"], "deleted_at": {"$ne": None}}
+        query = {
+            "$or": [
+                {"owner_id": user["id"]},
+                {"deleted_by": user["id"]},
+            ],
+            "deleted_at": {"$ne": None},
+        }
         projects = await db.doc_projects.find(query, {"_id": 0}).sort("deleted_at", -1).to_list(200)
         return projects
 
