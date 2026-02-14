@@ -20,8 +20,10 @@ import {
   CalendarDays,
   CreditCard,
   Zap,
+  MessageSquarePlus,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import FeedbackModal from '../modals/FeedbackModal';
 
 const navItems = [
   { path: '/meetings', label: 'Встречи', icon: CalendarDays },
