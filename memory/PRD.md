@@ -18,7 +18,6 @@ Web application for building and running data processing pipelines (workflows) f
 - Access control service with per-folder/per-project permission checks
 - Migration script + daily trash cleanup job
 - Admin trash retention settings API
-- **53/53 backend tests passed**
 
 ### Phase 2: Frontend — Meetings View (Feb 2026)
 - Tabs: Приватные / Публичные / Корзина
@@ -27,12 +26,15 @@ Web application for building and running data processing pipelines (workflows) f
 
 ### Phase 3: Frontend — Documents View (Feb 2026)
 - Same tab/sharing/trash UI as Meetings
-- **14/14 frontend tests passed (Phase 2+3)**
 
 ### Phase 4: Superadmin Controls (Feb 2026)
 - Trash retention settings UI in admin panel ("Корзина" tab)
-- Final E2E testing — all flows verified
-- **53/53 backend + full frontend E2E passed**
+
+### Bug Fixes & Sharing Enhancement (Feb 2026)
+- **Bug 1 FIXED:** Public tab data leak — removed enrichFolders race condition useEffect, backend now enriches owner_name in list endpoint, frontend clears state on tab switch
+- **Bug 2 FIXED:** Incomplete sharing UI — added user selection (multi-select with search) in share dialog, new `/api/organizations/my/members` endpoint for org user listing
+- **Enhancement:** "Доступы" shown for already-shared folders (manage existing permissions), "Расшарить" for private folders. Access management dialog allows editing users, access level, and making folder private
+- **11/11 backend tests + full frontend E2E passed**
 
 ## Key API Endpoints
 - `GET /api/meeting-folders?tab=private|public|trash`
@@ -43,7 +45,12 @@ Web application for building and running data processing pipelines (workflows) f
 - `DELETE /api/projects/{id}/permanent`
 - Same for doc folders/projects under /api/doc/...
 - `GET/PUT /api/admin/trash-settings`
+- `GET /api/organizations/my/members` — lightweight user list for sharing UI
+
+## P0 Pending
+- None
 
 ## P1 Backlog
+- Show folder owner name in context menu for all folder types (partially done — visible for public folders)
 - Landing page refinements
 - Real payment integration (Stripe/YooKassa)
