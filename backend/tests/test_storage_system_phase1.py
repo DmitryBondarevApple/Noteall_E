@@ -1003,29 +1003,55 @@ class TestDocProjectTrash:
     
     def test_permanent_delete_doc_project(self):
         """DELETE /api/doc/projects/{id}/permanent - permanent delete"""
-        # Get from private after restore (restored to private)
-        private_resp = requests.get(
-            f"{BASE_URL}/api/doc/projects",
+        # Create a new doc project for permanent delete test
+        # First get a doc folder
+        folders_resp = requests.get(
+            f"{BASE_URL}/api/doc/folders",
             params={"tab": "private"},
             headers=get_headers()
         )
-        project = next((p for p in private_resp.json() if p["name"] == "TEST_Public_Doc_Project"), None)
-        assert project is not None
-        project_id = project["id"]
+        folders = folders_resp.json()
+        folder = next((f for f in folders if "TEST_" in f["name"]), None)
+        
+        if not folder:
+            # Create a folder if none exists
+            folder_resp = requests.post(
+                f"{BASE_URL}/api/doc/folders",
+                json={"name": "TEST_Perm_Delete_Doc_Folder"},
+                headers=get_headers()
+            )
+            folder = folder_resp.json()
+            test_data["doc_folder_ids"].append(folder["id"])
+        
+        # Create project
+        proj_resp = requests.post(
+            f"{BASE_URL}/api/doc/projects",
+            json={"name": "TEST_Perm_Delete_Doc_Project", "folder_id": folder["id"]},
+            headers=get_headers()
+        )
+        assert proj_resp.status_code == 201, f"Create project failed: {proj_resp.text}"
+        project_id = proj_resp.json()["id"]
         
         # Soft delete
-        requests.delete(f"{BASE_URL}/api/doc/projects/{project_id}", headers=get_headers())
+        del_resp = requests.delete(f"{BASE_URL}/api/doc/projects/{project_id}", headers=get_headers())
+        assert del_resp.status_code == 200, f"Soft delete failed: {del_resp.text}"
         
         # Permanent delete
         response = requests.delete(
             f"{BASE_URL}/api/doc/projects/{project_id}/permanent",
             headers=get_headers()
         )
-        assert response.status_code == 200
-        print(f"Permanently deleted doc project: {project_id}")
+        assert response.status_code == 200, f"Permanent delete failed: {response.text}"
         
-        if project_id in test_data["doc_project_ids"]:
-            test_data["doc_project_ids"].remove(project_id)
+        # Verify not in trash
+        trash_check = requests.get(
+            f"{BASE_URL}/api/doc/projects",
+            params={"tab": "trash"},
+            headers=get_headers()
+        )
+        names = [p["name"] for p in trash_check.json()]
+        assert "TEST_Perm_Delete_Doc_Project" not in names
+        print(f"Permanently deleted doc project: {project_id}")
 
 
 # ==================== Doc Project Move ====================
