@@ -13,6 +13,7 @@ AI-платформа для транскрибации и анализа вст
 - Система приглашений пользователей
 - Обратная связь через Telegram (функция "Предложить улучшение")
 - Полноценная страница организации для суперадмина с аналитикой
+- Дашборд аналитики для админа организации
 
 ## Архитектура
 ```
@@ -26,8 +27,16 @@ AI-платформа для транскрибации и анализа вст
 │   └── requirements.txt
 ├── frontend/
 │   ├── src/
-│   │   ├── components/ (layout/AppLayout, modals/FeedbackModal, ui/...)
-│   │   ├── pages/ (MeetingsPage, DocumentsPage, AdminPage, OrgDetailPage, ...)
+│   │   ├── components/
+│   │   │   ├── layout/AppLayout
+│   │   │   ├── modals/FeedbackModal
+│   │   │   ├── analytics/AnalyticsWidgets.jsx (shared: KpiCard, CategoryBar, CategoryLegend, PeriodFilter)
+│   │   │   └── ui/...
+│   │   ├── pages/
+│   │   │   ├── AdminPage.js
+│   │   │   ├── OrgDetailPage.jsx (superadmin org analytics)
+│   │   │   ├── OrgAdminDashboard.jsx (org admin analytics)
+│   │   │   └── ...
 │   │   ├── contexts/ (AuthContext, CreditsContext)
 │   │   └── lib/ (api.js)
 │   └── package.json
@@ -61,6 +70,16 @@ AI-платформа для транскрибации и анализа вст
 - Вкладка "Транзакции": фильтрованные по периоду
 - Вкладка "Пополнить": ручное пополнение баланса
 - Тестирование: 100% (19/19 backend, frontend passed)
+
+### 3. Дашборд аналитики для админа организации
+- Новая страница `/admin/analytics` для org_admin
+- Кнопка "Аналитика" на странице `/admin` для перехода
+- Backend: GET /api/billing/org/my-analytics — переиспользует агрегацию суперадмина, привязан к org_id текущего пользователя
+- KPI-карточки, разбивка расходов по категориям, графики динамики и структуры
+- 3 вкладки: Динамика / Пользователи / Транзакции (без "Пополнить")
+- Период-фильтр: День / Неделя / Месяц / Всё время
+- Общие компоненты вынесены в `AnalyticsWidgets.jsx` (KpiCard, CategoryBar, CategoryLegend, PeriodFilter)
+- Тестирование: 100% (17/17 backend, frontend passed)
 
 ## Бэклог
 - Нет определённых задач на данный момент
