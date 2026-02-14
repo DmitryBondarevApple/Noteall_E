@@ -22,6 +22,7 @@ from app.routes import (
     organizations_router,
     billing_router,
     invitations_router,
+    feedback_router,
 )
 from app.core.database import client
 
