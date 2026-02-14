@@ -137,9 +137,13 @@ async def startup_db_client():
     # Fetch exchange rate on startup
     from app.routes.billing import update_exchange_rate
     await update_exchange_rate()
-    
+
+    # Run data migration for public/private storage system
+    await _migrate_storage_schema()
+
     # Schedule daily exchange rate update at 3am MSK (00:00 UTC)
     # and S3 storage cost calculation at 3:05am MSK (00:05 UTC)
+    # and trash cleanup at 3:10am MSK
     import asyncio
     async def rate_updater():
         while True:
@@ -155,7 +159,10 @@ async def startup_db_client():
             # Run storage cost calculation 5 minutes after rate update
             await asyncio.sleep(300)
             await calculate_daily_storage_costs()
-    
+            # Run trash cleanup 5 minutes after storage calc
+            await asyncio.sleep(300)
+            await _run_trash_cleanup()
+
     asyncio.create_task(rate_updater())
 
 
