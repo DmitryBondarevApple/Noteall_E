@@ -588,9 +588,8 @@ class AdminTopupRequest(BaseModel):
     description: str = ""
 
 
-@router.get("/admin/org/{org_id}")
-async def admin_org_detail(org_id: str, period: str = "all", admin=Depends(get_superadmin_user)):
-    """Get detailed org info with time-filtered expenses by category."""
+async def _build_org_analytics(org_id: str, period: str):
+    """Shared analytics aggregation logic for both superadmin and org_admin."""
     org = await db.organizations.find_one({"id": org_id}, {"_id": 0})
     if not org:
         raise HTTPException(status_code=404, detail="Organization not found")
@@ -614,7 +613,6 @@ async def admin_org_detail(org_id: str, period: str = "all", admin=Depends(get_s
     ).to_list(1000)
 
     # Balance
-    from app.routes.billing import get_or_create_balance
     bal = await get_or_create_balance(org_id)
 
     # --- Transactions (filtered + all for totals) ---
