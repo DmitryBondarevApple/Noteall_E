@@ -133,26 +133,7 @@ export default function OrgDetailPage() {
                   analysis={expenses.analysis || 0}
                   storage={expenses.storage || 0}
                 />
-                <div className="flex items-center gap-4 mt-3 flex-wrap">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
-                    <Mic className="w-3.5 h-3.5 text-indigo-500" />
-                    <span className="text-xs text-muted-foreground">Транскрибация</span>
-                    <span className="text-xs font-semibold">{fmtNum(expenses.transcription || 0, 2)}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2.5 h-2.5 rounded-full bg-cyan-500" />
-                    <Brain className="w-3.5 h-3.5 text-cyan-500" />
-                    <span className="text-xs text-muted-foreground">Анализ (AI)</span>
-                    <span className="text-xs font-semibold">{fmtNum(expenses.analysis || 0, 2)}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                    <HardDrive className="w-3.5 h-3.5 text-emerald-500" />
-                    <span className="text-xs text-muted-foreground">Хранение</span>
-                    <span className="text-xs font-semibold">{fmtNum(expenses.storage || 0, 2)}</span>
-                  </div>
-                </div>
+                <CategoryLegend expenses={expenses} fmtNum={fmtNum} />
               </CardContent>
             </Card>
 
