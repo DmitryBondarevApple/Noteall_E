@@ -332,6 +332,8 @@ export default function AppLayout({ children }) {
         <main className={cn('flex-1 transition-all duration-200', collapsed ? 'ml-16' : 'ml-56')}>
           {children}
         </main>
+
+        <FeedbackModal open={feedbackOpen} onOpenChange={setFeedbackOpen} />
       </div>
     </TooltipProvider>
   );
