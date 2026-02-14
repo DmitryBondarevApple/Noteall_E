@@ -576,9 +576,11 @@ async def delete_doc_attachment(
 async def download_doc_attachment(
     project_id: str, attachment_id: str, user=Depends(get_current_user)
 ):
-    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]})
+    project = await db.doc_projects.find_one({"id": project_id, "deleted_at": None}, {"_id": 0})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+    if not await can_user_access_project(project, user, "doc_folders"):
+        raise HTTPException(403, "Нет доступа к проекту")
 
     att = await db.doc_attachments.find_one({"id": attachment_id, "project_id": project_id}, {"_id": 0})
     if not att:
@@ -708,9 +710,11 @@ def _execute_script(script_text, context):
 @router.post("/doc/projects/{project_id}/run-pipeline")
 async def run_pipeline(project_id: str, data: RunPipelineRequest, user=Depends(get_current_user)):
     """Run a pipeline on document project materials. Fully server-side execution."""
-    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]})
+    project = await db.doc_projects.find_one({"id": project_id, "deleted_at": None})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+    if not await can_user_write_project(project, user, "doc_folders"):
+        raise HTTPException(403, "Нет прав на запуск пайплайна в этом проекте")
 
     # Load pipeline
     pipeline = await db.pipelines.find_one({"id": data.pipeline_id}, {"_id": 0})
