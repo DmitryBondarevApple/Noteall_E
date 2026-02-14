@@ -18,6 +18,7 @@ from app.services.access_control import (
     can_user_write_project,
     soft_delete_folder,
     get_accessible_public_folder_ids,
+    cascade_visibility,
 )
 from app.services.pdf_parser import extract_text_from_pdf
 
