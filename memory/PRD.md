@@ -24,8 +24,9 @@ Web application for building and running data processing pipelines (workflows) f
   - dmitry.bondarev@gmail.com → org "Bondarev Consulting" (startup script)
   - Default org name: "{Name} Company" when registration field empty
   - Org name in sidebar above user name
-  - **Org name editing** via "Переименовать" button on AdminPage → PUT /api/organizations/my
-- **Phase 1: Public/Private Storage System** (Feb 2026):
+  - Org name editing via "Переименовать" button on AdminPage → PUT /api/organizations/my
+
+### Phase 1: Backend Foundations (Feb 2026) — DONE
   - New schema: `owner_id`, `visibility` (private/public), `shared_with`, `access_type`, `deleted_at` for all folders and projects
   - Meeting folders: full CRUD with visibility, sharing, move, trash (soft delete/restore/permanent)
   - Doc folders: same feature set
@@ -38,10 +39,22 @@ Web application for building and running data processing pipelines (workflows) f
   - All related routes (transcripts, fragments, speakers, chat, attachments) updated to use access control
   - **53/53 backend tests passed**
 
+### Phase 2: Frontend — Meetings View (Feb 2026) — DONE
+  - Tabs: Приватные / Публичные / Корзина with state persistence in localStorage
+  - Folder tree with visibility icons (Globe for public), folder counts
+  - Create folder dialog with visibility selector and access type
+  - Sharing UI: Share/Unshare via dropdown menu, Share dialog with access level selector
+  - Move dialog for folders and projects
+  - Trash management: soft delete, restore, permanent delete with time-ago labels
+  - Context menu shows folder owner name for public folders
+  - **14/14 frontend tests passed**
+
+### Phase 3: Frontend — Documents View (Feb 2026) — DONE
+  - Same tab/sharing/trash UI as Meetings page
+  - All dialogs (create folder, share, move) replicated
+  - **Tested together with Phase 2 — all passed**
+
 ## Key API Endpoints
-- `PUT /api/organizations/my` — Rename organization
-- `GET/PUT /api/billing/admin/cost-settings` — Cost settings
-- `POST /api/billing/admin/run-storage-calc` — Manual S3 storage cost job
 - `GET /api/meeting-folders?tab=private|public|trash` — List meeting folders by tab
 - `POST /api/meeting-folders/{id}/share` — Share folder (make public)
 - `POST /api/meeting-folders/{id}/unshare` — Unshare folder (make private)
@@ -56,12 +69,8 @@ Web application for building and running data processing pipelines (workflows) f
 - `GET/PUT /api/admin/trash-settings` — Trash retention period (superadmin)
 
 ## P0 — In Progress
-- **Phase 2:** Frontend — Meetings View with Public/Private tabs, folder tree, sharing/moving/deleting UI
-- **Phase 3:** Frontend — Documents View (same UI as Phase 2)
+- **Phase 4:** Superadmin Controls — trash retention UI in admin panel, final E2E testing
 
-## P1 — Upcoming
-- **Phase 4:** Superadmin Controls — trash retention UI, folder owner in context menu, final E2E testing
-
-## P2 Backlog
+## P1 Backlog
 - Landing page refinements
 - Real payment integration (Stripe/YooKassa)
