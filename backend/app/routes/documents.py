@@ -1017,7 +1017,7 @@ async def run_pipeline(project_id: str, data: RunPipelineRequest, user=Depends(g
 
 @router.get("/doc/projects/{project_id}/runs")
 async def list_runs(project_id: str, user=Depends(get_current_user)):
-    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]})
+    project = await _get_doc_project_read(project_id, user)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
@@ -1029,7 +1029,7 @@ async def list_runs(project_id: str, user=Depends(get_current_user)):
 
 @router.delete("/doc/projects/{project_id}/runs/{run_id}")
 async def delete_run(project_id: str, run_id: str, user=Depends(get_current_user)):
-    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]})
+    project = await _get_doc_project_read(project_id, user)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     await db.doc_runs.delete_one({"id": run_id, "project_id": project_id})
@@ -1040,7 +1040,7 @@ async def delete_run(project_id: str, run_id: str, user=Depends(get_current_user
 
 @router.get("/doc/projects/{project_id}/streams")
 async def list_streams(project_id: str, user=Depends(get_current_user)):
-    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]})
+    project = await _get_doc_project_read(project_id, user)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
@@ -1051,7 +1051,7 @@ async def list_streams(project_id: str, user=Depends(get_current_user)):
 
 @router.post("/doc/projects/{project_id}/streams", status_code=201)
 async def create_stream(project_id: str, data: StreamCreate, user=Depends(get_current_user)):
-    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]})
+    project = await _get_doc_project_read(project_id, user)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
@@ -1070,7 +1070,7 @@ async def create_stream(project_id: str, data: StreamCreate, user=Depends(get_cu
 
 @router.put("/doc/projects/{project_id}/streams/{stream_id}")
 async def update_stream(project_id: str, stream_id: str, data: StreamUpdate, user=Depends(get_current_user)):
-    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]})
+    project = await _get_doc_project_read(project_id, user)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
@@ -1087,7 +1087,7 @@ async def update_stream(project_id: str, stream_id: str, data: StreamUpdate, use
 
 @router.delete("/doc/projects/{project_id}/streams/{stream_id}")
 async def delete_stream(project_id: str, stream_id: str, user=Depends(get_current_user)):
-    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]})
+    project = await _get_doc_project_read(project_id, user)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
@@ -1102,7 +1102,7 @@ async def delete_stream(project_id: str, stream_id: str, user=Depends(get_curren
 async def send_stream_message(
     project_id: str, stream_id: str, data: StreamMessage, user=Depends(get_current_user)
 ):
-    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]})
+    project = await _get_doc_project_read(project_id, user)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
@@ -1255,7 +1255,7 @@ async def delete_template(template_id: str, user=Depends(get_current_user)):
 
 @router.get("/doc/projects/{project_id}/pins")
 async def list_pins(project_id: str, user=Depends(get_current_user)):
-    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]})
+    project = await _get_doc_project_read(project_id, user)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
@@ -1266,7 +1266,7 @@ async def list_pins(project_id: str, user=Depends(get_current_user)):
 
 @router.post("/doc/projects/{project_id}/pins", status_code=201)
 async def create_pin(project_id: str, data: PinCreate, user=Depends(get_current_user)):
-    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]})
+    project = await _get_doc_project_read(project_id, user)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
@@ -1291,7 +1291,7 @@ async def create_pin(project_id: str, data: PinCreate, user=Depends(get_current_
 
 @router.post("/doc/projects/{project_id}/pins/reorder")
 async def reorder_pins(project_id: str, data: PinReorder, user=Depends(get_current_user)):
-    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]})
+    project = await _get_doc_project_read(project_id, user)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
@@ -1304,7 +1304,7 @@ async def reorder_pins(project_id: str, data: PinReorder, user=Depends(get_curre
 
 @router.put("/doc/projects/{project_id}/pins/{pin_id}")
 async def update_pin(project_id: str, pin_id: str, data: PinUpdate, user=Depends(get_current_user)):
-    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]})
+    project = await _get_doc_project_read(project_id, user)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
@@ -1320,7 +1320,7 @@ async def update_pin(project_id: str, pin_id: str, data: PinUpdate, user=Depends
 
 @router.delete("/doc/projects/{project_id}/pins/{pin_id}")
 async def delete_pin(project_id: str, pin_id: str, user=Depends(get_current_user)):
-    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]})
+    project = await _get_doc_project_read(project_id, user)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
