@@ -151,6 +151,7 @@ async def share_folder(folder_id: str, data: FolderShare, user=Depends(get_curre
         "access_type": data.access_type,
         "updated_at": now,
     }})
+    await cascade_visibility(folder_id, "public", "meeting_folders", "projects")
     return await db.meeting_folders.find_one({"id": folder_id}, {"_id": 0})
 
 
@@ -165,6 +166,7 @@ async def unshare_folder(folder_id: str, user=Depends(get_current_user)):
     await db.meeting_folders.update_one({"id": folder_id}, {"$set": {
         "visibility": "private", "shared_with": [], "updated_at": now,
     }})
+    await cascade_visibility(folder_id, "private", "meeting_folders", "projects")
     return await db.meeting_folders.find_one({"id": folder_id}, {"_id": 0})
 
 
