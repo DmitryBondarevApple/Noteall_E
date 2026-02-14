@@ -298,6 +298,21 @@ export default function AdminPage() {
     }
   };
 
+  const handleSaveTrashSettings = async () => {
+    if (editingTrash === null) return;
+    setSavingTrash(true);
+    try {
+      const res = await adminApi.updateTrashSettings(editingTrash);
+      setTrashRetention(res.data.retention_days);
+      setEditingTrash(null);
+      toast.success(res.data.message || 'Настройки корзины обновлены');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Ошибка сохранения');
+    } finally {
+      setSavingTrash(false);
+    }
+  };
+
   const handleCheckModels = async () => {
     setChecking(true);
     try {
