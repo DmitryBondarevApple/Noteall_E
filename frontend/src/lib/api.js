@@ -5,11 +5,14 @@ const API = `${BACKEND_URL}/api`;
 
 // Projects
 export const projectsApi = {
-  list: (folderId) => axios.get(`${API}/projects`, { params: folderId ? { folder_id: folderId } : {} }),
+  list: (params = {}) => axios.get(`${API}/projects`, { params }),
   get: (id) => axios.get(`${API}/projects/${id}`),
   create: (data) => axios.post(`${API}/projects`, data),
   update: (id, data) => axios.put(`${API}/projects/${id}`, data),
   delete: (id) => axios.delete(`${API}/projects/${id}`),
+  restore: (id) => axios.post(`${API}/projects/${id}/restore`),
+  permanentDelete: (id) => axios.delete(`${API}/projects/${id}/permanent`),
+  move: (id, folderId) => axios.post(`${API}/projects/${id}/move`, { folder_id: folderId }),
   upload: (id, file, language = 'ru', reasoningEffort = 'high', fastTrack = null) => {
     const formData = new FormData();
     formData.append('file', file);
@@ -28,10 +31,16 @@ export const projectsApi = {
 
 // Meeting Folders
 export const meetingFoldersApi = {
-  list: () => axios.get(`${API}/meeting-folders`),
+  list: (params = {}) => axios.get(`${API}/meeting-folders`, { params }),
+  get: (id) => axios.get(`${API}/meeting-folders/${id}`),
   create: (data) => axios.post(`${API}/meeting-folders`, data),
   update: (id, data) => axios.put(`${API}/meeting-folders/${id}`, data),
   delete: (id) => axios.delete(`${API}/meeting-folders/${id}`),
+  share: (id, data) => axios.post(`${API}/meeting-folders/${id}/share`, data),
+  unshare: (id) => axios.post(`${API}/meeting-folders/${id}/unshare`),
+  move: (id, parentId) => axios.post(`${API}/meeting-folders/${id}/move`, { parent_id: parentId }),
+  restore: (id) => axios.post(`${API}/meeting-folders/${id}/restore`),
+  permanentDelete: (id) => axios.delete(`${API}/meeting-folders/${id}/permanent`),
 };
 
 // Transcripts
@@ -189,19 +198,28 @@ export const attachmentsApi = {
 
 // Document Agent - Folders
 export const docFoldersApi = {
-  list: () => axios.get(`${API}/doc/folders`),
+  list: (params = {}) => axios.get(`${API}/doc/folders`, { params }),
+  get: (id) => axios.get(`${API}/doc/folders/${id}`),
   create: (data) => axios.post(`${API}/doc/folders`, data),
   update: (id, data) => axios.put(`${API}/doc/folders/${id}`, data),
   delete: (id) => axios.delete(`${API}/doc/folders/${id}`),
+  share: (id, data) => axios.post(`${API}/doc/folders/${id}/share`, data),
+  unshare: (id) => axios.post(`${API}/doc/folders/${id}/unshare`),
+  move: (id, parentId) => axios.post(`${API}/doc/folders/${id}/move`, { parent_id: parentId }),
+  restore: (id) => axios.post(`${API}/doc/folders/${id}/restore`),
+  permanentDelete: (id) => axios.delete(`${API}/doc/folders/${id}/permanent`),
 };
 
 // Document Agent - Projects
 export const docProjectsApi = {
-  list: (folderId) => axios.get(`${API}/doc/projects`, { params: folderId ? { folder_id: folderId } : {} }),
+  list: (params = {}) => axios.get(`${API}/doc/projects`, { params }),
   get: (id) => axios.get(`${API}/doc/projects/${id}`),
   create: (data) => axios.post(`${API}/doc/projects`, data),
   update: (id, data) => axios.put(`${API}/doc/projects/${id}`, data),
   delete: (id) => axios.delete(`${API}/doc/projects/${id}`),
+  restore: (id) => axios.post(`${API}/doc/projects/${id}/restore`),
+  permanentDelete: (id) => axios.delete(`${API}/doc/projects/${id}/permanent`),
+  move: (id, folderId) => axios.post(`${API}/doc/projects/${id}/move`, { folder_id: folderId }),
 };
 
 // Document Agent - Attachments
