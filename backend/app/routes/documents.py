@@ -481,9 +481,11 @@ async def upload_doc_attachment(
     file: UploadFile = File(...),
     user=Depends(get_current_user)
 ):
-    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]})
+    project = await db.doc_projects.find_one({"id": project_id, "deleted_at": None})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+    if not await can_user_write_project(project, user, "doc_folders"):
+        raise HTTPException(403, "Нет прав на загрузку в этот проект")
 
     content = await file.read()
     if len(content) > 100 * 1024 * 1024:
@@ -526,9 +528,11 @@ async def add_doc_url_attachment(
     data: dict,
     user=Depends(get_current_user)
 ):
-    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]})
+    project = await db.doc_projects.find_one({"id": project_id, "deleted_at": None})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+    if not await can_user_write_project(project, user, "doc_folders"):
+        raise HTTPException(403, "Нет прав на добавление в этот проект")
 
     now = datetime.now(timezone.utc).isoformat()
     doc = {
@@ -549,9 +553,11 @@ async def add_doc_url_attachment(
 async def delete_doc_attachment(
     project_id: str, attachment_id: str, user=Depends(get_current_user)
 ):
-    project = await db.doc_projects.find_one({"id": project_id, "user_id": user["id"]})
+    project = await db.doc_projects.find_one({"id": project_id, "deleted_at": None})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+    if not await can_user_write_project(project, user, "doc_folders"):
+        raise HTTPException(403, "Нет прав на удаление из этого проекта")
 
     att = await db.doc_attachments.find_one({"id": attachment_id, "project_id": project_id}, {"_id": 0})
     if not att:
