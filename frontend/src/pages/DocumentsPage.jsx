@@ -79,6 +79,8 @@ export default function DocumentsPage() {
   useEffect(() => { loadData(); }, [loadData]);
 
   const handleTabChange = (tab) => {
+    setFolders([]);
+    setProjects([]);
     setActiveTab(tab);
     localStorage.setItem('documents_tab', tab);
     setSearchQuery('');
