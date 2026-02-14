@@ -245,6 +245,7 @@ async def share_folder(folder_id: str, data: DocFolderShare, user=Depends(get_cu
         "access_type": data.access_type,
         "updated_at": now,
     }})
+    await cascade_visibility(folder_id, "public", "doc_folders", "doc_projects")
     return await db.doc_folders.find_one({"id": folder_id}, {"_id": 0})
 
 @router.post("/doc/folders/{folder_id}/unshare")
@@ -258,6 +259,7 @@ async def unshare_folder(folder_id: str, user=Depends(get_current_user)):
     await db.doc_folders.update_one({"id": folder_id}, {"$set": {
         "visibility": "private", "shared_with": [], "updated_at": now,
     }})
+    await cascade_visibility(folder_id, "private", "doc_folders", "doc_projects")
     return await db.doc_folders.find_one({"id": folder_id}, {"_id": 0})
 
 @router.post("/doc/folders/{folder_id}/move")
