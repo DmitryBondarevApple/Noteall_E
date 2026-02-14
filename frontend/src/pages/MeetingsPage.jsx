@@ -81,6 +81,8 @@ export default function MeetingsPage() {
   useEffect(() => { loadData(); }, [loadData]);
 
   const handleTabChange = (tab) => {
+    setFolders([]);
+    setProjects([]);
     setActiveTab(tab);
     localStorage.setItem('meetings_tab', tab);
     setSearchQuery('');
