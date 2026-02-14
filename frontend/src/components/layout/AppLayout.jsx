@@ -249,6 +249,31 @@ export default function AppLayout({ children }) {
 
           {/* Bottom section */}
           <div className="border-t border-slate-700/50 p-2 space-y-1">
+            {/* Suggest Improvement */}
+            {collapsed ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setFeedbackOpen(true)}
+                    className="w-full flex items-center justify-center rounded-lg text-sm text-slate-400 hover:bg-slate-800 hover:text-slate-200 h-9 transition-colors"
+                    data-testid="feedback-btn"
+                  >
+                    <MessageSquarePlus className="w-4 h-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="font-medium">Предложить улучшение</TooltipContent>
+              </Tooltip>
+            ) : (
+              <button
+                onClick={() => setFeedbackOpen(true)}
+                className="w-full flex items-center gap-2.5 px-3 rounded-lg text-sm text-slate-400 hover:bg-slate-800 hover:text-slate-200 h-9 transition-colors"
+                data-testid="feedback-btn"
+              >
+                <MessageSquarePlus className="w-4 h-4" />
+                <span>Предложить улучшение</span>
+              </button>
+            )}
+
             {/* Collapse toggle */}
             <button
               onClick={() => setCollapsed(!collapsed)}
