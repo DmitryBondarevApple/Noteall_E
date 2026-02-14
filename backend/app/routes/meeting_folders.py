@@ -9,6 +9,7 @@ from app.services.access_control import (
     can_user_access_folder,
     can_user_write_folder,
     soft_delete_folder,
+    cascade_visibility,
 )
 
 router = APIRouter(prefix="/meeting-folders", tags=["meeting-folders"])
