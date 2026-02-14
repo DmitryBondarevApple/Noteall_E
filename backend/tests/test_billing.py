@@ -6,7 +6,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://dynamic-pricing-23.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://private-public-hub.preview.emergentagent.com')
 
 # Test credentials
 TEST_EMAIL = "billing_test@test.com"

@@ -1,124 +1,130 @@
 <analysis>**original_problem_statement:**
-The user's initial high-level goal is to build a sophisticated data processing platform named noteall.ru. Throughout the session, the user guided the agent through a series of feature developments, bug fixes, and architectural improvements.
+The user's high-level goal is to build a sophisticated data processing platform, noteall.ru. Initially, the project involved creating a superadmin, building a pipeline engine, a marketing landing page, and an advanced billing system in Russian Rubles (RUB).
 
-The key features and requests implemented were:
-1.  **Superadmin Access:** Ensured the user  is always a superadmin via a startup script.
-2.  **Pipeline Engine Refactor:** Split a generic  node into three specific types (, , ) for better clarity and robustness.
-3.  **Marketing Landing Page:** Designed and built a new, professional landing page for the service, including generating placeholder images and integrating the existing authentication flow into a modal.
-4.  **Fast-Track Processing:** Added an automated, one-click processing option for audio files that bypasses all manual review steps.
-5.  **Advanced Billing System:** Migrated the pricing model to use Russian Rubles (RUB), with prices dynamically calculated based on a daily USD exchange rate. Implemented tiered discounts for bulk credit purchases and allowed users to specify a custom purchase amount.
-6.  **Storage Architecture Change:** Reworked file handling to stop using AWS S3 for temporary audio files (using local server storage instead) and added a mechanism to properly delete S3 files associated with a document project when it's deleted.
-7.  **UI/UX Polishing:** Removed branding mentions of ChatGPT and Deepgram and fixed a confusing button state on the project processing page.
+In this session, the user requested and the agent implemented:
+1.  **Third-Party Cost Integration:** A system to pass on the costs of Deepgram transcription and S3 storage to users by deducting credits from their balance, with multipliers managed by a superadmin.
+2.  **UI/UX Improvements:** Made the active UI tabs more prominent with a bright underline and removed a redundant Prompts tab from the admin panel.
+3.  **Organization Management:**
+    *   Fixed an issue where the superadmin was not tied to an organization.
+    *   Implemented logic to create a default organization for new users who don't specify one.
+    *   Added the user's organization name to the main UI.
+    *   Gave superadmins the ability to edit their organization's name.
 
-The current and most recent request is to enhance the billing system further by incorporating the costs of third-party services (transcription and file storage) into the customer's credit usage.
+The most recent and significant request is a complete architectural overhaul of the project storage system to introduce separate Private and Public (shared) areas for projects and folders, with granular access controls, a managed trash system, and distinct ownership rules.
 
 **User's preferred language**: The user's primary language is **Russian**. The next agent MUST respond in Russian only.
 
 **what currently exists?**
-The project is a full-stack web application with a FastAPI backend, MongoDB database, and a React frontend. The application, noteall.ru, allows users to upload audio for transcription and analysis, or upload documents for processing using custom-built pipelines.
-
-The codebase includes:
-- A complete authentication and user management system with roles (, ).
-- A sophisticated client-side pipeline editor and execution engine.
-- A fast-track feature for automated audio processing.
-- A dynamic billing system supporting multiple credit packages, custom amounts, tiered discounts, and daily currency conversion from USD to RUB.
-- A new landing page for unauthenticated users.
-- Backend logic for handling file uploads (audio locally, documents to S3) and running background tasks (transcription via Celery, cost calculations via ).
-- A superadmin dashboard for managing system settings.
+The application is a full-stack platform with a FastAPI backend, MongoDB database, and React frontend. It allows users to manage audio transcriptions and document analysis projects. The current system includes:
+- A complete user authentication system with  and  roles.
+- A dynamic billing system that handles credit purchases in RUB, tiered discounts, and custom amounts.
+- A newly implemented cost-pass-through system that deducts credits for transcription and storage usage based on superadmin-defined multipliers.
+- A superadmin panel for managing users, billing, and system settings.
+- Organization management features, including the ability for a superadmin to rename their organization.
+- A global UI style for highlighting active tabs with a prominent underline.
 
 **Last working item**:
-The agent and user finalized the plan for implementing two new cost calculation features. The agent acknowledged the user's final approval and was about to begin implementation.
--   Last item agent was working: Planning the implementation for adding third-party service costs (transcription and storage) into the customer credit system.
+The agent and user finalized a multi-phase plan to refactor the project storage system. The agent acknowledged the user's final approval and was about to begin implementation of the first phase.
+-   Last item agent was working: Starting Phase 1 of the Public/Private Storage System refactor.
 -   Status: NOT STARTED
 -   Agent Testing Done: N
--   Which testing method agent to use? This is a complex backend feature. The agent should first test the new endpoints and calculations using  and . Then, the superadmin UI changes should be verified with the screenshot tool. After the full implementation, the  should be used to run a full regression and E2E test to ensure the new background tasks and billing logic work correctly without breaking existing functionality.
+-   Which testing method agent to use? This is a large, multi-phase feature.
+    -   **For each phase:** Use  for backend API endpoints and the screenshot tool for frontend UI changes.
+    -   **After each phase is complete:** Use  to run comprehensive E2E and regression tests to ensure the new data models and access controls work correctly without breaking existing project functionality.
 -   User Testing Done: N
 
 **All Pending/In progress Issue list**:
-There are no pending bugs or issues. The current focus is on new feature development.
+There are no pending bugs or issues. The current focus is on the new storage architecture.
 
 **In progress Task List**:
--   Task 1: Implement new cost calculation parameters. (Priority: P0)
+-   Task 1: Implement Phase 1 of the Public/Private Storage System refactor. (Priority: P0)
 
  Task Detail:
-  - Task 1: **Implement new cost calculation parameters.**
-     - Where to resume: The implementation plan has been fully approved. The agent should start with the backend changes.
-        - **Part 1 (Transcription Cost):**
-            1.  Modify : Add a  field to the  model.
-            2.  Modify : Add a UI control for superadmins to set this new multiplier.
-            3.  Modify : In the audio transcription task, after a successful Deepgram transcription, calculate the cost (/bin/bash.0043/min), apply the multiplier, convert the final cost to credits, and deduct it from the user's balance. Create a corresponding .
-        - **Part 2 (Storage Cost):**
-            1.  Modify : Add an  field to the  model.
-            2.  Modify : Add a UI control for this multiplier.
-            3.  Modify : Create a new  job to run daily at 3:00 AM MSK (after the currency update job).
-            4.  Implement the job's logic: Iterate through users, calculate the total S3 storage size for their document projects, compute the cost based on the provider's tiered pricing, apply the multiplier, convert to credits, and deduct from their balance, logging a new transaction.
-     - What will be achieved with this? The service's pricing model will become sustainable by automatically passing on operational costs for transcription and storage to the end-users.
+  - Task 1: **Phase 1: Backend Foundations & Data Model**
+     - Where to resume: Begin implementation based on the agreed plan.
+        1.  **Database Schema Changes:**
+            -   Modify the  collection model: add  (boolean),  (ObjectId),  (ObjectId), and  (array of objects with  and ).
+            -   Create a new  collection model with a similar structure (, , , ).
+        2.  **Access Control Service:** Create a new service () to handle all permission checks for viewing, editing, and creating projects/folders.
+        3.  **Data Migration:** Create a one-time startup script to migrate existing projects: set  to , assign  based on the existing , and set  to .
+        4.  **Trash System:**
+            -   Add a  field to  and .
+            -   Create a new  background job to permanently delete items where  is older than the configurable retention period.
+        5.  **New API Endpoints:**
+            -   CRUD endpoints for folders ().
+            -   Endpoints for sharing (), moving projects/folders, and managing the trash.
+     - What will be achieved with this? The foundational backend logic and data structures for the new public/private storage system will be in place, ready for the frontend integration.
      - Status:  NOT STARTED
-     - Should Test frontend/backend/both after fix? Both.
+     - Should Test frontend/backend/both after fix? Backend.
      - Blocked on something: None.
 
 **Upcoming and Future Tasks**
--   None have been discussed.
+-   **Upcoming Tasks (P1):**
+    -   **Phase 2: Frontend - Meetings View:** Implement the Public and Private tabs in the Meetings section, build the new folder/project tree view, and add UI for creating folders, sharing, moving, and deleting.
+    -   **Phase 3: Frontend - Documents View:** Replicate the UI and functionality from Phase 2 for the Documents section.
+-   **Future Tasks (P2):**
+    -   **Phase 4: Superadmin Controls & Polish:** Add a UI in the superadmin panel for setting the trash retention period. Conduct final E2E testing of the entire feature. Show the folder owner in the context menu as requested by the user.
 
 **Completed work in this session**
-- **Superadmin Role Fix:** Ensured user  is granted  role on application startup ().
-- **Pipeline Node Refactor:** Replaced the generic  node with specific , , and  types across the frontend and database.
-- **Feature - Landing Page:** Created a new, full-featured landing page component at .
-- **Feature - Fast-Track Audio Processing:** Implemented an end-to-end automated processing flow, involving changes to backend models, a new API endpoint (), and significant frontend orchestration logic.
-- **Feature - Advanced Billing:** Implemented RUB pricing, daily exchange rate updates, tiered discounts, and custom purchase amounts in the billing system ( and ).
-- **Refactor - S3 Storage:** Changed audio file handling to use temporary local storage instead of S3 and added S3 cleanup for document projects upon deletion (, ).
-- **UI/UX Polish:** Removed hardcoded ChatGPT and Deepgram mentions from the UI and improved the state management of a button on the project page to reduce confusion.
+-   **Feature - Cost Calculation:** Implemented the entire system for passing transcription and storage costs to users. This included backend models, API endpoints, background jobs, and a new Cost Settings tab in the admin UI. (, , , , ).
+-   **Feature - Organization Management:**
+    -   Ensured the superadmin user is assigned to the Bondarev Consulting organization on startup ().
+    -   Implemented default organization name generation for new users ().
+    -   Displayed the organization name in the UI sidebar ().
+    -   Added the ability for superadmins to edit their organization's name (, ).
+-   **UI Fix - Active Tab Highlighting:** Applied a global CSS style to add a prominent blue underline to all active tabs across the application ().
+-   **UI Cleanup - Remove Prompts Tab:** Removed the Prompts tab and its associated logic from the superadmin panel ().
+
+**Earlier issues found/mentioned but not fixed**
+- None.
 
 **Known issue recurrence from previous fork**
--   The initial handoff summary incorrectly identified the tech stack as Django/PostgreSQL. The agent correctly identified it as **FastAPI/MongoDB** and proceeded with the correct stack.
+- The initial handoff summary incorrectly identified the tech stack as Django/PostgreSQL. The agent correctly identified it as **FastAPI/MongoDB** and proceeded with the correct stack.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Frontend:** React, JavaScript (JSX), , TanStack Query for data fetching, Shadcn UI components.
--   **Backend:** Python, FastAPI, MongoDB (with  async driver), Pydantic for data validation.
--   **Background Tasks:**  for long-running tasks like transcription;  for scheduled jobs like currency updates.
--   **Storage:** Local server filesystem for temporary audio files, AWS S3 for persistent document storage.
+-   **Frontend:** React, JavaScript (JSX), , TanStack Query, Shadcn UI.
+-   **Backend:** Python, FastAPI, MongoDB (), Pydantic.
+-   **Background Tasks:**  (transcription),  (currency updates, cost calculations, upcoming trash cleanup).
+-   **Storage:** Local server (temp audio), AWS S3 (documents).
 
 **key DB schema**
--   : Contains user profile, , and  (in credits).
--   : A singleton collection storing global settings like  and . This will be extended for the new multipliers.
--   : Defines purchasable credit packages with , , and .
--   : Logs all credit deductions and additions.
--   : Stores metadata for user projects. The  boolean and related fields were recently added.
--   : Stores metadata for files in document analysis projects, including the .
+-   : { , , , ,  }
+-   : { ,  }
+-   : Singleton for global settings, now includes  and . Will be extended to include .
+-   : Stores project metadata. **To be modified** with , , , , .
+-   : **New collection** to be created to manage folder hierarchy and permissions.
 
 **All files of reference**
--    (for adding the new scheduled task)
--    &  (for billing logic)
--    (for transcription cost logic)
--    (for the new multiplier settings UI)
--    (for transcription cost reference: /bin/bash.0043/min for Nova-3 Pre-recorded)
--   User-provided S3 storage pricing tiers.
+-    (entire directory is the focus for the next task).
+-    (to add the new trash cleanup job).
+-    and  (will need to be refactored for the new UI).
+-    (to add the trash retention setting).
 
 **Critical Info for New Agent**
--   **Your immediate and only priority is to implement the new cost calculation features as planned.** The user has confirmed the plan and is waiting for you to start.
+-   **Your sole priority is the multi-phase refactor of the project storage system.** The plan has been approved by the user. Start with **Phase 1: Backend Foundations**.
 -   You MUST communicate with the user in **Russian**.
--   The tech stack is **FastAPI, MongoDB, and React**.
--   The billing system is now multi-faceted; remember to account for USD/RUB conversion, multipliers, and tiered pricing in your calculations.
--   Refer to the approved plan under In progress Task List for the step-by-step implementation guide.
+-   The user requested a small UI change to the plan: show the **folder owner's name in the context menu** for that folder, not as a badge. This should be implemented in the frontend phases.
+-   This is a large, architectural change. Work systematically through the approved phases, testing thoroughly at each step.
 
 **documents and test reports created in this job**
 -   
 -   
--   
+-    (Updated)
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User (message 526):** Pointed out that the Process button remains active throughout the transcription, which is confusing.
-2.  **User (message 529):** Clarified that the button should be hidden only *after* processing is successfully completed.
-3.  **Agent (message 530):** Agreed and implemented the fix.
-4.  **User (message 548):** Provided a detailed new requirement to add transcription (Deepgram) and storage (S3) costs to the customer's credit consumption.
-5.  **Agent (message 555):** Proposed a comprehensive, two-part plan to implement the new cost calculations.
-6.  **User (message 557):** Approved the plan with one minor correction: the storage cost calculation should run daily *after* the currency rate update.
-7.  **Agent (message 558):** Acknowledged the correction and confirmed they were starting.
-8.  **User (message 560):** We have a task to add two more parameters to the cost calculation. Look at it, are you ready to start? **(PENDING)**
-9.  **User (message 561):** (Repeated the previous message) We have a task to add two more parameters to the cost calculation. Look at it, are you ready to start? **(PENDING - This is the most recent message, indicating urgency)**
+1.  **User (250):** Proposed the massive new feature: a Public/Private storage system with sharing, permissions, and a trash system.
+2.  **Agent (252):** Asked several clarifying questions about ownership, permissions, and behavior.
+3.  **User (253):** Answered all questions, confirming details like permission types (read-only, read+create), root projects, separate trash bins, and subfolder ownership.
+4.  **Agent (254):** Signaled understanding and began reviewing the architecture.
+5.  **Agent (263):** Proposed a detailed, 4-phase implementation plan, starting with backend foundations and moving to frontend implementation.
+6.  **User (264):** Agreed with the entire plan (В остальном - согласен!) but requested one UI tweak: show the folder owner in the context menu instead of as a badge. **(This is an important requirement for the frontend phases)**.
+7.  **Agent (265):** Acknowledged the UI tweak and confirmed the start of Phase 1.
+8.  **User (209):** Yes, lets add the ability to edit the organization name from the AdminPage settings." (This was completed).
+9.  **User (184):** "Do as you suggested, but not below, but ABOVE the users name. (Regarding showing org name in UI, this was completed).
+10. **User (173):** Raised the issue of the superadmin not having an organization and requested the feature to display the org name in the UI. (This was completed).
 
 **Project Health Check:**
 -   **Broken:** None.
@@ -128,16 +134,16 @@ There are no pending bugs or issues. The current focus is on new feature develop
 -   **OpenAI GPT-4o:** Used for AI pipeline steps. Uses the Emergent LLM Key.
 -   **Deepgram (Nova-3):** Used for audio transcription. Requires a user-provided API key.
 -   **AWS S3:** Used for storing files for document analysis projects. Requires user-provided keys.
--   **Free Currency Converter API:** Used for daily USD to RUB exchange rate updates. Appears to be keyless.
+-   **Free Currency Converter API:** Used for daily USD to RUB exchange rate updates.
 
 **Testing status**
--   Testing agent used after significant changes: YES
+-   Testing agent used after significant changes: YES. The organization management features were successfully tested.
 -   Troubleshoot agent used after agent stuck in loop: NO
 -   Test files created: None
 -   Known regressions: None
 
 **Credentials to test flow:**
--   The primary user account is , which has  privileges. The password is unknown but was successfully used by the previous agent during the session for testing UI flows.
+-   Superadmin user: . The password is unknown but the agent can log in programmatically for testing.
 
 **What agent forgot to execute**
--   Nothing was forgotten. The agent has been working systematically. The very last user message is a prompt to start the new, agreed-upon task.</analysis>
+-   Nothing. The agent was systematically working through user requests and was about to begin the next large, approved task.</analysis>
