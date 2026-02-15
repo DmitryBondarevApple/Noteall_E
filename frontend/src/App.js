@@ -20,6 +20,7 @@ import SpeakerDirectoryPage from "./pages/SpeakerDirectoryPage";
 import AdminPage from "./pages/AdminPage";
 import OrgDetailPage from "./pages/OrgDetailPage";
 import OrgAdminDashboard from "./pages/OrgAdminDashboard";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import BillingPage from "./pages/BillingPage";
 
 const ProtectedRoute = ({ children }) => {
