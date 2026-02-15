@@ -170,3 +170,91 @@ async def login(data: UserLogin):
 async def get_me(user=Depends(get_current_user)):
     org_name = await _get_org_name(user.get("org_id"))
     return _user_response(user, org_name)
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    password: str
+
+
+@router.post("/forgot-password")
+async def forgot_password(data: ForgotPasswordRequest):
+    user = await db.users.find_one({"email": data.email}, {"_id": 0, "id": 1, "name": 1})
+    # Always return success to prevent email enumeration
+    if not user:
+        return {"message": "Если email зарегистрирован, вы получите письмо со ссылкой для сброса пароля"}
+
+    # Generate reset token
+    token = str(uuid.uuid4())
+    now = datetime.now(timezone.utc)
+    await db.password_resets.insert_one({
+        "token": token,
+        "user_id": user["id"],
+        "created_at": now.isoformat(),
+        "expires_at": (now + timedelta(hours=1)).isoformat(),
+        "used": False,
+    })
+
+    # Build reset link
+    reset_link = f"{FRONTEND_URL}/reset-password/{token}"
+    user_name = user.get("name", "")
+
+    html = f"""
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px;">
+      <div style="text-align: center; margin-bottom: 32px;">
+        <h2 style="color: #0f172a; font-size: 22px; margin: 0;">Noteall</h2>
+      </div>
+      <p style="color: #334155; font-size: 15px; line-height: 1.6;">Здравствуйте{', ' + user_name if user_name else ''}!</p>
+      <p style="color: #334155; font-size: 15px; line-height: 1.6;">Мы получили запрос на сброс пароля для вашего аккаунта. Нажмите кнопку ниже, чтобы установить новый пароль:</p>
+      <div style="text-align: center; margin: 28px 0;">
+        <a href="{reset_link}" style="display: inline-block; background-color: #0f172a; color: #ffffff; text-decoration: none; padding: 12px 32px; border-radius: 24px; font-size: 14px; font-weight: 600;">
+          Сбросить пароль
+        </a>
+      </div>
+      <p style="color: #94a3b8; font-size: 13px; line-height: 1.5;">Ссылка действительна 1 час. Если вы не запрашивали сброс пароля, проигнорируйте это письмо.</p>
+      <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
+      <p style="color: #cbd5e1; font-size: 11px; text-align: center;">Noteall — AI-платформа для анализа встреч и документов</p>
+    </div>
+    """
+
+    try:
+        params = {
+            "from": SENDER_EMAIL,
+            "to": [data.email],
+            "subject": "Сброс пароля — Noteall",
+            "html": html,
+        }
+        await asyncio.to_thread(resend.Emails.send, params)
+        logger.info(f"Password reset email sent to {data.email}")
+    except Exception as e:
+        logger.error(f"Failed to send reset email: {e}")
+        raise HTTPException(status_code=500, detail="Не удалось отправить письмо. Попробуйте позже.")
+
+    return {"message": "Если email зарегистрирован, вы получите письмо со ссылкой для сброса пароля"}
+
+
+@router.post("/reset-password")
+async def reset_password(data: ResetPasswordRequest):
+    if len(data.password) < 6:
+        raise HTTPException(status_code=400, detail="Пароль должен быть не менее 6 символов")
+
+    reset = await db.password_resets.find_one({"token": data.token, "used": False}, {"_id": 0})
+    if not reset:
+        raise HTTPException(status_code=400, detail="Недействительная или уже использованная ссылка для сброса пароля")
+
+    now = datetime.now(timezone.utc).isoformat()
+    if now > reset["expires_at"]:
+        raise HTTPException(status_code=400, detail="Ссылка для сброса пароля истекла. Запросите новую.")
+
+    # Update password
+    new_hash = hash_password(data.password)
+    await db.users.update_one({"id": reset["user_id"]}, {"$set": {"password": new_hash}})
+
+    # Mark token as used
+    await db.password_resets.update_one({"token": data.token}, {"$set": {"used": True}})
+
+    return {"message": "Пароль успешно изменён"}
