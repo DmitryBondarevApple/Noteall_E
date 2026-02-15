@@ -132,10 +132,77 @@ export default function AuthPage() {
             <div className="lg:hidden flex items-center justify-center gap-2 mb-4">
               <img src="/logo-noteall.png" alt="Noteall" className="h-6" />
             </div>
-            <CardTitle className="text-2xl font-bold tracking-tight">Добро пожаловать</CardTitle>
-            <CardDescription>Войдите или создайте аккаунт</CardDescription>
+            {showForgot ? (
+              <>
+                <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Mail className="w-6 h-6 text-slate-600" />
+                </div>
+                <CardTitle className="text-2xl font-bold tracking-tight">Сброс пароля</CardTitle>
+                <CardDescription>Введите email, на который зарегистрирован аккаунт</CardDescription>
+              </>
+            ) : (
+              <>
+                <CardTitle className="text-2xl font-bold tracking-tight">Добро пожаловать</CardTitle>
+                <CardDescription>Войдите или создайте аккаунт</CardDescription>
+              </>
+            )}
           </CardHeader>
           <CardContent>
+            {showForgot ? (
+              forgotSent ? (
+                <div className="text-center space-y-4 py-4">
+                  <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center mx-auto">
+                    <Mail className="w-7 h-7 text-emerald-600" />
+                  </div>
+                  <h3 className="font-semibold text-lg" data-testid="forgot-sent-title">Проверьте почту</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Если аккаунт с адресом <span className="font-medium text-slate-700">{forgotEmail}</span> существует, мы отправили письмо со ссылкой для сброса пароля.
+                  </p>
+                  <p className="text-xs text-muted-foreground">Не получили? Проверьте папку «Спам»</p>
+                  <Button
+                    variant="outline"
+                    className="rounded-full"
+                    onClick={() => { setShowForgot(false); setForgotSent(false); setForgotEmail(''); }}
+                    data-testid="forgot-back-login-btn"
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" /> Вернуться ко входу
+                  </Button>
+                </div>
+              ) : (
+                <form onSubmit={handleForgotPassword} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="forgot-email">Email</Label>
+                    <Input
+                      id="forgot-email"
+                      data-testid="forgot-email-input"
+                      type="email"
+                      placeholder="email@example.com"
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    data-testid="forgot-submit-btn"
+                    className="w-full rounded-full h-11"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Отправка...</> : 'Отправить ссылку'}
+                  </Button>
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      className="text-sm text-muted-foreground hover:text-slate-900 transition-colors inline-flex items-center gap-1"
+                      onClick={() => setShowForgot(false)}
+                      data-testid="forgot-back-btn"
+                    >
+                      <ArrowLeft className="w-3.5 h-3.5" /> Вернуться ко входу
+                    </button>
+                  </div>
+                </form>
+              )
+            ) : (
             <Tabs defaultValue="login" className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="login" data-testid="login-tab">Вход</TabsTrigger>
@@ -157,7 +224,17 @@ export default function AuthPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="login-password">Пароль</Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="login-password">Пароль</Label>
+                      <button
+                        type="button"
+                        className="text-xs text-muted-foreground hover:text-slate-900 transition-colors"
+                        onClick={() => { setShowForgot(true); setForgotEmail(loginData.email); }}
+                        data-testid="forgot-password-link"
+                      >
+                        Забыли пароль?
+                      </button>
+                    </div>
                     <Input
                       id="login-password"
                       data-testid="login-password-input"
