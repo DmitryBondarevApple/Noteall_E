@@ -6,9 +6,12 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Sparkles, FileText, Users, BrainCircuit } from 'lucide-react';
+import { Sparkles, FileText, Users, BrainCircuit, ArrowLeft, Loader2, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { seedData } from '../lib/api';
+import axios from 'axios';
+
+const API = process.env.REACT_APP_BACKEND_URL + '/api';
 
 export default function AuthPage() {
   const [isLoading, setIsLoading] = useState(false);
