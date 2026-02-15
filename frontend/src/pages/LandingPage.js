@@ -98,6 +98,17 @@ export default function LandingPage() {
     } finally { setIsLoading(false); }
   };
 
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      await axios.post(`${API}/auth/forgot-password`, { email: forgotEmail });
+      setForgotSent(true);
+    } catch { toast.error('Ошибка отправки'); }
+    finally { setIsLoading(false); }
+  };
+
+  const closeAuth = () => { setShowAuth(false); setShowForgot(false); setForgotSent(false); setForgotEmail(''); };
   const openRegister = () => { setAuthTab('register'); setShowAuth(true); };
   const openLogin = () => { setAuthTab('login'); setShowAuth(true); };
 
