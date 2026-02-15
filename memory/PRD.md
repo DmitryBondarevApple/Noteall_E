@@ -1,94 +1,43 @@
-# PRD — noteall.ru
+# Noteall.ru - PRD
 
-## Описание продукта
-AI-платформа для транскрибации и анализа встреч и документов. Полнофункциональное приложение (FastAPI + React + MongoDB).
+## Original Problem Statement
+Build the "noteall.ru" platform - a meeting notes and transcription management tool with organization management, billing, and AI-powered features.
 
-## Основные возможности
-- Управление проектами/встречами с приватными, публичными папками и корзиной
-- Шаринг папок с каскадными правами доступа
-- AI-транскрибация и анализ (Deepgram, OpenAI)
-- Конструктор пайплайнов
-- Биллинг и управление кредитами
-- S3 хранилище файлов
-- Система приглашений пользователей
-- Обратная связь через Telegram
-- Аналитика для суперадмина и org_admin
-- Восстановление пароля через email (Resend)
+## Core Features (Implemented)
+- Project/folder management (public/private/trash)
+- JWT authentication with password reset via Resend
+- "Suggest Improvements" feedback modal (Telegram integration)
+- Superadmin analytics dashboard
+- Organization admin analytics dashboard
+- Transcript view with compact speaker badges
+- Redesigned sidebar layout
 
-## Архитектура
-```
-/app
-├── backend/
-│   ├── app/
-│   │   ├── core/ (config, database, security)
-│   │   ├── routes/ (auth, projects, documents, meeting_folders, feedback, billing, ...)
-│   │   ├── services/ (access_control, metering)
-│   │   └── main.py
-│   └── requirements.txt
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── layout/AppLayout.jsx
-│   │   │   ├── modals/FeedbackModal
-│   │   │   ├── analytics/AnalyticsWidgets.jsx
-│   │   │   └── ui/...
-│   │   ├── pages/
-│   │   │   ├── AuthPage.js (login/register + forgot password flow)
-│   │   │   ├── ResetPasswordPage.jsx (new password form)
-│   │   │   ├── AdminPage.js
-│   │   │   ├── OrgDetailPage.jsx (superadmin analytics)
-│   │   │   ├── OrgAdminDashboard.jsx (org admin analytics)
-│   │   │   └── ...
-│   │   ├── contexts/ (AuthContext, CreditsContext)
-│   │   └── lib/ (api.js)
-│   └── package.json
-```
+## Tech Stack
+- **Frontend:** React, Recharts, html2canvas, Shadcn UI
+- **Backend:** FastAPI, MongoDB
+- **Email:** Resend (transactional emails)
+- **Integrations:** OpenAI GPT-4o, Deepgram, AWS S3, Telegram Bot API, Free Currency Converter API
 
-## Интеграции
-- OpenAI GPT-4o (Emergent LLM Key)
-- Deepgram Nova-3 (транскрибация)
-- AWS S3 / Timeweb S3 (хранение файлов)
-- Free Currency Converter API
-- Telegram Bot API (обратная связь)
-- Resend (транзакционные email — сброс пароля)
+## Key Architecture
+- Frontend: `/app/frontend/src/`
+- Backend: `/app/backend/src/`
+- Shared analytics components: `/app/frontend/src/components/analytics/`
+- Shared analytics utils: `/app/backend/src/projects/routes/billing_utils.py`
 
-## Реализовано Feb 14, 2026
+## Completed Tasks
+- [x] Core project management features
+- [x] Feedback modal with Telegram integration
+- [x] Superadmin analytics dashboard
+- [x] Organization admin analytics dashboard
+- [x] Sidebar redesign
+- [x] Compact speaker badges in transcript
+- [x] Password reset flow (Resend integration)
+- [x] "Forgot Password?" link in landing page auth modal (Feb 2026)
 
-### 1. Функция "Предложить улучшение"
-- Кнопка в сайдбаре → модальное окно → Telegram Bot API
+## Backlog
+- No defined future tasks - awaiting user input
 
-### 2. Страница организации (Суперадмин)
-- `/admin/org/:orgId` — KPI, графики, категории расходов, транзакции
-
-### 3. Дашборд аналитики для админа организации
-- `/admin/analytics` — аналогичный суперадминскому, привязан к org_id пользователя
-
-### 4. Редизайн нижней части сайдбара
-- Баланс → "Обратная связь" + свернуть → Профиль
-
-### 5. Компактные бейджи спикеров
-- Сокращённые имена в сводке ("Имя Ф."), полные в транскрипте
-
-### 6. Восстановление пароля (NEW)
-- **Поток:** "Забыли пароль?" → ввод email → письмо от Resend → `/reset-password/:token` → новый пароль → редирект на логин
-- **Backend:**
-  - `POST /api/auth/forgot-password` — генерация одноразового токена (1 час), отправка письма
-  - `POST /api/auth/reset-password` — проверка токена, смена пароля
-  - MongoDB коллекция: `password_resets` (token, user_id, expires_at, used)
-  - Защита от enumeration — одинаковый ответ для существующих и несуществующих email
-- **Frontend:**
-  - Ссылка "Забыли пароль?" рядом с полем пароля на логине
-  - Форма ввода email + экран "Проверьте почту"
-  - Страница `/reset-password/:token` — два поля пароля + валидация
-  - Экран успеха с кнопкой "Войти"
-- **Email:** отправляется с `noreply@notifications.noteall.ru` через Resend API
-- **Тестирование:** 100% (8/8 backend, все frontend flows)
-
-## Бэклог
-- Нет определённых задач
-
-## Учётные данные
-- Суперадмин: dmitry.bondarev@gmail.com / Qq!11111
-- Telegram: backend/.env (TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID)
-- Resend: backend/.env (RESEND_API_KEY)
-- Sender: noreply@notifications.noteall.ru
+## Credentials
+- Superadmin: dmitry.bondarev@gmail.com
+- Resend API Key: configured in backend/.env
+- Resend from email: noreply@notifications.noteall.ru
