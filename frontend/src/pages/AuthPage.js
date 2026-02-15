@@ -58,6 +58,20 @@ export default function AuthPage() {
     }
   };
 
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      await axios.post(`${API}/auth/forgot-password`, { email: forgotEmail });
+      setForgotSent(true);
+      toast.success('Письмо отправлено!');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Ошибка отправки');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex">
       {/* Left side - Branding */}
