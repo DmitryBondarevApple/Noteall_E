@@ -460,11 +460,11 @@ export default function LandingPage() {
       {/* ═══════ AUTH MODAL ═══════ */}
       {showAuth && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowAuth(false)} />
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={closeAuth} />
           <Card className="relative w-full max-w-md shadow-2xl border-0 bg-white z-10" data-testid="auth-modal">
             <button
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-xl leading-none"
-              onClick={() => setShowAuth(false)}
+              onClick={closeAuth}
               data-testid="auth-modal-close"
             >
               &times;
@@ -472,8 +472,58 @@ export default function LandingPage() {
             <CardContent className="pt-8 pb-6 px-6">
               <div className="text-center mb-6">
                 <img src="/logo-noteall.png" alt="Noteall" className="h-8 mx-auto mb-3" />
-                <p className="text-slate-500 text-sm">Войдите или создайте аккаунт</p>
+                <p className="text-slate-500 text-sm">{showForgot ? 'Восстановление пароля' : 'Войдите или создайте аккаунт'}</p>
               </div>
+
+              {showForgot ? (
+                forgotSent ? (
+                  <div className="text-center space-y-4">
+                    <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mx-auto">
+                      <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                    </div>
+                    <h3 className="font-semibold text-lg text-slate-900" data-testid="modal-forgot-sent-title">Проверьте почту</h3>
+                    <p className="text-slate-500 text-sm">
+                      Если аккаунт с адресом <span className="font-medium text-slate-700">{forgotEmail}</span> существует, мы отправили письмо со ссылкой для сброса пароля.
+                    </p>
+                    <Button
+                      variant="outline"
+                      className="w-full rounded-full"
+                      onClick={() => { setShowForgot(false); setForgotSent(false); setForgotEmail(''); }}
+                      data-testid="modal-forgot-back-login-btn"
+                    >
+                      Вернуться ко входу
+                    </Button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleForgotPassword} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="modal-forgot-email">Email</Label>
+                      <Input
+                        id="modal-forgot-email"
+                        data-testid="modal-forgot-email-input"
+                        type="email"
+                        placeholder="email@example.com"
+                        value={forgotEmail}
+                        onChange={(e) => setForgotEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <Button type="submit" data-testid="modal-forgot-submit-btn" className="w-full rounded-full h-11" disabled={isLoading}>
+                      {isLoading ? 'Отправка...' : 'Отправить ссылку для сброса'}
+                    </Button>
+                    <div className="text-center">
+                      <button
+                        type="button"
+                        className="text-sm text-slate-500 hover:text-slate-700 transition-colors"
+                        onClick={() => setShowForgot(false)}
+                        data-testid="modal-forgot-back-btn"
+                      >
+                        Назад ко входу
+                      </button>
+                    </div>
+                  </form>
+                )
+              ) : (
               <Tabs value={authTab} onValueChange={setAuthTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-6">
                   <TabsTrigger value="login" data-testid="login-tab">Вход</TabsTrigger>
@@ -487,7 +537,17 @@ export default function LandingPage() {
                       <Input id="login-email" data-testid="login-email-input" type="email" placeholder="email@example.com" value={loginData.email} onChange={(e) => setLoginData({ ...loginData, email: e.target.value })} required />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="login-password">Пароль</Label>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="login-password">Пароль</Label>
+                        <button
+                          type="button"
+                          className="text-xs text-cyan-600 hover:text-cyan-700 transition-colors"
+                          onClick={() => { setShowForgot(true); setForgotEmail(loginData.email); }}
+                          data-testid="modal-forgot-password-link"
+                        >
+                          Забыли пароль?
+                        </button>
+                      </div>
                       <Input id="login-password" data-testid="login-password-input" type="password" placeholder="********" value={loginData.password} onChange={(e) => setLoginData({ ...loginData, password: e.target.value })} required />
                     </div>
                     <Button type="submit" data-testid="login-submit-btn" className="w-full rounded-full h-11" disabled={isLoading}>
@@ -520,6 +580,7 @@ export default function LandingPage() {
                   </form>
                 </TabsContent>
               </Tabs>
+              )}
             </CardContent>
           </Card>
         </div>
